@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <exception>
 #include <fasttext/fasttext.h>
 
 #include <boost/program_options.hpp>
@@ -10,8 +11,6 @@
 #include "tinyxml2.h"
 
 namespace po = boost::program_options;
-
-constexpr const char* const MODEL_PATH = "../lid.176.ftz";
 
 struct Document {
     std::string Title;
@@ -69,6 +68,7 @@ int main(int argc, char** argv) {
         desc.add_options()
             ("mode", po::value<std::string>()->required(), "mode")
             ("source_dir", po::value<std::string>()->required(), "source_dir")
+            ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
             ;
 
         po::positional_options_description p;
@@ -89,8 +89,8 @@ int main(int argc, char** argv) {
         std::cerr << "Mode: " << mode << std::endl;
 
         // Read file names
-        std::string source_dir = vm["source_dir"].as<std::string>();
-        boost::filesystem::path dir(source_dir);
+        std::string sourceDir = vm["source_dir"].as<std::string>();
+        boost::filesystem::path dir(sourceDir);
         boost::filesystem::recursive_directory_iterator start(dir);
         boost::filesystem::recursive_directory_iterator end;
         std::vector<std::string> fileNames;
@@ -106,11 +106,16 @@ int main(int argc, char** argv) {
         std::cerr << fileNames.size() << std::endl;
 
         // Load models
-        fasttext::FastText fasttextModel;
-        fasttextModel.loadModel(MODEL_PATH);
+        std::string langDetectModelPath = vm["lang_detect_model"].as<std::string>();
+        fasttext::FastText langDetectModel;
+        langDetectModel.loadModel(langDetectModelPath);
+        std::cerr << "FastText lang_detect model loaded" << std::endl;
 
         // Parse files
-        fileNames.resize(100);
+        const size_t n = 1000;
+        if (fileNames.size() > n) {
+            fileNames.resize(n);
+        }
         std::vector<Document> docs;
         docs.reserve(fileNames.size());
         for (const std::string& path: fileNames) {
@@ -120,12 +125,12 @@ int main(int argc, char** argv) {
         // Main modes
         if (mode == "languages") {
             for (const auto& doc : docs) {
-                std::string language = DetectLanguage(fasttextModel, doc);
+                std::string language = DetectLanguage(langDetectModel, doc);
                 std::cerr << doc.FileName << " " << doc.Title << " " << language << std::endl;
             }
         }
         return 0;
-    } catch (po::error& e) {
+    } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
         return -1;
     }

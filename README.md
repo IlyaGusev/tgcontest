@@ -19,3 +19,8 @@ $ cd tgcontest
 $ mkdir build && cd build && cmake ..
 $ make
 ```
+
+To download models and datasets:
+```
+sh download.sh
+```

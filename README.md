@@ -16,6 +16,8 @@ To build binary:
 ```
 $ git clone https://github.com/IlyaGusev/tgcontest.git
 $ cd tgcontest
+$ git submodule init
+$ git submodule update
 $ mkdir build && cd build && cmake ..
 $ make
 ```

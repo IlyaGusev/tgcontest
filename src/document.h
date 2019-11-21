@@ -7,4 +7,5 @@ struct Document {
     std::string Description;
     std::string FileName;
     std::string Language;
+    bool IsNews;
 };

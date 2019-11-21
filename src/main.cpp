@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
         }
         std::string mode = vm["mode"].as<std::string>();
         std::cerr << "Mode: " << mode << std::endl;
-        if (mode != "languages" && model != "news") {
+        if (mode != "languages" && mode != "news") {
             std::cerr << "Unknown or unsupported mode!" << std::endl;
             return -1;
         }
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
             }
         }
         docs.shrink_to_fit();
-        std::cerr << "Parsing completed!" << std::endl;
+        std::cerr << docs.size() << " documents saved" << std::endl;
 
         // Pipeline
         if (mode == "languages") {
@@ -115,15 +115,6 @@ int main(int argc, char** argv) {
             std::cout << outputJson.dump(4) << std::endl;
             return 0;
         }
-        std::vector<Document> filteredDocs;
-        filteredDocs.reserve(docs.size() / 3);
-        for (const Document& doc : docs) {
-            if (doc.Language == "ru" || doc.Language == "en") {
-                filteredDocs.push_back(doc);
-            }
-        }
-        docs.clear();
-        docs.swap(filteredDocs);
         return 0;
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;

@@ -3,7 +3,7 @@
 #include <vector>
 #include <fstream>
 #include <exception>
-#include <fasttext/fasttext.h>
+#include "../thirdparty/fasttext/src/fasttext.h"
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>

@@ -5,7 +5,7 @@ include_directories(fasttext/fasttext)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -funroll-loops -O3 -march=native")
 
-add_subdirectory(thirdparty/fasttext)
+add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
 
 set(HEADER_FILES
     src/tinyxml2.h

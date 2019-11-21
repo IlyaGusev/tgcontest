@@ -4,12 +4,9 @@ Trello: https://trello.com/b/36OkBvly/tgcontest
 
 Wiki: https://github.com/IlyaGusev/tgcontest/wiki
 
-FastText installation (for training):
+To download models and datasets:
 ```
-$ git clone https://github.com/facebookresearch/fastText.git
-$ cd fastText
-$ mkdir build && cd build && cmake ..
-$ make && make install
+$ sh download.sh
 ```
 
 To build binary:
@@ -22,7 +19,15 @@ $ mkdir build && cd build && cmake ..
 $ make
 ```
 
-To download models and datasets:
+Run on sample:
 ```
-sh download.sh
+./tgnews languages ../data --lang_detect_model ../models/lang_detect.ftz --ndocs 1000 
+```
+
+FastText installation (for training):
+```
+$ git clone https://github.com/facebookresearch/fastText.git
+$ cd fastText
+$ mkdir build && cd build && cmake ..
+$ make && make install
 ```

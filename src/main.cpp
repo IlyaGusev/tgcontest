@@ -10,8 +10,7 @@
 
 #include "../thirdparty/fasttext/src/fasttext.h"
 #include "../thirdparty/nlohmann_json/json.hpp"
-
-#include "tinyxml2.h"
+#include "../thirdparty/tinyxml2/tinyxml2.h"
 
 namespace po = boost::program_options;
 
@@ -113,7 +112,7 @@ int main(int argc, char** argv) {
             if (path.substr(path.length() - 5) == ".html") {
                 fileNames.push_back(path);
             }
-            if (nDocs != -1 && fileNames.size() == nDocs) {
+            if (nDocs != -1 && fileNames.size() == static_cast<size_t>(nDocs)) {
                 break;
             }
         }

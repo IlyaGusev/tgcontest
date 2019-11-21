@@ -4,7 +4,7 @@ Trello: https://trello.com/b/36OkBvly/tgcontest
 
 Wiki: https://github.com/IlyaGusev/tgcontest/wiki
 
-FastText installation:
+FastText installation (for training):
 ```
 $ git clone https://github.com/facebookresearch/fastText.git
 $ cd fastText

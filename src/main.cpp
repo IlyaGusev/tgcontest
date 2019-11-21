@@ -3,10 +3,13 @@
 #include <vector>
 #include <fstream>
 #include <exception>
-#include "../thirdparty/fasttext/src/fasttext.h"
+#include <map>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
+
+#include "../thirdparty/fasttext/src/fasttext.h"
+#include "../thirdparty/nlohmann_json/json.hpp"
 
 #include "tinyxml2.h"
 
@@ -18,6 +21,7 @@ struct Document {
     std::string SiteName;
     std::string Description;
     std::string FileName;
+    std::string Language;
 };
 
 std::string DetectLanguage(const fasttext::FastText& model, const Document& document) {
@@ -69,6 +73,7 @@ int main(int argc, char** argv) {
             ("mode", po::value<std::string>()->required(), "mode")
             ("source_dir", po::value<std::string>()->required(), "source_dir")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
+            ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ;
 
         po::positional_options_description p;
@@ -87,9 +92,15 @@ int main(int argc, char** argv) {
         }
         std::string mode = vm["mode"].as<std::string>();
         std::cerr << "Mode: " << mode << std::endl;
+        if (mode != "languages") {
+            std::cerr << "Unknown or unsupported mode!" << std::endl;
+            return -1;
+        }
 
         // Read file names
+        std::cerr << "Reading file names..." << std::endl;
         std::string sourceDir = vm["source_dir"].as<std::string>();
+        int nDocs = vm["ndocs"].as<int>();
         boost::filesystem::path dir(sourceDir);
         boost::filesystem::recursive_directory_iterator start(dir);
         boost::filesystem::recursive_directory_iterator end;
@@ -102,32 +113,49 @@ int main(int argc, char** argv) {
             if (path.substr(path.length() - 5) == ".html") {
                 fileNames.push_back(path);
             }
+            if (nDocs != -1 && fileNames.size() == nDocs) {
+                break;
+            }
         }
-        std::cerr << fileNames.size() << std::endl;
+        std::cerr << "Files count: " << fileNames.size() << std::endl;
 
         // Load models
+        std::cerr << "Loading models..." << std::endl;
         std::string langDetectModelPath = vm["lang_detect_model"].as<std::string>();
         fasttext::FastText langDetectModel;
         langDetectModel.loadModel(langDetectModelPath);
         std::cerr << "FastText lang_detect model loaded" << std::endl;
 
         // Parse files
-        const size_t n = 1000;
-        if (fileNames.size() > n) {
-            fileNames.resize(n);
-        }
+        std::cerr << "Pasing " << fileNames.size() << " files..." << std::endl;
         std::vector<Document> docs;
         docs.reserve(fileNames.size());
         for (const std::string& path: fileNames) {
             docs.push_back(ParseFile(path.c_str()));
         }
+        std::cerr << "Parsing completed!" << std::endl;
 
         // Main modes
         if (mode == "languages") {
-            for (const auto& doc : docs) {
+            std::map<std::string, std::vector<std::string>> langToFiles;
+            for (auto& doc : docs) {
                 std::string language = DetectLanguage(langDetectModel, doc);
-                std::cerr << doc.FileName << " " << doc.Title << " " << language << std::endl;
+                doc.Language = language;
+                std::string fileName = doc.FileName.substr(doc.FileName.find_last_of("/") + 1);
+                langToFiles[language].push_back(fileName);
+                //std::cerr << fileName << " " << doc.Title << " " << language << std::endl;
             }
+            nlohmann::json outputJson = nlohmann::json::array();
+            for (const auto& pair : langToFiles) {
+                const std::string& language = pair.first;
+                const auto& files = pair.second;
+                nlohmann::json object = {
+                    {"language", language},
+                    {"articles", files}
+                };
+                outputJson.push_back(object);
+            }
+            std::cout << outputJson.dump(4) << std::endl;
         }
         return 0;
     } catch (std::exception& e) {

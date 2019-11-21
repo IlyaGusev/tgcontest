@@ -1,68 +1,36 @@
+#include <exception>
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
-#include <fstream>
-#include <exception>
-#include <map>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
-
 #include "../thirdparty/fasttext/src/fasttext.h"
 #include "../thirdparty/nlohmann_json/json.hpp"
-#include "../thirdparty/tinyxml2/tinyxml2.h"
+
+#include "parser.h"
+#include "lang_detect.h"
 
 namespace po = boost::program_options;
 
-struct Document {
-    std::string Title;
-    std::string Url;
-    std::string SiteName;
-    std::string Description;
-    std::string FileName;
-    std::string Language;
-};
 
-std::string DetectLanguage(const fasttext::FastText& model, const Document& document) {
-    std::istringstream ifs(document.Title);
-    std::vector<std::pair<fasttext::real, std::string>> predictions;
-    model.predictLine(ifs, predictions, 1, 0.0);
-    if (predictions.empty()) {
-        return "en";
-    }
-    const std::string& label = predictions[0].second;
-    return label.substr(label.length() - 2);
-}
-
-Document ParseFile(const char* fileName) {
-    tinyxml2::XMLDocument originalDoc;
-    originalDoc.LoadFile(fileName);
-    const tinyxml2::XMLElement* headElement = originalDoc.FirstChildElement("html")->FirstChildElement("head");
-    const tinyxml2::XMLElement* metaElement = headElement->FirstChildElement("meta");
-    Document doc;
-    doc.FileName = fileName;
-    while (metaElement != 0) {
-        const char* property = metaElement->Attribute("property");
-        const char* content = metaElement->Attribute("content");
-        if (content == 0 || property == 0) {
-            metaElement = metaElement->NextSiblingElement("meta");
+void ReadFileNames(const std::string& directory, std::vector<std::string>& fileNames, int nDocs=-1) {
+    boost::filesystem::path dirPath(directory);
+    boost::filesystem::recursive_directory_iterator start(dirPath);
+    boost::filesystem::recursive_directory_iterator end;
+    for (auto it = start; it != end; it++) {
+        if (boost::filesystem::is_directory(it->path())) {
             continue;
         }
-        if (std::string(property) == "og:title") {
-            doc.Title = content;
+        std::string path = it->path().string();
+        if (path.substr(path.length() - 5) == ".html") {
+            fileNames.push_back(path);
         }
-        if (std::string(property) == "og:url") {
-            doc.Url = content;
+        if (nDocs != -1 && fileNames.size() == static_cast<size_t>(nDocs)) {
+            break;
         }
-        if (std::string(property) == "og:site_name") {
-            doc.SiteName = content;
-        }
-        if (std::string(property) == "og:description") {
-            doc.Description = content;
-        }
-        metaElement = metaElement->NextSiblingElement("meta");
     }
-    return doc;
 }
 
 int main(int argc, char** argv) {
@@ -85,38 +53,18 @@ int main(int argc, char** argv) {
         po::variables_map vm;
         po::store(parsed_options, vm);
         po::notify(vm);
+
+        // Args check
         if (!vm.count("mode") || !vm.count("source_dir")) {
             std::cerr << "Not enough arguments" << std::endl;
             return -1;
         }
         std::string mode = vm["mode"].as<std::string>();
         std::cerr << "Mode: " << mode << std::endl;
-        if (mode != "languages") {
+        if (mode != "languages" && model != "news") {
             std::cerr << "Unknown or unsupported mode!" << std::endl;
             return -1;
         }
-
-        // Read file names
-        std::cerr << "Reading file names..." << std::endl;
-        std::string sourceDir = vm["source_dir"].as<std::string>();
-        int nDocs = vm["ndocs"].as<int>();
-        boost::filesystem::path dir(sourceDir);
-        boost::filesystem::recursive_directory_iterator start(dir);
-        boost::filesystem::recursive_directory_iterator end;
-        std::vector<std::string> fileNames;
-        for (auto it = start; it != end; it++) {
-            if (boost::filesystem::is_directory(it->path())) {
-                continue;
-            }
-            std::string path = it->path().string();
-            if (path.substr(path.length() - 5) == ".html") {
-                fileNames.push_back(path);
-            }
-            if (nDocs != -1 && fileNames.size() == static_cast<size_t>(nDocs)) {
-                break;
-            }
-        }
-        std::cerr << "Files count: " << fileNames.size() << std::endl;
 
         // Load models
         std::cerr << "Loading models..." << std::endl;
@@ -125,37 +73,57 @@ int main(int argc, char** argv) {
         langDetectModel.loadModel(langDetectModelPath);
         std::cerr << "FastText lang_detect model loaded" << std::endl;
 
-        // Parse files
+        // Read file names
+        std::cerr << "Reading file names..." << std::endl;
+        std::string sourceDir = vm["source_dir"].as<std::string>();
+        int nDocs = vm["ndocs"].as<int>();
+        std::vector<std::string> fileNames;
+        ReadFileNames(sourceDir, fileNames, nDocs);
+        std::cerr << "Files count: " << fileNames.size() << std::endl;
+
+        // Parse files and save only russian and english texts
         std::cerr << "Pasing " << fileNames.size() << " files..." << std::endl;
         std::vector<Document> docs;
-        docs.reserve(fileNames.size());
+        docs.reserve(fileNames.size() / 2);
         for (const std::string& path: fileNames) {
-            docs.push_back(ParseFile(path.c_str()));
+            Document doc = ParseFile(path.c_str());
+            doc.Language = DetectLanguage(langDetectModel, doc);
+            if (doc.Language == "ru" || doc.Language == "en") {
+                docs.push_back(doc);
+            }
         }
+        docs.shrink_to_fit();
         std::cerr << "Parsing completed!" << std::endl;
 
-        // Main modes
+        // Pipeline
         if (mode == "languages") {
             std::map<std::string, std::vector<std::string>> langToFiles;
-            for (auto& doc : docs) {
-                std::string language = DetectLanguage(langDetectModel, doc);
-                doc.Language = language;
+            for (const Document& doc : docs) {
                 std::string fileName = doc.FileName.substr(doc.FileName.find_last_of("/") + 1);
-                langToFiles[language].push_back(fileName);
-                //std::cerr << fileName << " " << doc.Title << " " << language << std::endl;
+                langToFiles[doc.Language].push_back(fileName);
             }
             nlohmann::json outputJson = nlohmann::json::array();
             for (const auto& pair : langToFiles) {
                 const std::string& language = pair.first;
-                const auto& files = pair.second;
+                const std::vector<std::string>& files = pair.second;
                 nlohmann::json object = {
-                    {"language", language},
+                    {"lang_code", language},
                     {"articles", files}
                 };
                 outputJson.push_back(object);
             }
             std::cout << outputJson.dump(4) << std::endl;
+            return 0;
         }
+        std::vector<Document> filteredDocs;
+        filteredDocs.reserve(docs.size() / 3);
+        for (const Document& doc : docs) {
+            if (doc.Language == "ru" || doc.Language == "en") {
+                filteredDocs.push_back(doc);
+            }
+        }
+        docs.clear();
+        docs.swap(filteredDocs);
         return 0;
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;

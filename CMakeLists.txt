@@ -11,7 +11,15 @@ add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/tinyxml2)
 
 set(SOURCE_FILES
+    src/lang_detect.cpp
     src/main.cpp
+    src/parser.cpp
+)
+
+set(HEADER_FILES
+    src/document.h
+    src/lang_detect.h
+    src/parser.h
 )
 
 set(Boost_USE_MULTITHREADED ON)

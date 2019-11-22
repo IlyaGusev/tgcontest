@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
         std::cerr << "Files count: " << fileNames.size() << std::endl;
 
         // Parse files and save only russian and english texts
-        std::cerr << "Pasing " << fileNames.size() << " files..." << std::endl;
+        std::cerr << "Parsing " << fileNames.size() << " files..." << std::endl;
         std::vector<Document> docs;
         docs.reserve(fileNames.size() / 2);
         for (const std::string& path: fileNames) {

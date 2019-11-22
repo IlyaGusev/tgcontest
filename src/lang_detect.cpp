@@ -7,11 +7,15 @@ std::string DetectLanguage(const fasttext::FastText& model, const Document& docu
     std::replace(sample.begin(), sample.end(), '\n', ' ');
     std::istringstream ifs(sample);
     std::vector<std::pair<fasttext::real, std::string>> predictions;
-    model.predictLine(ifs, predictions, 1, 0.0);
+    model.predictLine(ifs, predictions, 1, 0.5);
     if (predictions.empty()) {
-        return "en";
+        return "unk";
     }
-    const std::string& label = predictions[0].second;
-    return label.substr(label.length() - 2);
+    const std::string& fullLabel = predictions[0].second;
+    std::string label = fullLabel.substr(fullLabel.length() - 2);
+    if ((label == "ru") && predictions[0].first < 0.7) {
+        return "tg";
+    }
+    return label;
 }
 

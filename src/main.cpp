@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
         }
         std::string mode = vm["mode"].as<std::string>();
         std::cerr << "Mode: " << mode << std::endl;
-        if (mode != "languages" && mode != "news") {
+        if (mode != "languages" && mode != "news" && mode != "sites") {
             std::cerr << "Unknown or unsupported mode!" << std::endl;
             return -1;
         }
@@ -95,14 +95,14 @@ int main(int argc, char** argv) {
         docs.shrink_to_fit();
         std::cerr << docs.size() << " documents saved" << std::endl;
 
-        // Pipeline
+        // Output
+        nlohmann::json outputJson = nlohmann::json::array();
         if (mode == "languages") {
             std::map<std::string, std::vector<std::string>> langToFiles;
             for (const Document& doc : docs) {
                 std::string fileName = doc.FileName.substr(doc.FileName.find_last_of("/") + 1);
                 langToFiles[doc.Language].push_back(fileName);
             }
-            nlohmann::json outputJson = nlohmann::json::array();
             for (const auto& pair : langToFiles) {
                 const std::string& language = pair.first;
                 const std::vector<std::string>& files = pair.second;
@@ -112,9 +112,22 @@ int main(int argc, char** argv) {
                 };
                 outputJson.push_back(object);
             }
-            std::cout << outputJson.dump(4) << std::endl;
-            return 0;
+        } else if (mode == "sites") {
+            std::map<std::string, std::vector<std::string>> siteToTitles;
+            for (const Document& doc : docs) {
+                siteToTitles[doc.SiteName].push_back(doc.Title);
+            }
+            for (const auto& pair : siteToTitles) {
+                const std::string& site = pair.first;
+                const std::vector<std::string>& titles = pair.second;
+                nlohmann::json object = {
+                    {"site", site},
+                    {"titles", titles}
+                };
+                outputJson.push_back(object);
+            }
         }
+        std::cout << outputJson.dump(4) << std::endl;
         return 0;
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;

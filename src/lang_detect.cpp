@@ -3,7 +3,9 @@
 #include "document.h"
 
 std::string DetectLanguage(const fasttext::FastText& model, const Document& document) {
-    std::istringstream ifs(document.Title);
+    std::string sample(document.Title + " " + document.Description + " " + document.Text.substr(0, 100));
+    std::replace(sample.begin(), sample.end(), '\n', ' ');
+    std::istringstream ifs(sample);
     std::vector<std::pair<fasttext::real, std::string>> predictions;
     model.predictLine(ifs, predictions, 1, 0.0);
     if (predictions.empty()) {

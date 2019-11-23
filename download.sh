@@ -4,6 +4,7 @@
 mkdir models
 cd models
 wget -O lang_detect.ftz https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.ftz
+wget -O news_detect.ftz https://www.dropbox.com/s/squ9rnm6a4ixkza/news_detect.ftz
 cd ..
 
 # Datasets

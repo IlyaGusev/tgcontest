@@ -33,6 +33,13 @@ void ReadFileNames(const std::string& directory, std::vector<std::string>& fileN
     }
 }
 
+std::string CleanText(std::string text) {
+    std::replace(text.begin(), text.end(), '\n', ' ');
+    std::replace(text.begin(), text.end(), '\t', ' ');
+    std::replace(text.begin(), text.end(), '\r', ' ');
+    return text;
+}
+
 int main(int argc, char** argv) {
     try {
         po::options_description desc("options");
@@ -41,6 +48,7 @@ int main(int argc, char** argv) {
             ("source_dir", po::value<std::string>()->required(), "source_dir")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
+            ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ;
 
         po::positional_options_description p;
@@ -61,7 +69,14 @@ int main(int argc, char** argv) {
         }
         std::string mode = vm["mode"].as<std::string>();
         std::cerr << "Mode: " << mode << std::endl;
-        if (mode != "languages" && mode != "news" && mode != "sites") {
+        std::vector<std::string> modes = {
+            "languages",
+            "news",
+            "sites",
+            "json",
+            "toloka"
+        };
+        if (std::find(modes.begin(), modes.end(), mode) == modes.end()) {
             std::cerr << "Unknown or unsupported mode!" << std::endl;
             return -1;
         }
@@ -72,6 +87,8 @@ int main(int argc, char** argv) {
         fasttext::FastText langDetectModel;
         langDetectModel.loadModel(langDetectModelPath);
         std::cerr << "FastText lang_detect model loaded" << std::endl;
+        //fasttext::FastText newsDetectModel;
+        //newsDetectModel.loadModel("../models/task2_model.ftz");
 
         // Read file names
         std::cerr << "Reading file names..." << std::endl;
@@ -81,14 +98,15 @@ int main(int argc, char** argv) {
         ReadFileNames(sourceDir, fileNames, nDocs);
         std::cerr << "Files count: " << fileNames.size() << std::endl;
 
-        // Parse files and save only russian and english texts
+        // Parse files and filter by language
+        std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
         std::cerr << "Parsing " << fileNames.size() << " files..." << std::endl;
         std::vector<Document> docs;
         docs.reserve(fileNames.size() / 2);
         for (const std::string& path: fileNames) {
             Document doc = ParseFile(path.c_str());
             doc.Language = DetectLanguage(langDetectModel, doc);
-            if (doc.Language == "ru" || doc.Language == "en") {
+            if (std::find(languages.begin(), languages.end(), doc.Language) != languages.end()) {
                 docs.push_back(doc);
             }
         }
@@ -126,8 +144,42 @@ int main(int argc, char** argv) {
                 };
                 outputJson.push_back(object);
             }
+            std::cout << outputJson.dump(4) << std::endl;
+        } else if (mode == "json") {
+            for (const Document& doc : docs) {
+                nlohmann::json object = {
+                    {"url", doc.Url},
+                    {"site_name", doc.SiteName},
+                    {"date", doc.DateTime},
+                    {"title", doc.Title},
+                    {"description", doc.Description},
+                    {"text", doc.Text}
+                };
+                outputJson.push_back(object);
+            }
+            std::cout << outputJson.dump(4) << std::endl;
+        } else if (mode == "toloka") {
+            std::cout << "INPUT:url" << "\t" << "INPUT:title" << "\t" << "INPUT:text" << "\n";
+            for (const Document& doc : docs) {
+                std::cout << doc.Url << "\t" << CleanText(doc.Title) << "\t" << CleanText(doc.Text) << "\n";
+            }
+        } else if (mode == "news") {
+            for (const Document& doc : docs) {
+                if (doc.Language != "ru") {
+                    continue;
+                }
+                /*std::istringstream ifs(doc.Title);
+                std::vector<std::pair<fasttext::real, std::string>> predictions;
+                newsDetectModel.predictLine(ifs, predictions, 1, 0.5);
+                if (predictions.size() == 0) {
+                    continue;
+                }
+                if (std::string(predictions[0].second) != "__label__0") {
+                    continue;
+                }
+                std::cout << doc.Title << std::endl;*/
+            }
         }
-        std::cout << outputJson.dump(4) << std::endl;
         return 0;
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;

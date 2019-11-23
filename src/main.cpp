@@ -11,6 +11,7 @@
 
 #include "parser.h"
 #include "lang_detect.h"
+#include "news_detect.h"
 
 namespace po = boost::program_options;
 
@@ -47,6 +48,7 @@ int main(int argc, char** argv) {
             ("mode", po::value<std::string>()->required(), "mode")
             ("source_dir", po::value<std::string>()->required(), "source_dir")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
+            ("news_detect_model", po::value<std::string>()->default_value("models/news_detect.ftz"), "news_detect_model")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ;
@@ -83,12 +85,15 @@ int main(int argc, char** argv) {
 
         // Load models
         std::cerr << "Loading models..." << std::endl;
-        std::string langDetectModelPath = vm["lang_detect_model"].as<std::string>();
+ 
+        const std::string langDetectModelPath = vm["lang_detect_model"].as<std::string>();
         fasttext::FastText langDetectModel;
         langDetectModel.loadModel(langDetectModelPath);
         std::cerr << "FastText lang_detect model loaded" << std::endl;
-        //fasttext::FastText newsDetectModel;
-        //newsDetectModel.loadModel("../models/task2_model.ftz");
+
+        const std::string newsDetectModelPath = vm["news_detect_model"].as<std::string>();
+        fasttext::FastText newsDetectModel;
+        newsDetectModel.loadModel(newsDetectModelPath);
 
         // Read file names
         std::cerr << "Reading file names..." << std::endl;
@@ -168,16 +173,9 @@ int main(int argc, char** argv) {
                 if (doc.Language != "ru") {
                     continue;
                 }
-                /*std::istringstream ifs(doc.Title);
-                std::vector<std::pair<fasttext::real, std::string>> predictions;
-                newsDetectModel.predictLine(ifs, predictions, 1, 0.5);
-                if (predictions.size() == 0) {
-                    continue;
+                if (!DetectIsNews(newsDetectModel, doc)) {
+                    std::cout << doc.Title << std::endl;
                 }
-                if (std::string(predictions[0].second) != "__label__0") {
-                    continue;
-                }
-                std::cout << doc.Title << std::endl;*/
             }
         }
         return 0;

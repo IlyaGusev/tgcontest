@@ -4,6 +4,11 @@ Trello: https://trello.com/b/36OkBvly/tgcontest
 
 Wiki: https://github.com/IlyaGusev/tgcontest/wiki
 
+Prerequisites: Boost
+```
+$ sudo apt-get install libboost-all-dev
+```
+
 To download models and datasets:
 ```
 $ sh download.sh

@@ -10,5 +10,6 @@ struct Document {
     std::string Text;
     std::string DateTime;
     std::string Author;
+    std::string Category;
     bool IsNews;
 };

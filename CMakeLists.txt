@@ -11,16 +11,14 @@ add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/tinyxml2)
 
 set(SOURCE_FILES
-    src/lang_detect.cpp
+    src/detect.cpp
     src/main.cpp
-    src/news_detect.cpp
     src/parser.cpp
 )
 
 set(HEADER_FILES
+    src/detect.h
     src/document.h
-    src/lang_detect.h
-    src/news_detect.h
     src/parser.h
 )
 

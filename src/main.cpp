@@ -9,9 +9,8 @@
 #include "../thirdparty/fasttext/src/fasttext.h"
 #include "../thirdparty/nlohmann_json/json.hpp"
 
+#include "detect.h"
 #include "parser.h"
-#include "lang_detect.h"
-#include "news_detect.h"
 
 namespace po = boost::program_options;
 
@@ -49,6 +48,7 @@ int main(int argc, char** argv) {
             ("source_dir", po::value<std::string>()->required(), "source_dir")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
             ("news_detect_model", po::value<std::string>()->default_value("models/news_detect.ftz"), "news_detect_model")
+            ("cat_detect_model", po::value<std::string>()->default_value("models/cat_detect.ftz"), "cat_detect_model")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ;
@@ -76,7 +76,8 @@ int main(int argc, char** argv) {
             "news",
             "sites",
             "json",
-            "toloka"
+            "toloka",
+            "categories"
         };
         if (std::find(modes.begin(), modes.end(), mode) == modes.end()) {
             std::cerr << "Unknown or unsupported mode!" << std::endl;
@@ -95,6 +96,10 @@ int main(int argc, char** argv) {
         fasttext::FastText newsDetectModel;
         newsDetectModel.loadModel(newsDetectModelPath);
 
+        const std::string catDetectModelPath = vm["cat_detect_model"].as<std::string>();
+        fasttext::FastText catDetectModel;
+        catDetectModel.loadModel(catDetectModelPath);
+
         // Read file names
         std::cerr << "Reading file names..." << std::endl;
         std::string sourceDir = vm["source_dir"].as<std::string>();
@@ -112,6 +117,8 @@ int main(int argc, char** argv) {
             Document doc = ParseFile(path.c_str());
             doc.Language = DetectLanguage(langDetectModel, doc);
             if (std::find(languages.begin(), languages.end(), doc.Language) != languages.end()) {
+                doc.IsNews = DetectIsNews(newsDetectModel, doc);
+                doc.Category = DetectCategory(catDetectModel, doc);
                 docs.push_back(doc);
             }
         }
@@ -173,9 +180,13 @@ int main(int argc, char** argv) {
                 if (doc.Language != "ru") {
                     continue;
                 }
-                if (!DetectIsNews(newsDetectModel, doc)) {
+                if (!doc.IsNews) {
                     std::cout << doc.Title << std::endl;
                 }
+            }
+        } else if (mode == "categories") {
+            for (const Document& doc : docs) {
+                std::cout << doc.Category << " " << doc.Title << std::endl;
             }
         }
         return 0;

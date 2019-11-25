@@ -34,12 +34,14 @@ def main(json_file_name, output_dir, honey_file_name, pool_size, honey_size, exi
         records = json.load(r)
         random.shuffle(records)
         current_pool = []
-        for i, record in enumerate(records):
+        i = 0
+        for record in records:
             if i % pool_size == 0 and i != 0:
                 clean_pool = []
                 for r in current_pool:
                     title = clean_text(r["title"])
                     text = clean_text(r["text"])
+                    url = r["url"]
                     clean_pool.append({"url": url, "title": title, "text": text, "res": ""})
                 random.shuffle(honey)
                 current_pool = clean_pool + honey[:honey_size]
@@ -54,9 +56,10 @@ def main(json_file_name, output_dir, honey_file_name, pool_size, honey_size, exi
                     for r in current_pool:
                         writer.writerow((r["url"], r["title"], r["text"], r["res"]))
                 current_pool = []
-            if record["url"] in existing_urls:
+            if record["url"] in existing_urls or not clean_text(record["text"]) or not clean_text(record["title"]):
                 continue
             current_pool.append(record)
+            i += 1
 
 
 if __name__ == "__main__":

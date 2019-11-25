@@ -31,7 +31,7 @@ $ make
 
 Run on sample:
 ```
-./tgnews languages ../data --lang_detect_model ../models/lang_detect.ftz --news_detect_model ../models/news_detect.ftz --ndocs 1000 --languages ru en
+./tgnews languages ../data --lang_detect_model ../models/lang_detect.ftz --cat_detect_model ../models/cat_detect.ftz --news_detect_model ../models/news_detect.ftz --ndocs 1000 --languages ru en
 ```
 
 FastText installation (for training):

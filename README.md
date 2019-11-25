@@ -9,15 +9,20 @@ Prerequisites: Boost
 $ sudo apt-get install libboost-all-dev
 ```
 
-To download models and datasets:
+To download code and models:
+```
+$ git clone https://github.com/IlyaGusev/tgcontest
+$ cd tgcontest
+$ git lfs fetch
+```
+
+To download datasets:
 ```
 $ sh download.sh
 ```
 
-To build binary:
+To build binary (in "tgcontest" dir):
 ```
-$ git clone https://github.com/IlyaGusev/tgcontest.git
-$ cd tgcontest
 $ git submodule init
 $ git submodule update
 $ mkdir build && cd build && cmake ..

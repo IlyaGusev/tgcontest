@@ -1,3 +1,8 @@
 models/lang_detect.ftz filter=lfs diff=lfs merge=lfs -text
 models/news_detect.ftz filter=lfs diff=lfs merge=lfs -text
 models/cat_detect.ftz filter=lfs diff=lfs merge=lfs -text
+markup/ru_cat_exam.tsv filter=lfs diff=lfs merge=lfs -text
+markup/ru_cat_training.tsv filter=lfs diff=lfs merge=lfs -text
+markup/ru_cat_honey.tsv filter=lfs diff=lfs merge=lfs -text
+markup/ru_news_detect.txt filter=lfs diff=lfs merge=lfs -text
+markup/categories.txt filter=lfs diff=lfs merge=lfs -text

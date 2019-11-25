@@ -13,7 +13,7 @@ To download code and models:
 ```
 $ git clone https://github.com/IlyaGusev/tgcontest
 $ cd tgcontest
-$ git lfs pull
+$ git lfs fetch
 ```
 
 To download datasets:

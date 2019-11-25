@@ -142,6 +142,7 @@ int main(int argc, char** argv) {
                 };
                 outputJson.push_back(object);
             }
+            std::cout << outputJson.dump(4) << std::endl;
         } else if (mode == "sites") {
             std::map<std::string, std::vector<std::string>> siteToTitles;
             for (const Document& doc : docs) {

@@ -57,6 +57,7 @@ def main(json_file_name, output_dir, honey_file_name, pool_size, honey_size, exi
                         writer.writerow((r["url"], r["title"], r["text"], r["res"]))
                 current_pool = []
             if record["url"] in existing_urls or not clean_text(record["text"]) or not clean_text(record["title"]):
+                print("Skipping: {}".format(record["url"]))
                 continue
             current_pool.append(record)
             i += 1

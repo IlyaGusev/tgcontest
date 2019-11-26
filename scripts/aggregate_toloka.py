@@ -14,6 +14,7 @@ def main(answers_file_name, original_json, honey_output_file_name, ft_output_fil
         records = []
         for line in r:
             fields = line.strip().split("\t")
+            assert len(fields) == len(header), fields
             records.append(dict(zip(header, fields)))
     # Filter honeypots out
     records = [r for r in records if not r["GOLDEN:res"]]
@@ -68,7 +69,8 @@ def main(answers_file_name, original_json, honey_output_file_name, ft_output_fil
                 print("{} vs {}: no intersection".format(w1, w2))
             else:
                 score = cohen_kappa_score(fixed_labels1, fixed_labels2)
-                scores.append(score)
+                if -1.0 <= score <= 1.0:
+                    scores.append(score)
                 print("{} vs {}: {}".format(w1, w2, score))
     print("Avg kappa score: {}".format(sum(scores)/len(scores)))
 
@@ -96,7 +98,7 @@ def main(answers_file_name, original_json, honey_output_file_name, ft_output_fil
     if ft_output_file_name:
         with open(ft_output_file_name, "w") as w:
             for d in data.values():
-                w.write("{} {} {}\n".format(d["res"], d["title"], d["text"]))
+                w.write("__label__{} {} {}\n".format(d["res"], d["title"], d["text"]))
 
 
 if __name__ == "__main__":

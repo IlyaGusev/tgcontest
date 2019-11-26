@@ -44,6 +44,6 @@ $ make && make install
 
 Classifier training and compression:
 ```
-$ fasttext supervised -input train.txt -output model -lr 1.0 -epoch 25 -wordNgrams 2
+$ fasttext supervised -input train.txt -output model -lr 1.0 -epoch 100 -minCount 5 -ws 3
 $ fasttext quantize -input train.txt -output model -qnorm -retrain -epoch 1 -cutoff 10000
 ```

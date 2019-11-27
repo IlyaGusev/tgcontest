@@ -44,6 +44,6 @@ $ make && make install
 
 Classifier training and compression:
 ```
-$ fasttext supervised -input train.txt -output model -lr 1.0 -epoch 100 -minCount 5 -ws 3
-$ fasttext quantize -input train.txt -output model -qnorm -retrain -epoch 1 -cutoff 10000
+$ fasttext supervised -input markup/ru_cat_all_train.txt -output models/my_model -lr 1.0 -epoch 50 -minCount 15 -pretrainedVectors models/tg_lenta.vec -dim 50
+$ fasttext quantize -input markup/ru_cat_all_train.txt -output models/my_mode -qnorm
 ```

@@ -76,7 +76,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-file", type=str, required=True)
     parser.add_argument("--output-file", type=str, required=True)
-    parser.add_argument("--part", type=int, default=0.02)
+    parser.add_argument("--part", type=float, default=0.02)
     args = parser.parse_args()
     main(**vars(args))
 

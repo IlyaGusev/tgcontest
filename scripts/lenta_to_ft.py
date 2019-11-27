@@ -16,8 +16,6 @@ def main(input_file, output_file, part):
                 true_topic = "economy"
             elif topic == "Спорт":
                 true_topic = "sports"
-            elif topic == "Культура":
-                true_topic = "entertainment"
             elif topic == "Наука и техника" and tag == "Игры":
                 true_topic = "entertainment"
             elif topic == "Наука и техника" and (tag == "Наука" or tag == "Космос" or tag == "Жизнь"):
@@ -36,8 +34,6 @@ def main(input_file, output_file, part):
                 true_topic = "technology"
             elif topic == "Ценности" and tag == "Стиль":
                 true_topic = "other"
-            elif topic == "Бывший СССР":
-                continue
             elif topic == "Бизнес":
                 true_topic = "economy"
             elif topic == "Культпросвет":
@@ -52,6 +48,10 @@ def main(input_file, output_file, part):
                 true_topic = "other"
             elif topic == "Путешествия" and tag == "Происшествия":
                 true_topic = "society"
+            elif topic == "Культура":
+                continue
+            elif topic == "Бывший СССР":
+                continue
             elif topic == "Из жизни":
                 continue
             elif topic == "Интернет и СМИ":
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-file", type=str, required=True)
     parser.add_argument("--output-file", type=str, required=True)
-    parser.add_argument("--part", type=int, default=0.2)
+    parser.add_argument("--part", type=int, default=0.02)
     args = parser.parse_args()
     main(**vars(args))
 

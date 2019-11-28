@@ -1,10 +1,10 @@
-#include "hclustering.h"
+#include "slink.h"
 
-#include <iostream>
-#include <cassert>
+#include <string>
+#include <vector>
 
 
-HierarchicalClustering::HierarchicalClustering(
+SlinkClustering::SlinkClustering(
     const std::string& modelPath,
     float distanceThreshold
 )
@@ -13,7 +13,7 @@ HierarchicalClustering::HierarchicalClustering(
 {}
 
 // SLINK: https://sites.cs.ucsb.edu/~veronika/MAE/summary_SLINK_Sibson72.pdf
-HierarchicalClustering::Clusters HierarchicalClustering::Cluster(const std::vector<Document>& docs) {
+SlinkClustering::Clusters SlinkClustering::Cluster(const std::vector<Document>& docs) {
     const size_t docSize = docs.size();
     const size_t embSize = GetEmbeddingSize();
 
@@ -85,7 +85,7 @@ HierarchicalClustering::Clusters HierarchicalClustering::Cluster(const std::vect
         level += 1;
     }
 
-    HierarchicalClustering::Clusters clusters(labels.size());
+    SlinkClustering::Clusters clusters(labels.size());
     for (size_t i = 0; i < docSize; ++i) {
         const size_t clusterId = labels[i];
         clusters[clusterId].push_back(std::cref(docs[i]));
@@ -95,7 +95,7 @@ HierarchicalClustering::Clusters HierarchicalClustering::Cluster(const std::vect
 
 }
 
-void HierarchicalClustering::FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const {
+void SlinkClustering::FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const {
     // Assuming points are on unit sphere
     // Normalize to [0.0, 1.0]
     distances = -((points * points.transpose()).array() + 1.0f) / 2.0f + 1.0f;

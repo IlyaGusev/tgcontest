@@ -4,11 +4,9 @@
 
 #include <Eigen/Core>
 
-#include <vector>
-
-class HierarchicalClustering : public FastTextEmbedder, public Clustering {
+class SlinkClustering : public FastTextEmbedder, public Clustering {
 public:
-    HierarchicalClustering(
+    SlinkClustering(
         const std::string& modelPath,
         float distanceThreshold
     );

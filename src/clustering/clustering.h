@@ -2,9 +2,8 @@
 
 #include "../document.h"
 
-#include "../../thirdparty/fasttext/src/fasttext.h"
+#include <fasttext.h>
 
-#include <vector>
 
 class Clustering {
 public:
@@ -14,6 +13,7 @@ public:
     virtual Clusters Cluster(const std::vector<Document>& docs) = 0;
     virtual ~Clustering() = default;
 };
+
 
 class FastTextEmbedder {
 public:

@@ -7,13 +7,13 @@
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
-#include "../thirdparty/fasttext/src/fasttext.h"
-#include "../thirdparty/nlohmann_json/json.hpp"
+#include <fasttext.h>
+#include <nlohmann_json/json.hpp>
 
+#include "clustering/dbscan.h"
+#include "clustering/slink.h"
 #include "detect.h"
 #include "parser.h"
-#include "clustering/dbscan.h"
-#include "clustering/hclustering.h"
 
 namespace po = boost::program_options;
 
@@ -35,13 +35,6 @@ void ReadFileNames(const std::string& directory, std::vector<std::string>& fileN
     }
 }
 
-std::string CleanText(std::string text) {
-    std::replace(text.begin(), text.end(), '\n', ' ');
-    std::replace(text.begin(), text.end(), '\t', ' ');
-    std::replace(text.begin(), text.end(), '\r', ' ');
-    return text;
-}
-
 int main(int argc, char** argv) {
     try {
         po::options_description desc("options");
@@ -52,7 +45,7 @@ int main(int argc, char** argv) {
             ("news_detect_model", po::value<std::string>()->default_value("models/news_detect.ftz"), "news_detect_model")
             ("cat_detect_model", po::value<std::string>()->default_value("models/cat_detect.ftz"), "cat_detect_model")
             ("vector_model", po::value<std::string>()->default_value("models/tg_lenta.bin"), "vector_model")
-            ("clustering_type", po::value<std::string>()->default_value("hierarchical"), "clustering_type")
+            ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
             ("clustering_distance_threshold", po::value<float>()->default_value(0.05f), "clustering_distance_threshold")
             ("clustering_eps", po::value<double>()->default_value(0.3), "clustering_eps")
             ("clustering_min_points", po::value<size_t>()->default_value(1), "clustering_min_points")
@@ -182,11 +175,6 @@ int main(int argc, char** argv) {
                 outputJson.push_back(object);
             }
             std::cout << outputJson.dump(4) << std::endl;
-        } else if (mode == "toloka") {
-            std::cout << "INPUT:url" << "\t" << "INPUT:title" << "\t" << "INPUT:text" << "\n";
-            for (const Document& doc : docs) {
-                std::cout << doc.Url << "\t" << CleanText(doc.Title) << "\t" << CleanText(doc.Text) << "\n";
-            }
         } else if (mode == "news") {
             for (const Document& doc : docs) {
                 if (doc.Language != "ru") {
@@ -206,9 +194,9 @@ int main(int argc, char** argv) {
             std::unique_ptr<Clustering> clustering;
 
             const std::string clusteringType = vm["clustering_type"].as<std::string>();
-            if (clusteringType == "hierarchical") {
+            if (clusteringType == "slink") {
                 const float distanceThreshold = vm["clustering_distance_threshold"].as<float>();
-                clustering = std::unique_ptr<Clustering>(new HierarchicalClustering(vectorModelPath, distanceThreshold));
+                clustering = std::unique_ptr<Clustering>(new SlinkClustering(vectorModelPath, distanceThreshold));
             }
             else if (clusteringType == "dbscan") {
                 const double eps = vm["clustering_eps"].as<double>();

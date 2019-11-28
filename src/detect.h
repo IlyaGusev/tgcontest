@@ -2,9 +2,11 @@
 
 #include <string>
 
-#include "../thirdparty/fasttext/src/fasttext.h"
-
 struct Document;
+
+namespace fasttext {
+    class FastText;
+}
 
 std::string DetectLanguage(const fasttext::FastText& model, const Document& document);
 bool DetectIsNews(const fasttext::FastText& model, const Document& document);

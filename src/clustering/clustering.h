@@ -4,10 +4,11 @@
 
 #include <fasttext.h>
 
+typedef std::vector<std::reference_wrapper<const Document>> NewsCluster;
 
 class Clustering {
 public:
-    using Clusters = std::vector<std::vector<std::reference_wrapper<const Document>>>;
+    using Clusters = std::vector<NewsCluster>;
 
 public:
     virtual Clusters Cluster(const std::vector<Document>& docs) = 0;

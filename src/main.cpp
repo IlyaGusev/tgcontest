@@ -12,6 +12,8 @@
 #include "detect.h"
 #include "parser.h"
 
+#include "clustering/clustering.h"
+
 namespace po = boost::program_options;
 
 
@@ -49,6 +51,9 @@ int main(int argc, char** argv) {
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
             ("news_detect_model", po::value<std::string>()->default_value("models/news_detect.ftz"), "news_detect_model")
             ("cat_detect_model", po::value<std::string>()->default_value("models/cat_detect.ftz"), "cat_detect_model")
+            ("embedding_model", po::value<std::string>()->default_value("models/tg_lenta.vec"), "embedding_model")
+            ("clustering_eps", po::value<double>()->default_value(1.0), "clustering_eps")
+            ("clustering_min_points", po::value<size_t>()->default_value(4), "clustering_min_points")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ;
@@ -77,7 +82,8 @@ int main(int argc, char** argv) {
             "sites",
             "json",
             "toloka",
-            "categories"
+            "categories",
+            "clustering"
         };
         if (std::find(modes.begin(), modes.end(), mode) == modes.end()) {
             std::cerr << "Unknown or unsupported mode!" << std::endl;
@@ -188,6 +194,23 @@ int main(int argc, char** argv) {
         } else if (mode == "categories") {
             for (const Document& doc : docs) {
                 std::cout << doc.Category << " " << doc.Title << std::endl;
+            }
+        } else if (mode == "clustering") {
+            const std::string embeddingModelPath = vm["embedding_model"].as<std::string>();
+            const double eps = vm["clustering_eps"].as<double>();
+            const size_t minPoints = vm["clustering_min_points"].as<size_t>();
+
+            Clustering clustering(embeddingModelPath);
+            const auto clusters = clustering.Cluster(docs, eps, minPoints);
+
+            for (const auto& cluster : clusters) {
+                if (cluster.size() == 1) {
+                    continue;
+                }
+                std::cout << "CLUSTER" << std::endl;
+                for (const auto& doc : cluster) {
+                    std::cout << "   " << doc.get().Title << "(" << doc.get().Url << ")" << std::endl;
+                }
             }
         }
         return 0;

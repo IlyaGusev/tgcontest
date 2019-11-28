@@ -14,12 +14,23 @@ std::string GetFullText(const tinyxml2::XMLElement* element) {
     while (node) {
         if (node->ToText()) {
             text += node->ToText()->Value();
-        } else if (node->ToElement()) {
-            text += GetFullText(node->ToElement());
         }
         node = node->NextSibling();
     }
     return text;
+}
+
+void ParseLinksFromText(const tinyxml2::XMLElement* element, std::vector<std::string>& links) {
+    const tinyxml2::XMLNode* node = element->FirstChild();
+    while (node) {
+        if (const auto nodeElement = node->ToElement()) {
+            if (nodeElement->Value() == std::string("a") && nodeElement->Attribute("href")) {
+                links.push_back(nodeElement->Attribute("href"));
+            }
+            ParseLinksFromText(nodeElement, links);
+        }
+        node = node->NextSibling();
+    }
 }
 
 Document ParseFile(const char* fileName) {
@@ -69,9 +80,14 @@ Document ParseFile(const char* fileName) {
         throw std::runtime_error("Parser error: no article");
     }
     const tinyxml2::XMLElement* pElement = articleElement->FirstChildElement("p");
-    while (pElement) {
-        doc.Text += GetFullText(pElement) + "\n";
-        pElement = pElement->NextSiblingElement("p");
+    {
+        std::vector<std::string> links;
+        while (pElement) {
+            doc.Text += GetFullText(pElement) + "\n";
+            ParseLinksFromText(pElement, links);
+            pElement = pElement->NextSiblingElement("p");
+        }
+        doc.OutLinks = std::move(links);
     }
     const tinyxml2::XMLElement* addressElement = articleElement->FirstChildElement("address");
     if (addressElement) {
@@ -82,9 +98,8 @@ Document ParseFile(const char* fileName) {
         const tinyxml2::XMLElement* aElement = addressElement->FirstChildElement("a");
         if (aElement && aElement->Attribute("rel") && std::string(aElement->Attribute("rel")) == "author") {
             doc.Author = aElement->GetText();
-        }
+        } 
     }
+   
     return doc;
 }
-
-

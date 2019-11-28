@@ -12,21 +12,23 @@ add_subdirectory(thirdparty/tinyxml2)
 add_subdirectory(thirdparty/eigen EXCLUDE_FROM_ALL)
 
 set(SOURCE_FILES
-    src/detect.cpp
-    src/main.cpp
-    src/parser.cpp
     src/clustering/clustering.cpp
     src/clustering/dbscan.cpp
     src/clustering/slink.cpp
+    src/detect.cpp
+    src/main.cpp
+    src/parser.cpp
+    src/util.cpp
 )
 
 set(HEADER_FILES
-    src/detect.h
-    src/document.h
-    src/parser.h
     src/clustering/clustering.h
     src/clustering/dbscan.h
     src/clustering/slink.h
+    src/detect.h
+    src/document.h
+    src/parser.h
+    src/util.h
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")

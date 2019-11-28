@@ -3,7 +3,6 @@
 #include "clustering.h"
 
 #include <functional>
-#include <vector>
 
 class Dbscan : public FastTextEmbedder, public Clustering {
 public:

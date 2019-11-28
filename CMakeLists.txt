@@ -17,7 +17,7 @@ set(SOURCE_FILES
     src/parser.cpp
     src/clustering/clustering.cpp
     src/clustering/dbscan.cpp
-    src/clustering/hclustering.cpp
+    src/clustering/slink.cpp
 )
 
 set(HEADER_FILES
@@ -26,7 +26,7 @@ set(HEADER_FILES
     src/parser.h
     src/clustering/clustering.h
     src/clustering/dbscan.h
-    src/clustering/hclustering.h
+    src/clustering/slink.h
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -50,6 +50,9 @@ set(LIB_LIST
     ${Boost_LIBRARIES}
     ${MLPACK_LIBRARIES}
 )
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fasttext/src")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LIB_LIST} PRIVATE fasttext-static PRIVATE tinyxml2 PRIVATE eigen)

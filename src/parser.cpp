@@ -1,9 +1,8 @@
-#include <exception>
-#include <iostream>
-
 #include "parser.h"
 
-#include "../thirdparty/tinyxml2/tinyxml2.h"
+#include <stdexcept>
+
+#include <tinyxml2/tinyxml2.h>
 
 std::string GetFullText(const tinyxml2::XMLElement* element) {
     if (element->ToText()) {
@@ -98,8 +97,8 @@ Document ParseFile(const char* fileName) {
         const tinyxml2::XMLElement* aElement = addressElement->FirstChildElement("a");
         if (aElement && aElement->Attribute("rel") && std::string(aElement->Attribute("rel")) == "author") {
             doc.Author = aElement->GetText();
-        } 
+        }
     }
-   
+
     return doc;
 }

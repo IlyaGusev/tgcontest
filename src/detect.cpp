@@ -1,6 +1,9 @@
-#include <sstream>
 #include "detect.h"
 #include "document.h"
+
+#include <sstream>
+
+#include <fasttext.h>
 
 std::string DetectLanguage(const fasttext::FastText& model, const Document& document) {
     std::string sample(document.Title + " " + document.Description + " " + document.Text.substr(0, 100));

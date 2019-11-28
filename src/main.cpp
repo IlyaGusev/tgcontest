@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <boost/program_options.hpp>
-#include <boost/filesystem.hpp>
 #include <fasttext.h>
 #include <nlohmann_json/json.hpp>
 
@@ -14,26 +13,9 @@
 #include "clustering/slink.h"
 #include "detect.h"
 #include "parser.h"
+#include "util.h"
 
 namespace po = boost::program_options;
-
-void ReadFileNames(const std::string& directory, std::vector<std::string>& fileNames, int nDocs=-1) {
-    boost::filesystem::path dirPath(directory);
-    boost::filesystem::recursive_directory_iterator start(dirPath);
-    boost::filesystem::recursive_directory_iterator end;
-    for (auto it = start; it != end; it++) {
-        if (boost::filesystem::is_directory(it->path())) {
-            continue;
-        }
-        std::string path = it->path().string();
-        if (path.substr(path.length() - 5) == ".html") {
-            fileNames.push_back(path);
-        }
-        if (nDocs != -1 && fileNames.size() == static_cast<size_t>(nDocs)) {
-            break;
-        }
-    }
-}
 
 int main(int argc, char** argv) {
     try {

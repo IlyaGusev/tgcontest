@@ -9,17 +9,20 @@ set(CMAKE_CXX_FLAGS "-pthread -funroll-loops -O3 -march=native -Wall -Wextra")
 
 add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/tinyxml2)
+add_subdirectory(thirdparty/eigen EXCLUDE_FROM_ALL)
 
 set(SOURCE_FILES
     src/detect.cpp
     src/main.cpp
     src/parser.cpp
+    src/hclustering.cpp
 )
 
 set(HEADER_FILES
     src/detect.h
     src/document.h
     src/parser.h
+    src/hclustering.h
 )
 
 set(Boost_USE_MULTITHREADED ON)
@@ -31,4 +34,4 @@ set(LIB_LIST
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${LIB_LIST} PRIVATE fasttext-static PRIVATE tinyxml2)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${LIB_LIST} PRIVATE fasttext-static PRIVATE tinyxml2 PRIVATE eigen)

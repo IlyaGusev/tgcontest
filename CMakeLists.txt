@@ -15,6 +15,7 @@ set(SOURCE_FILES
     src/clustering/clustering.cpp
     src/clustering/dbscan.cpp
     src/clustering/slink.cpp
+    src/clustering/in_cluster_ranging.cpp
     src/detect.cpp
     src/main.cpp
     src/parser.cpp
@@ -25,6 +26,7 @@ set(HEADER_FILES
     src/clustering/clustering.h
     src/clustering/dbscan.h
     src/clustering/slink.h
+    src/clustering/in_cluster_ranging.h
     src/detect.h
     src/document.h
     src/parser.h

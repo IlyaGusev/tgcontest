@@ -176,7 +176,8 @@ int main(int argc, char** argv) {
                     {"date", doc.DateTime},
                     {"title", doc.Title},
                     {"description", doc.Description},
-                    {"text", doc.Text}
+                    {"text", doc.Text},
+                    {"out_links", doc.OutLinks}
                 };
                 outputJson.push_back(object);
             }

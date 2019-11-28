@@ -1,6 +1,7 @@
 #include <exception>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -11,11 +12,10 @@
 
 #include "detect.h"
 #include "parser.h"
-
-#include "clustering/clustering.h"
+#include "clustering/dbscan.h"
+#include "clustering/hclustering.h"
 
 namespace po = boost::program_options;
-
 
 void ReadFileNames(const std::string& directory, std::vector<std::string>& fileNames, int nDocs=-1) {
     boost::filesystem::path dirPath(directory);
@@ -51,9 +51,11 @@ int main(int argc, char** argv) {
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
             ("news_detect_model", po::value<std::string>()->default_value("models/news_detect.ftz"), "news_detect_model")
             ("cat_detect_model", po::value<std::string>()->default_value("models/cat_detect.ftz"), "cat_detect_model")
-            ("embedding_model", po::value<std::string>()->default_value("models/tg_lenta.vec"), "embedding_model")
-            ("clustering_eps", po::value<double>()->default_value(1.0), "clustering_eps")
-            ("clustering_min_points", po::value<size_t>()->default_value(4), "clustering_min_points")
+            ("vector_model", po::value<std::string>()->default_value("models/tg_lenta.bin"), "vector_model")
+            ("clustering_type", po::value<std::string>()->default_value("hierarchical"), "clustering_type")
+            ("clustering_distance_threshold", po::value<float>()->default_value(0.05f), "clustering_distance_threshold")
+            ("clustering_eps", po::value<double>()->default_value(0.3), "clustering_eps")
+            ("clustering_min_points", po::value<size_t>()->default_value(1), "clustering_min_points")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ;
@@ -83,7 +85,7 @@ int main(int argc, char** argv) {
             "json",
             "toloka",
             "categories",
-            "clustering"
+            "threads"
         };
         if (std::find(modes.begin(), modes.end(), mode) == modes.end()) {
             std::cerr << "Unknown or unsupported mode!" << std::endl;
@@ -101,10 +103,12 @@ int main(int argc, char** argv) {
         const std::string newsDetectModelPath = vm["news_detect_model"].as<std::string>();
         fasttext::FastText newsDetectModel;
         newsDetectModel.loadModel(newsDetectModelPath);
+        std::cerr << "FastText news_detect model loaded" << std::endl;
 
         const std::string catDetectModelPath = vm["cat_detect_model"].as<std::string>();
         fasttext::FastText catDetectModel;
         catDetectModel.loadModel(catDetectModelPath);
+        std::cerr << "FastText cat_detect model loaded" << std::endl;
 
         // Read file names
         std::cerr << "Reading file names..." << std::endl;
@@ -195,21 +199,31 @@ int main(int argc, char** argv) {
             for (const Document& doc : docs) {
                 std::cout << doc.Category << " " << doc.Title << std::endl;
             }
-        } else if (mode == "clustering") {
-            const std::string embeddingModelPath = vm["embedding_model"].as<std::string>();
-            const double eps = vm["clustering_eps"].as<double>();
-            const size_t minPoints = vm["clustering_min_points"].as<size_t>();
+        } else if (mode == "threads") {
+            const std::string vectorModelPath = vm["vector_model"].as<std::string>();
 
-            Clustering clustering(embeddingModelPath);
-            const auto clusters = clustering.Cluster(docs, eps, minPoints);
+            std::unique_ptr<Clustering> clustering;
+
+            const std::string clusteringType = vm["clustering_type"].as<std::string>();
+            if (clusteringType == "hierarchical") {
+                const float distanceThreshold = vm["clustering_distance_threshold"].as<float>();
+                clustering = std::unique_ptr<Clustering>(new HierarchicalClustering(vectorModelPath, distanceThreshold));
+            }
+            else if (clusteringType == "dbscan") {
+                const double eps = vm["clustering_eps"].as<double>();
+                const size_t minPoints = vm["clustering_min_points"].as<size_t>();
+                clustering = std::unique_ptr<Clustering>(new Dbscan(vectorModelPath, eps, minPoints));
+            }
+
+            const Clustering::Clusters clusters = clustering->Cluster(docs);
 
             for (const auto& cluster : clusters) {
-                if (cluster.size() == 1) {
+                if (cluster.size() < 2) {
                     continue;
                 }
                 std::cout << "CLUSTER" << std::endl;
                 for (const auto& doc : cluster) {
-                    std::cout << "   " << doc.get().Title << "(" << doc.get().Url << ")" << std::endl;
+                    std::cout << "   " << doc.get().Title << " (" << doc.get().Url << ")" << std::endl;
                 }
             }
         }

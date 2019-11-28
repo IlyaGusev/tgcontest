@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include <boost/program_options.hpp>
 #include <fasttext.h>
@@ -11,6 +12,7 @@
 
 #include "clustering/dbscan.h"
 #include "clustering/slink.h"
+#include "clustering/in_cluster_ranging.h"
 #include "detect.h"
 #include "parser.h"
 #include "util.h"
@@ -31,6 +33,8 @@ int main(int argc, char** argv) {
             ("clustering_distance_threshold", po::value<float>()->default_value(0.05f), "clustering_distance_threshold")
             ("clustering_eps", po::value<double>()->default_value(0.3), "clustering_eps")
             ("clustering_min_points", po::value<size_t>()->default_value(1), "clustering_min_points")
+            ("en_rating", po::value<std::string>()->default_value("ratings/en_rating.txt"), "en_rating")
+            ("ru_rating", po::value<std::string>()->default_value("ratings/ru_rating.txt"), "ru_rating")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ;
@@ -84,6 +88,12 @@ int main(int argc, char** argv) {
         fasttext::FastText catDetectModel;
         catDetectModel.loadModel(catDetectModelPath);
         std::cerr << "FastText cat_detect model loaded" << std::endl;
+
+        // Load agency ratings
+        std::cerr << "Loading agency ratings..." << std::endl;
+        std::vector<std::string> ratingFiles = {vm["en_rating"].as<std::string>(), vm["ru_rating"].as<std::string>()};;
+        std::unordered_map<std::string, double> agencyRating = LoadRatings(ratingFiles);
+        std::cerr << "Agency ratings loaded" << std::endl;
 
         // Read file names
         std::cerr << "Reading file names..." << std::endl;
@@ -187,7 +197,6 @@ int main(int argc, char** argv) {
             }
 
             const Clustering::Clusters clusters = clustering->Cluster(docs);
-
             for (const auto& cluster : clusters) {
                 if (cluster.size() < 2) {
                     continue;

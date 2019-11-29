@@ -29,14 +29,13 @@ SlinkClustering::Clusters SlinkClustering::Cluster(const std::vector<Document>& 
 
     // Prepare 3 arrays
     const float INF_DISTANCE = 1.0f;
-    size_t n = points.rows();
-    std::vector<size_t> labels(n);
-    for (size_t i = 0; i < n; i++) {
+    std::vector<size_t> labels(docSize);
+    for (size_t i = 0; i < docSize; i++) {
         labels[i] = i;
     }
-    std::vector<size_t> nn(n);
-    std::vector<float> nnDistances(n);
-    for (size_t i = 0; i < n; i++) {
+    std::vector<size_t> nn(docSize);
+    std::vector<float> nnDistances(docSize);
+    for (size_t i = 0; i < docSize; i++) {
         Eigen::Index minJ;
         nnDistances[i] = distances.row(i).minCoeff(&minJ);
         nn[i] = minJ;
@@ -44,7 +43,7 @@ SlinkClustering::Clusters SlinkClustering::Cluster(const std::vector<Document>& 
 
     // Main linking loop
     size_t level = 0;
-    while (level < n - 1) {
+    while (level + 1 < docSize) {
         // Calculate minimal distance
         auto minDistanceIt = std::min_element(nnDistances.begin(), nnDistances.end());
         size_t minI = std::distance(nnDistances.begin(), minDistanceIt);
@@ -55,7 +54,7 @@ SlinkClustering::Clusters SlinkClustering::Cluster(const std::vector<Document>& 
         }
 
         // Link minJ to minI
-        for (size_t i = 0; i < n; i++) {
+        for (size_t i = 0; i < docSize; i++) {
             if (labels[i] == minJ) {
                 labels[i] = minI;
             }
@@ -85,14 +84,13 @@ SlinkClustering::Clusters SlinkClustering::Cluster(const std::vector<Document>& 
         level += 1;
     }
 
-    SlinkClustering::Clusters clusters(labels.size());
+    SlinkClustering::Clusters clusters(docSize);
     for (size_t i = 0; i < docSize; ++i) {
         const size_t clusterId = labels[i];
         clusters[clusterId].push_back(std::cref(docs[i]));
     }
 
     return clusters;
-
 }
 
 void SlinkClustering::FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const {

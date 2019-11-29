@@ -30,6 +30,7 @@ set(HEADER_FILES
     src/detect.h
     src/document.h
     src/parser.h
+    src/timer.h
     src/util.h
 )
 

@@ -4,7 +4,7 @@
 #include "clustering.h"
 
 
-std::unordered_map<std::string, double> LoadRatings(std::vector<std::string> ratingFiles) {
+std::unordered_map<std::string, double> LoadRatings(const std::vector<std::string>& ratingFiles) {
     std::unordered_map<std::string, double> output;
     std::string line;
 

@@ -19,6 +19,6 @@ struct WeightedDoc {
     {}
 };
 
-std::unordered_map<std::string, double> LoadRatings(std::vector<std::string> ratingFiles);
+std::unordered_map<std::string, double> LoadRatings(const std::vector<std::string>& ratingFiles);
 
 std::vector<NewsCluster> InClusterRanging(const Clustering::Clusters& clusters, const std::unordered_map<std::string, double>& agencyRating);

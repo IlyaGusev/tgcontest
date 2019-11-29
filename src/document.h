@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
 struct Document {
     std::string Title;
@@ -15,5 +16,6 @@ struct Document {
     std::string DateTime;
     std::string Author;
     std::string Category;
+    uint64_t Timestamp = 0.0;
     bool IsNews;
 };

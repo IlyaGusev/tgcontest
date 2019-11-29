@@ -1,7 +1,7 @@
 #include "parser.h"
-
+#include <regex>
 #include <stdexcept>
-
+#include <ctime>
 #include <tinyxml2/tinyxml2.h>
 
 std::string GetFullText(const tinyxml2::XMLElement* element) {
@@ -30,6 +30,41 @@ void ParseLinksFromText(const tinyxml2::XMLElement* element, std::vector<std::st
         }
         node = node->NextSibling();
     }
+}
+
+uint64_t DateToTimestamp(const std::string& date) {
+    //TO DO: parse timezones (std cant handle them)
+    std::regex ex("(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)T(\\d\\d):(\\d\\d):(\\d\\d)([+-])(\\d\\d):(\\d\\d)");
+    std::smatch what;
+    if (std::regex_match(date, what, ex) && what.size() >= 10) {
+        std::tm t = {
+            .tm_sec = std::stoi(what[6]),
+            .tm_min = std::stoi(what[5]),
+            .tm_hour = std::stoi(what[4]),
+            .tm_mday = std::stoi(what[3]),
+            .tm_mon = std::stoi(what[2]),
+            .tm_year = std::stoi(what[1]) - 1900,
+            .tm_wday = 0,
+            .tm_yday = 0,
+            .tm_isdst = 0
+        };
+        std::tm worldBeginning = {
+            .tm_sec = 0,
+            .tm_min = 0,
+            .tm_hour = 0,
+            .tm_mday = 1,
+            .tm_mon = 0,
+            .tm_year = 70,
+            .tm_wday = 0,
+            .tm_yday = 0,
+            .tm_isdst = 0
+        };
+
+        const auto timestamp = std::difftime(std::mktime(&t), std::mktime(&worldBeginning));
+        return timestamp > 0 ? timestamp : 0;
+    }
+    return 0.0;
+
 }
 
 Document ParseFile(const char* fileName) {
@@ -93,6 +128,7 @@ Document ParseFile(const char* fileName) {
         const tinyxml2::XMLElement* timeElement = addressElement->FirstChildElement("time");
         if (timeElement && timeElement->Attribute("datetime")) {
             doc.DateTime = timeElement->Attribute("datetime");
+            doc.Timestamp = DateToTimestamp(doc.DateTime);
         }
         const tinyxml2::XMLElement* aElement = addressElement->FirstChildElement("a");
         if (aElement && aElement->Attribute("rel") && std::string(aElement->Attribute("rel")) == "author") {

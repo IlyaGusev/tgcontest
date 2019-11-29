@@ -16,6 +16,6 @@ struct Document {
     std::string DateTime;
     std::string Author;
     std::string Category;
-    uint64_t Timestamp = 0.0;
+    uint64_t Timestamp = 0;
     bool IsNews;
 };

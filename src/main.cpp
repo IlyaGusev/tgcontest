@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
 
             Timer<std::chrono::high_resolution_clock, std::chrono::milliseconds> timer;
             const Clustering::Clusters clusters = clustering->Cluster(docs);
-            std::cout << "CLUSTERING: " << timer.Elapsed() << " ms" << std::endl;
+            std::cout << "CLUSTERING: " << timer.Elapsed() << " ms (" << clusters.size() << "clusters)" << std::endl;
 
             for (const auto& cluster : clusters) {
                 if (cluster.size() < 2) {

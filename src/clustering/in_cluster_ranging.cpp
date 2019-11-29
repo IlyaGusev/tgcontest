@@ -1,5 +1,4 @@
-#include <regex>
-
+#include "../util.h"
 #include "in_cluster_ranging.h"
 #include "clustering.h"
 
@@ -20,18 +19,6 @@ std::unordered_map<std::string, double> LoadRatings(const std::vector<std::strin
         } else {
             std::cerr << "rating file is not available" << std::endl;
         }
-    }
-    return output;
-}
-
-std::string GetHost(std::string url) {
-    // if u know better way to do it - it would be nice if u rewrite it
-    std::string output = "";
-    // https://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
-    std::regex ex("(http|https)://(?:www\.)?([^/ :]+):?([^/ ]*)(/?[^ #?]*)\\x3f?([^ #]*)#?([^ ]*)");
-    std::smatch what;
-    if (std::regex_match(url, what, ex) && what.size() >= 3) {
-        output = std::string(what[2].first, what[2].second);
     }
     return output;
 }

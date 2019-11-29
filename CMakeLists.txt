@@ -15,6 +15,7 @@ set(SOURCE_FILES
     src/clustering/clustering.cpp
     src/clustering/dbscan.cpp
     src/clustering/slink.cpp
+    src/clustering/in_cluster_ranging.cpp
     src/detect.cpp
     src/main.cpp
     src/parser.cpp
@@ -25,6 +26,7 @@ set(HEADER_FILES
     src/clustering/clustering.h
     src/clustering/dbscan.h
     src/clustering/slink.h
+    src/clustering/in_cluster_ranging.h
     src/detect.h
     src/document.h
     src/parser.h
@@ -39,6 +41,10 @@ if (OPENMP_FOUND)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
+find_package(Armadillo REQUIRED)
+include_directories(${ARMADILLO_INCLUDE_DIRS})
+link_libraries(${ARMADILLO_LIBRARIES})
+
 find_package(MLPACK REQUIRED)
 include_directories(${MLPACK_INCLUDE_DIRS})
 link_directories(${MLPACK_LIBRARIES})
@@ -50,6 +56,7 @@ link_directories(${Boost_LIBRARY_DIR})
 
 set(LIB_LIST
     ${Boost_LIBRARIES}
+    ${ARMADILLO_LIBRARIES}
     ${MLPACK_LIBRARIES}
 )
 

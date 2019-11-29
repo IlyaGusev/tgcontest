@@ -63,7 +63,7 @@ uint64_t DateToTimestamp(const std::string& date) {
         const auto timestamp = std::difftime(std::mktime(&t), std::mktime(&worldBeginning));
         return timestamp > 0 ? timestamp : 0;
     }
-    return 0.0;
+    return 0;
 
 }
 

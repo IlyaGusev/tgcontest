@@ -15,6 +15,7 @@
 #include "clustering/in_cluster_ranging.h"
 #include "detect.h"
 #include "parser.h"
+#include "timer.h"
 #include "util.h"
 
 namespace po = boost::program_options;
@@ -181,6 +182,7 @@ int main(int argc, char** argv) {
                 std::cout << doc.Category << " " << doc.Title << std::endl;
             }
         } else if (mode == "threads") {
+
             const std::string vectorModelPath = vm["vector_model"].as<std::string>();
 
             std::unique_ptr<Clustering> clustering;
@@ -196,7 +198,10 @@ int main(int argc, char** argv) {
                 clustering = std::unique_ptr<Clustering>(new Dbscan(vectorModelPath, eps, minPoints));
             }
 
+            Timer<std::chrono::high_resolution_clock, std::chrono::milliseconds> timer;
             const Clustering::Clusters clusters = clustering->Cluster(docs);
+            std::cout << "CLUSTERING: " << timer.Elapsed() << " ms (" << clusters.size() << "clusters)" << std::endl;
+
             for (const auto& cluster : clusters) {
                 if (cluster.size() < 2) {
                     continue;

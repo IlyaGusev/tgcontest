@@ -2,7 +2,6 @@
 
 #include <mlpack/methods/dbscan/dbscan.hpp>
 
-
 Dbscan::Dbscan(
     const std::string& modelPath,
     double epsilon,
@@ -25,7 +24,7 @@ Dbscan::Clusters Dbscan::Cluster(
         fasttext::Vector embedding = GetSentenceEmbedding(docs[i]);
 
         arma::fcolvec fvec(embedding.data(), embSize, /*copy_aux_mem*/ false, /*strict*/ true);
-        data.col(i) = arma::conv_to<arma::colvec>::from(fvec);
+        data.col(i) = arma::normalise(arma::conv_to<arma::colvec>::from(fvec));
     }
 
     mlpack::dbscan::DBSCAN<> clustering(Epsilon, MinPoints);

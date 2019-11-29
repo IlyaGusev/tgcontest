@@ -202,7 +202,8 @@ int main(int argc, char** argv) {
             const Clustering::Clusters clusters = clustering->Cluster(docs);
             std::cout << "CLUSTERING: " << timer.Elapsed() << " ms (" << clusters.size() << "clusters)" << std::endl;
 
-            for (const auto& cluster : clusters) {
+            const auto clustersSummarized = InClusterRanging(clusters, agencyRating);
+            for (const auto& cluster : clustersSummarized) {
                 if (cluster.size() < 2) {
                     continue;
                 }

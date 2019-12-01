@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 
 #include <boost/program_options.hpp>
 #include <fasttext.h>
@@ -13,6 +14,7 @@
 #include "clustering/dbscan.h"
 #include "clustering/slink.h"
 #include "clustering/in_cluster_ranging.h"
+#include "rank/rank.h"
 #include "detect.h"
 #include "parser.h"
 #include "timer.h"
@@ -67,7 +69,8 @@ int main(int argc, char** argv) {
             "json",
             "toloka",
             "categories",
-            "threads"
+            "threads",
+            "top"
         };
         if (std::find(modes.begin(), modes.end(), mode) == modes.end()) {
             std::cerr << "Unknown or unsupported mode!" << std::endl;
@@ -206,7 +209,7 @@ int main(int argc, char** argv) {
                 outputJson.push_back(object);
             }
             std::cout << outputJson.dump(4) << std::endl;
-        } else if (mode == "threads") {
+        } else if ((mode == "threads") || (mode == "top")) {
             std::unique_ptr<Clustering> ruClustering;
             std::unique_ptr<Clustering> enClustering;
 
@@ -243,19 +246,67 @@ int main(int argc, char** argv) {
             docs.shrink_to_fit();
             docs.clear();
 
-            const Clustering::Clusters ruClusters = ruClustering->Cluster(ruDocs);
-            const Clustering::Clusters enClusters = enClustering->Cluster(enDocs);
-            std::cout << "CLUSTERING: " << timer.Elapsed() << " ms (" << ruClusters.size() << "clusters)" << std::endl;
+            Clustering::Clusters clusters;
+            {
+                const Clustering::Clusters ruClusters = ruClustering->Cluster(ruDocs);
+                const Clustering::Clusters enClusters = enClustering->Cluster(enDocs);
+                std::copy_if(
+                    ruClusters.cbegin(),
+                    ruClusters.cend(),
+                    std::back_inserter(clusters),
+                    [](NewsCluster cluster) {
+                        return cluster.size() > 0;
+                    }
+                );
+                std::copy_if(
+                    enClusters.cbegin(),
+                    enClusters.cend(),
+                    std::back_inserter(clusters),
+                    [](NewsCluster cluster) {
+                        return cluster.size() > 0;
+                    }
+                );
+            }
+            std::cout << "CLUSTERING: " << timer.Elapsed() << " ms (" << clusters.size() << "clusters)" << std::endl;
 
-            const auto ruClustersSummarized = InClusterRanging(ruClusters, agencyRating);
-            for (const auto& cluster : ruClustersSummarized) {
+            const auto clustersSummarized = InClusterRanging(clusters, agencyRating);
+            if (mode == "threads") {
+            for (const auto& cluster : clustersSummarized) {
                 if (cluster.size() < 2) {
                     continue;
                 }
                 std::cout << "CLUSTER" << std::endl;
-                for (const auto& doc : cluster) {
-                    std::cout << "   " << doc.get().Title << " (" << doc.get().Url << ")" << std::endl;
+                    for (const auto& doc : cluster) {
+                        std::cout << "   " << doc.get().Title << " (" << doc.get().Url << ")" << std::endl;
+                    }
                 }
+            } else if (mode == "top") {
+                nlohmann::json outputJson = nlohmann::json::array();
+
+                const auto tops = Rank(clustersSummarized, agencyRating);
+
+                for (auto it = tops.begin(); it != tops.end(); ++it) {
+                    const auto categoryName = it->first;
+                    
+                    nlohmann::json rubricTop = {
+                        {"category", categoryName},
+                        {"threads", nlohmann::json::array()}
+                    };
+                                       
+                    for (const auto& cluster : it->second) {
+                        nlohmann::json object = {
+                            {"title", cluster.Title},
+                            {"category", cluster.Category},
+                            {"articles", nlohmann::json::array()}
+                        };
+                        for (const auto& doc : cluster.Cluster.get()) {
+                            object["articles"].push_back(doc.get().Url);
+                        }
+                        rubricTop["threads"].push_back(object);
+                    }
+                    outputJson.push_back(rubricTop);
+                }
+                std::cout << outputJson.dump(4) << std::endl;
             }
         }
         return 0;

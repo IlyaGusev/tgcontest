@@ -306,15 +306,26 @@ int main(int argc, char** argv) {
         const auto clustersSummarized = InClusterRanging(clusters, agencyRating);
 
         if (mode == "threads") {
+            nlohmann::json outputJson = nlohmann::json::array();
             for (const auto& cluster : clustersSummarized) {
-                if (cluster.size() < 2) {
-                    continue;
-                }
-                std::cout << "CLUSTER" << std::endl;
+                nlohmann::json files = nlohmann::json::array();
                 for (const auto& doc : cluster) {
-                    std::cout << "   " << doc.get().Title << " (" << doc.get().Url << ")" << std::endl;
+                    files.push_back(GetCleanFileName(doc.get().FileName));
+                }
+                nlohmann::json object = {
+                    {"title", cluster[0].get().Title},
+                    {"articles", files}
+                };
+                outputJson.push_back(object);
+
+                if (cluster.size() >= 2) {
+                    std::cerr << "         CLUSTER: " << cluster[0].get().Title << std::endl;
+                    for (const auto& doc : cluster) {
+                        std::cerr << "   " << doc.get().Title << " (" << doc.get().Url << ")" << std::endl;
+                    }
                 }
             }
+            std::cout << outputJson.dump(4) << std::endl;
         } else if (mode == "top") {
             nlohmann::json outputJson = nlohmann::json::array();
             const auto tops = Rank(clustersSummarized, agencyRating);

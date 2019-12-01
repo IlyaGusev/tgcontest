@@ -47,7 +47,7 @@ $ make
 
 Run on sample:
 ```
-./tgnews threads ../data/ --lang_detect_model ../models/lang_detect.ftz --news_detect_model ../models/news_detect.ftz  --cat_detect_model ../models/ru_cat_detect.ftz --languages ru --vector_model ../models/tg_lenta.bin --clustering_distance_threshold 0.05 --en_rating ../ratings/en_rating.txt --ru_rating ../ratings/ru_rating.txt
+./build/tgnews threads data --ndocs 10000
 ```
 
 FastText installation (for training):

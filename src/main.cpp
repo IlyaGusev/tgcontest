@@ -125,6 +125,9 @@ int main(int argc, char** argv) {
             if (std::find(languages.begin(), languages.end(), doc.Language) != languages.end()) {
                 doc.IsNews = DetectIsNews(*models.at(doc.Language + "_news_detect_model"), doc);
                 doc.Category = DetectCategory(*models.at(doc.Language + "_cat_detect_model"), doc);
+                if (doc.Category == "not_news") {
+                    doc.IsNews = false;
+                }
                 //if (!doc.IsNews) {
                 //    std::cerr << "ALERT: " << doc.Title << std::endl;
                 //}

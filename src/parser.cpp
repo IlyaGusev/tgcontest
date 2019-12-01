@@ -42,7 +42,7 @@ uint64_t DateToTimestamp(const std::string& date) {
             .tm_min = std::stoi(what[5]),
             .tm_hour = std::stoi(what[4]),
             .tm_mday = std::stoi(what[3]),
-            .tm_mon = std::stoi(what[2]),
+            .tm_mon = std::stoi(what[2]) - 1,
             .tm_year = std::stoi(what[1]) - 1900,
             .tm_wday = 0,
             .tm_yday = 0,

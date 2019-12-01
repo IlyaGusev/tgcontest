@@ -1,7 +1,7 @@
+#include <set>
 #include "rank.h"
 #include "../util.h"
 #include "../clustering/in_cluster_ranging.h"
-#include <iostream>
 
 std::string ComputeClusterCategory(const NewsCluster& cluster) {
     std::unordered_map<std::string, size_t> categoryCount;
@@ -22,8 +22,12 @@ std::string ComputeClusterCategory(const NewsCluster& cluster) {
 
 double ComputeClusterWeight(const NewsCluster& cluster, const std::unordered_map<std::string, double>& agencyRating) {
     double output = 0.0;
+    std::set<std::string> seenHosts;
+    
     for (const auto& doc : cluster) {
-        output += ComputeDocWeight(doc, agencyRating);
+        if (seenHosts.insert(GetHost(doc.get().Url)).second) {
+            output += ComputeDocWeight(doc, agencyRating);
+        }
     }
     return output;
 }

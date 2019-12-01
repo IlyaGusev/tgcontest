@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -18,11 +19,14 @@ struct WeightedNewsCluster {
 
 };
 
+uint64_t GetIterTimestamp(const std::vector<NewsCluster>&); // the latest document timestamp
+
 std::string ComputeClusterCategory(const NewsCluster& cluster);
 
 double ComputeClusterWeight(
     const NewsCluster& cluster,
-    const std::unordered_map<std::string, double>& agencyRating
+    const std::unordered_map<std::string, double>& agencyRating,
+    const uint64_t iterTimestamp
 );
 
 std::unordered_map<std::string, std::vector<WeightedNewsCluster>> Rank(

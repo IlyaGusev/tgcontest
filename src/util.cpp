@@ -1,4 +1,6 @@
+#include <cmath>
 #include <regex>
+
 #include <boost/filesystem.hpp>
 
 #include "util.h"
@@ -35,4 +37,22 @@ std::string GetHost(const std::string& url) {
 
 std::string GetCleanFileName(const std::string& fileName) {
     return fileName.substr(fileName.find_last_of("/") + 1);
+}
+
+float Sigmoid(float x) {
+    if (x >= 0.0f) {
+        float z = exp(-x);
+        return 1.0f / (1.0f + z);
+    }
+    float z = exp(x);
+    return z / (1.0f + z);
+}
+
+double Sigmoid(double x) {
+    if (x >= 0.0) {
+        double z = exp(-x);
+        return 1.0 / (1.0 + z);
+    }
+    double z = exp(x);
+    return z / (1.0 + z);
 }

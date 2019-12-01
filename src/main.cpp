@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cassert>
 #include <unordered_map>
 #include <algorithm>
 
@@ -110,7 +111,7 @@ int main(int argc, char** argv) {
         ReadFileNames(sourceDir, fileNames, nDocs);
         std::cerr << "Files count: " << fileNames.size() << std::endl;
 
-        // Parse files and filter by language
+        // Parse files and annotate with classifiers
         std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
         std::cerr << "Parsing " << fileNames.size() << " files..." << std::endl;
         std::vector<Document> docs;
@@ -122,6 +123,9 @@ int main(int argc, char** argv) {
             if (std::find(languages.begin(), languages.end(), doc.Language) != languages.end()) {
                 doc.IsNews = DetectIsNews(*models.at("news_detect_model"), doc);
                 doc.Category = DetectCategory(*models.at(doc.Language + "_cat_detect_model"), doc);
+                //if (doc.IsNews && doc.Category == "not_news") {
+                //    std::cerr << "ALERT: " << doc.Title << std::endl;
+                //}
                 docs.push_back(doc);
             }
         }
@@ -145,6 +149,7 @@ int main(int argc, char** argv) {
                 outputJson.push_back(object);
             }
             std::cout << outputJson.dump(4) << std::endl;
+            return 0;
         } else if (mode == "sites") {
             nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> siteToTitles;
@@ -161,6 +166,7 @@ int main(int argc, char** argv) {
                 outputJson.push_back(object);
             }
             std::cout << outputJson.dump(4) << std::endl;
+            return 0;
         } else if (mode == "json") {
             nlohmann::json outputJson = nlohmann::json::array();
             for (const Document& doc : docs) {
@@ -179,6 +185,7 @@ int main(int argc, char** argv) {
                 outputJson.push_back(object);
             }
             std::cout << outputJson.dump(4) << std::endl;
+            return 0;
         } else if (mode == "news") {
             nlohmann::json articles = nlohmann::json::array();
             for (const Document& doc : docs) {
@@ -190,6 +197,7 @@ int main(int argc, char** argv) {
             nlohmann::json outputJson = nlohmann::json::object();
             outputJson["articles"] = articles;
             std::cout << outputJson.dump(4) << std::endl;
+            return 0;
         } else if (mode == "categories") {
             nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> catToFiles;
@@ -209,105 +217,104 @@ int main(int argc, char** argv) {
                 outputJson.push_back(object);
             }
             std::cout << outputJson.dump(4) << std::endl;
-        } else if ((mode == "threads") || (mode == "top")) {
-            std::unique_ptr<Clustering> ruClustering;
-            std::unique_ptr<Clustering> enClustering;
+            return 0;
+        } else if (mode != "threads" && mode != "top") {
+            assert(false);
+        }
 
-            const std::string clusteringType = vm["clustering_type"].as<std::string>();
-            if (clusteringType == "slink") {
-                const float distanceThreshold = vm["clustering_distance_threshold"].as<float>();
-                ruClustering = std::unique_ptr<Clustering>(new SlinkClustering(*models.at("ru_vector_model"), distanceThreshold));
-                enClustering = std::unique_ptr<Clustering>(new SlinkClustering(*models.at("en_vector_model"), distanceThreshold));
-            }
-            else if (clusteringType == "dbscan") {
-                const double eps = vm["clustering_eps"].as<double>();
-                const size_t minPoints = vm["clustering_min_points"].as<size_t>();
-                ruClustering = std::unique_ptr<Clustering>(new Dbscan(*models.at("ru_vector_model"), eps, minPoints));
-                enClustering = std::unique_ptr<Clustering>(new Dbscan(*models.at("en_vector_model"), eps, minPoints));
-            }
+        // Clustering
+        std::unique_ptr<Clustering> ruClustering;
+        std::unique_ptr<Clustering> enClustering;
+        const std::string clusteringType = vm["clustering_type"].as<std::string>();
+        if (clusteringType == "slink") {
+            const float distanceThreshold = vm["clustering_distance_threshold"].as<float>();
+            ruClustering = std::unique_ptr<Clustering>(new SlinkClustering(*models.at("ru_vector_model"), distanceThreshold));
+            enClustering = std::unique_ptr<Clustering>(new SlinkClustering(*models.at("en_vector_model"), distanceThreshold));
+        }
+        else if (clusteringType == "dbscan") {
+            const double eps = vm["clustering_eps"].as<double>();
+            const size_t minPoints = vm["clustering_min_points"].as<size_t>();
+            ruClustering = std::unique_ptr<Clustering>(new Dbscan(*models.at("ru_vector_model"), eps, minPoints));
+            enClustering = std::unique_ptr<Clustering>(new Dbscan(*models.at("en_vector_model"), eps, minPoints));
+        }
 
-            Timer<std::chrono::high_resolution_clock, std::chrono::milliseconds> timer;
+        Timer<std::chrono::high_resolution_clock, std::chrono::milliseconds> timer;
 
-            std::vector<Document> ruDocs;
-            std::vector<Document> enDocs;
-            while (!docs.empty()) {
-                const Document& doc = docs.back();
-                if (!doc.IsNews || doc.Category == "not_news") {
-                    docs.pop_back();
-                    continue;
-                }
-                if (doc.Language == "en") {
-                    enDocs.push_back(doc);
-                } else if (doc.Language == "ru") {
-                    ruDocs.push_back(doc);
-                }
+        std::vector<Document> ruDocs;
+        std::vector<Document> enDocs;
+        while (!docs.empty()) {
+            const Document& doc = docs.back();
+            if (!doc.IsNews || doc.Category == "not_news") {
                 docs.pop_back();
+                continue;
             }
-            docs.shrink_to_fit();
-            docs.clear();
-
-            Clustering::Clusters clusters;
-            {
-                const Clustering::Clusters ruClusters = ruClustering->Cluster(ruDocs);
-                const Clustering::Clusters enClusters = enClustering->Cluster(enDocs);
-                std::copy_if(
-                    ruClusters.cbegin(),
-                    ruClusters.cend(),
-                    std::back_inserter(clusters),
-                    [](NewsCluster cluster) {
-                        return cluster.size() > 0;
-                    }
-                );
-                std::copy_if(
-                    enClusters.cbegin(),
-                    enClusters.cend(),
-                    std::back_inserter(clusters),
-                    [](NewsCluster cluster) {
-                        return cluster.size() > 0;
-                    }
-                );
+            if (doc.Language == "en") {
+                enDocs.push_back(doc);
+            } else if (doc.Language == "ru") {
+                ruDocs.push_back(doc);
             }
-            std::cout << "CLUSTERING: " << timer.Elapsed() << " ms (" << clusters.size() << "clusters)" << std::endl;
+            docs.pop_back();
+        }
+        docs.shrink_to_fit();
+        docs.clear();
 
-            const auto clustersSummarized = InClusterRanging(clusters, agencyRating);
-            if (mode == "threads") {
+        Clustering::Clusters clusters;
+        {
+            const Clustering::Clusters ruClusters = ruClustering->Cluster(ruDocs);
+            const Clustering::Clusters enClusters = enClustering->Cluster(enDocs);
+            std::copy_if(
+                ruClusters.cbegin(),
+                ruClusters.cend(),
+                std::back_inserter(clusters),
+                [](NewsCluster cluster) {
+                    return cluster.size() > 0;
+                }
+            );
+            std::copy_if(
+                enClusters.cbegin(),
+                enClusters.cend(),
+                std::back_inserter(clusters),
+                [](NewsCluster cluster) {
+                    return cluster.size() > 0;
+                }
+            );
+        }
+        std::cout << "CLUSTERING: " << timer.Elapsed() << " ms (" << clusters.size() << "clusters)" << std::endl;
+        const auto clustersSummarized = InClusterRanging(clusters, agencyRating);
+
+        if (mode == "threads") {
             for (const auto& cluster : clustersSummarized) {
                 if (cluster.size() < 2) {
                     continue;
                 }
                 std::cout << "CLUSTER" << std::endl;
-                    for (const auto& doc : cluster) {
-                        std::cout << "   " << doc.get().Title << " (" << doc.get().Url << ")" << std::endl;
-                    }
+                for (const auto& doc : cluster) {
+                    std::cout << "   " << doc.get().Title << " (" << doc.get().Url << ")" << std::endl;
                 }
-            } else if (mode == "top") {
-                nlohmann::json outputJson = nlohmann::json::array();
-
-                const auto tops = Rank(clustersSummarized, agencyRating);
-
-                for (auto it = tops.begin(); it != tops.end(); ++it) {
-                    const auto categoryName = it->first;
-                    
-                    nlohmann::json rubricTop = {
-                        {"category", categoryName},
-                        {"threads", nlohmann::json::array()}
-                    };
-                                       
-                    for (const auto& cluster : it->second) {
-                        nlohmann::json object = {
-                            {"title", cluster.Title},
-                            {"category", cluster.Category},
-                            {"articles", nlohmann::json::array()}
-                        };
-                        for (const auto& doc : cluster.Cluster.get()) {
-                            object["articles"].push_back(doc.get().Url);
-                        }
-                        rubricTop["threads"].push_back(object);
-                    }
-                    outputJson.push_back(rubricTop);
-                }
-                std::cout << outputJson.dump(4) << std::endl;
             }
+        } else if (mode == "top") {
+            nlohmann::json outputJson = nlohmann::json::array();
+            const auto tops = Rank(clustersSummarized, agencyRating);
+            for (auto it = tops.begin(); it != tops.end(); ++it) {
+                const auto categoryName = it->first;
+                nlohmann::json rubricTop = {
+                    {"category", categoryName},
+                    {"threads", nlohmann::json::array()}
+                };
+                for (const auto& cluster : it->second) {
+                    nlohmann::json object = {
+                        {"title", cluster.Title},
+                        {"category", cluster.Category},
+                        {"articles", nlohmann::json::array()}
+                    };
+                    for (const auto& doc : cluster.Cluster.get()) {
+                        object["articles"].push_back(doc.get().Url);
+                    }
+                    rubricTop["threads"].push_back(object);
+                }
+                outputJson.push_back(rubricTop);
+            }
+            std::cout << outputJson.dump(4) << std::endl;
         }
         return 0;
     } catch (std::exception& e) {

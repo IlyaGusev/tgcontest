@@ -22,7 +22,7 @@ std::string DetectLanguage(const fasttext::FastText& model, const Document& docu
 }
 
 bool DetectIsNews(const fasttext::FastText& model, const Document& document) {
-    std::string sample(document.Title);
+    std::string sample(document.Title + " " + document.Text);
     std::replace(sample.begin(), sample.end(), '\n', ' ');
     std::istringstream ifs(sample);
     std::vector<std::pair<fasttext::real, std::string>> predictions;
@@ -31,7 +31,7 @@ bool DetectIsNews(const fasttext::FastText& model, const Document& document) {
         return true;
     }
     std::string label = predictions[0].second.substr(9);
-    return label == "1";
+    return label == "news";
 }
 
 std::string DetectCategory(const fasttext::FastText& model, const Document& document) {

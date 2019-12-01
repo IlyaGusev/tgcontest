@@ -4,6 +4,7 @@ language: cpp
 
 addons:
   apt:
+    update: true
     packages:
       - cmake
       - libboost-all-dev
@@ -13,8 +14,14 @@ compiler:
   - clang
   - gcc
 
+before_install:
+  - git lfs pull
+  - git submodule init
+  - git submodule update
+
 script:
     - mkdir build
     - cd build
     - cmake ..
     - make
+    - cd ..

@@ -5,10 +5,14 @@
 
 
 SlinkClustering::SlinkClustering(
-    fasttext::FastText& model,
-    float distanceThreshold
+    fasttext::FastText& model
+    , float distanceThreshold
+    , FastTextEmbedder::AggregationMode mode
+    , size_t maxWords
+    , const std::string& matrixPath
+    , const std::string& biasPath
 )
-    : FastTextEmbedder(model)
+    : FastTextEmbedder(model, mode, maxWords, matrixPath, biasPath)
     , DistanceThreshold(distanceThreshold)
 {}
 

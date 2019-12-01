@@ -37,9 +37,11 @@ int main(int argc, char** argv) {
             ("ru_vector_model", po::value<std::string>()->default_value("models/ru_tg_lenta_vector_model.bin"), "ru_vector_model")
             ("en_vector_model", po::value<std::string>()->default_value("models/en_tg_bbc_nc_vector_model.bin"), "en_vector_model")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
-            ("clustering_distance_threshold", po::value<float>()->default_value(0.05f), "clustering_distance_threshold")
+            ("clustering_distance_threshold", po::value<float>()->default_value(0.01f), "clustering_distance_threshold")
             ("clustering_eps", po::value<double>()->default_value(0.3), "clustering_eps")
             ("clustering_min_points", po::value<size_t>()->default_value(1), "clustering_min_points")
+            ("ru_sentence_embedder_matrix", po::value<std::string>()->default_value("models/sentence_embedder/matrix.txt"), "ru_sentence_embedder_matrix")
+            ("ru_sentence_embedder_bias", po::value<std::string>()->default_value("models/sentence_embedder/bias.txt"), "ru_sentence_embedder_bias")
             ("en_rating", po::value<std::string>()->default_value("ratings/en_rating.txt"), "en_rating")
             ("ru_rating", po::value<std::string>()->default_value("ratings/ru_rating.txt"), "ru_rating")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
@@ -128,9 +130,6 @@ int main(int argc, char** argv) {
                 if (doc.Category == "not_news") {
                     doc.IsNews = false;
                 }
-                //if (!doc.IsNews) {
-                //    std::cerr << "ALERT: " << doc.Title << std::endl;
-                //}
                 docs.push_back(doc);
             }
         }
@@ -231,15 +230,34 @@ int main(int argc, char** argv) {
         std::unique_ptr<Clustering> ruClustering;
         std::unique_ptr<Clustering> enClustering;
         const std::string clusteringType = vm["clustering_type"].as<std::string>();
+        const std::string matrixPath = vm["ru_sentence_embedder_matrix"].as<std::string>();
+        const std::string biasPath = vm["ru_sentence_embedder_bias"].as<std::string>();
         if (clusteringType == "slink") {
             const float distanceThreshold = vm["clustering_distance_threshold"].as<float>();
-            ruClustering = std::unique_ptr<Clustering>(new SlinkClustering(*models.at("ru_vector_model"), distanceThreshold));
+            ruClustering = std::unique_ptr<Clustering>(
+                new SlinkClustering(
+                    *models.at("ru_vector_model"),
+                    distanceThreshold,
+                    SlinkClustering::AM_Avg,
+                    100,
+                    matrixPath,
+                    biasPath
+                    ));
             enClustering = std::unique_ptr<Clustering>(new SlinkClustering(*models.at("en_vector_model"), distanceThreshold));
         }
         else if (clusteringType == "dbscan") {
             const double eps = vm["clustering_eps"].as<double>();
             const size_t minPoints = vm["clustering_min_points"].as<size_t>();
-            ruClustering = std::unique_ptr<Clustering>(new Dbscan(*models.at("ru_vector_model"), eps, minPoints));
+            ruClustering = std::unique_ptr<Clustering>(
+                new Dbscan(
+                    *models.at("ru_vector_model"),
+                    eps,
+                    minPoints,
+                    Dbscan::AM_Avg,
+                    100,
+                    matrixPath,
+                    biasPath
+                    ));
             enClustering = std::unique_ptr<Clustering>(new Dbscan(*models.at("en_vector_model"), eps, minPoints));
         }
 

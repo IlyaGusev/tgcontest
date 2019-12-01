@@ -18,7 +18,6 @@ Dbscan::Clusters Dbscan::Cluster(
 ) {
     const size_t docSize = docs.size();
     const size_t embSize = GetEmbeddingSize();
-
     arma::mat data(embSize, docSize);
     for (size_t i = 0; i < docSize; ++i) {
         fasttext::Vector embedding = GetSentenceEmbedding(docs[i]);
@@ -26,12 +25,10 @@ Dbscan::Clusters Dbscan::Cluster(
         arma::fcolvec fvec(embedding.data(), embSize, /*copy_aux_mem*/ false, /*strict*/ true);
         data.col(i) = arma::normalise(arma::conv_to<arma::colvec>::from(fvec));
     }
-
     mlpack::dbscan::DBSCAN<> clustering(Epsilon, MinPoints);
 
     arma::Row<size_t> assignments;
-    const size_t clustersSize = clustering.Cluster(data, assignments);
-
+    const size_t clustersSize = docSize > 0 ? clustering.Cluster(data, assignments) : 0;
     Dbscan::Clusters clusters(clustersSize);
     for (size_t i = 0; i < docSize; ++i) {
         const size_t clusterId = assignments[i];

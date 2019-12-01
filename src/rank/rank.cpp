@@ -24,9 +24,6 @@ uint64_t GetIterTimestamp(const std::vector<NewsCluster>& clusters) {
             if (timestamps.size() > prioritySize) {
                 timestamps.pop();
             }
-            if (doc.get().Timestamp > maxTimestamp) {
-                maxTimestamp = doc.get().Timestamp;
-            }
         }
     }
 

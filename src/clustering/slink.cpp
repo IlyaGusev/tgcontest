@@ -93,8 +93,14 @@ SlinkClustering::Clusters SlinkClustering::Cluster(const std::vector<Document>& 
         const size_t clusterId = labels[i];
         clusters[clusterId].push_back(std::cref(docs[i]));
     }
+    SlinkClustering::Clusters filteredClusters;
+    for (const auto& cluster : clusters) {
+        if (cluster.size() >= 1) {
+            filteredClusters.push_back(cluster);
+        }
+    }
 
-    return clusters;
+    return filteredClusters;
 }
 
 void SlinkClustering::FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const {

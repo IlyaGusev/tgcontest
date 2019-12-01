@@ -29,33 +29,3 @@ std::unordered_map<std::string, std::vector<WeightedNewsCluster>> Rank(
     const std::vector<NewsCluster>& clusters,
     const std::unordered_map<std::string, double>& agencyRating
 );
-/*
-class Ranker {
-private:
-    const std::unordered_map<std::string, const RubricThreshold>& Thresholds;
-public:
-    Ranker(
-        std::unordered_map<std::string, RubricThreshold> thresholds
-    ) : Tresholds(thresholds)
-    {
-    }
-}
-
-bool IsClusterFromRubric(
-    const NewsCluster& cluster,
-    const std::string& rubric,
-    const double documentThreshold,
-    const double clusterThreshold
-);
-
-std::unordered_map<std::string, std::vector<NewsCluster>> Rank(
-    const std::vector<NewsCluster>& clusters,
-    const std::unordered_map<std::string, double>& agencyRating
-);
-
-std::vector<NewsCluster> RankRubric(
-    const std::vector<NewsCluster>& clusters,
-    const std::string& rubric, 
-    const std::unordered_map<std::string, double>& agencyRating
-);
-*/

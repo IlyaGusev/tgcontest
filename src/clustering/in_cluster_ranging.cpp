@@ -48,7 +48,7 @@ double ComputeDocWeight(
         return iter->second * timeMultiplier;
     } 
 
-    return 0.0;
+    return 0.000015;
 }
 
 std::vector<NewsCluster> InClusterRanging(const Clustering::Clusters& clusters, const std::unordered_map<std::string, double>& agencyRating) {

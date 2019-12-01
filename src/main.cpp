@@ -30,7 +30,8 @@ int main(int argc, char** argv) {
             ("mode", po::value<std::string>()->required(), "mode")
             ("source_dir", po::value<std::string>()->required(), "source_dir")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
-            ("news_detect_model", po::value<std::string>()->default_value("models/news_detect.ftz"), "news_detect_model")
+            ("en_news_detect_model", po::value<std::string>()->default_value("models/en_news_detect.ftz"), "en_news_detect_model")
+            ("ru_news_detect_model", po::value<std::string>()->default_value("models/ru_news_detect.ftz"), "ru_news_detect_model")
             ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_detect.ftz"), "ru_cat_detect_model")
             ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_detect.ftz"), "en_cat_detect_model")
             ("ru_vector_model", po::value<std::string>()->default_value("models/ru_tg_lenta_vector_model.bin"), "ru_vector_model")
@@ -82,11 +83,12 @@ int main(int argc, char** argv) {
         std::cerr << "Loading models..." << std::endl;
         std::vector<std::string> modelsOptions = {
             "lang_detect_model",
-            "news_detect_model",
-            "ru_cat_detect_model",
+            "en_news_detect_model",
+            "ru_news_detect_model",
             "en_cat_detect_model",
-            "ru_vector_model",
-            "en_vector_model"
+            "ru_cat_detect_model",
+            "en_vector_model",
+            "ru_vector_model"
         };
         std::unordered_map<std::string, std::unique_ptr<fasttext::FastText>>models;
         for (const auto& optionName : modelsOptions) {
@@ -121,9 +123,9 @@ int main(int argc, char** argv) {
             Document doc = ParseFile(path.c_str());
             doc.Language = DetectLanguage(langDetectModel, doc);
             if (std::find(languages.begin(), languages.end(), doc.Language) != languages.end()) {
-                doc.IsNews = DetectIsNews(*models.at("news_detect_model"), doc);
+                doc.IsNews = DetectIsNews(*models.at(doc.Language + "_news_detect_model"), doc);
                 doc.Category = DetectCategory(*models.at(doc.Language + "_cat_detect_model"), doc);
-                //if (doc.IsNews && doc.Category == "not_news") {
+                //if (!doc.IsNews) {
                 //    std::cerr << "ALERT: " << doc.Title << std::endl;
                 //}
                 docs.push_back(doc);

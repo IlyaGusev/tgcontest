@@ -2,19 +2,18 @@
 
 #include <sstream>
 
-FastTextEmbedder::FastTextEmbedder(const std::string& modelPath) {
-    embedder.loadModel(modelPath);
+FastTextEmbedder::FastTextEmbedder(fasttext::FastText& model) : Model(model) {
 }
 
 size_t FastTextEmbedder::GetEmbeddingSize() const {
-    return embedder.getDimension();
+    return Model.getDimension();
 }
 
 fasttext::Vector FastTextEmbedder::GetSentenceEmbedding(const Document& doc) {
     fasttext::Vector embedding(FastTextEmbedder::GetEmbeddingSize());
 
     std::istringstream ss(doc.Title);
-    embedder.getSentenceVector(ss, embedding);
+    Model.getSentenceVector(ss, embedding);
 
     return embedding;
 }

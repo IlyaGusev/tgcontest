@@ -3,11 +3,11 @@
 #include <mlpack/methods/dbscan/dbscan.hpp>
 
 Dbscan::Dbscan(
-    const std::string& modelPath,
+    fasttext::FastText& model,
     double epsilon,
     size_t minPoints
 )
-    : FastTextEmbedder(modelPath)
+    : FastTextEmbedder(model)
     , Epsilon(epsilon)
     , MinPoints(minPoints)
 {

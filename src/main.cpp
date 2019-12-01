@@ -28,8 +28,10 @@ int main(int argc, char** argv) {
             ("source_dir", po::value<std::string>()->required(), "source_dir")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
             ("news_detect_model", po::value<std::string>()->default_value("models/news_detect.ftz"), "news_detect_model")
-            ("cat_detect_model", po::value<std::string>()->default_value("models/cat_detect.ftz"), "cat_detect_model")
-            ("vector_model", po::value<std::string>()->default_value("models/tg_lenta.bin"), "vector_model")
+            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_detect.ftz"), "ru_cat_detect_model")
+            ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_detect.ftz"), "en_cat_detect_model")
+            ("ru_vector_model", po::value<std::string>()->default_value("models/ru_tg_lenta_vector_model.bin"), "ru_vector_model")
+            ("en_vector_model", po::value<std::string>()->default_value("models/en_tg_bbc_nc_vector_model.bin"), "en_vector_model")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
             ("clustering_distance_threshold", po::value<float>()->default_value(0.05f), "clustering_distance_threshold")
             ("clustering_eps", po::value<double>()->default_value(0.3), "clustering_eps")
@@ -74,21 +76,22 @@ int main(int argc, char** argv) {
 
         // Load models
         std::cerr << "Loading models..." << std::endl;
- 
-        const std::string langDetectModelPath = vm["lang_detect_model"].as<std::string>();
-        fasttext::FastText langDetectModel;
-        langDetectModel.loadModel(langDetectModelPath);
-        std::cerr << "FastText lang_detect model loaded" << std::endl;
-
-        const std::string newsDetectModelPath = vm["news_detect_model"].as<std::string>();
-        fasttext::FastText newsDetectModel;
-        newsDetectModel.loadModel(newsDetectModelPath);
-        std::cerr << "FastText news_detect model loaded" << std::endl;
-
-        const std::string catDetectModelPath = vm["cat_detect_model"].as<std::string>();
-        fasttext::FastText catDetectModel;
-        catDetectModel.loadModel(catDetectModelPath);
-        std::cerr << "FastText cat_detect model loaded" << std::endl;
+        std::vector<std::string> modelsOptions = {
+            "lang_detect_model",
+            "news_detect_model",
+            "ru_cat_detect_model",
+            "en_cat_detect_model",
+            "ru_vector_model",
+            "en_vector_model"
+        };
+        std::unordered_map<std::string, std::unique_ptr<fasttext::FastText>>models;
+        for (const auto& optionName : modelsOptions) {
+            const std::string modelPath = vm[optionName].as<std::string>();
+            std::unique_ptr<fasttext::FastText> model(new fasttext::FastText());
+            models.emplace(optionName, std::move(model));
+            models.at(optionName)->loadModel(modelPath);
+            std::cerr << "FastText " << optionName << " loaded" << std::endl;
+        }
 
         // Load agency ratings
         std::cerr << "Loading agency ratings..." << std::endl;
@@ -109,12 +112,13 @@ int main(int argc, char** argv) {
         std::cerr << "Parsing " << fileNames.size() << " files..." << std::endl;
         std::vector<Document> docs;
         docs.reserve(fileNames.size() / 2);
+        const auto& langDetectModel = *models.at("lang_detect_model");
         for (const std::string& path: fileNames) {
             Document doc = ParseFile(path.c_str());
             doc.Language = DetectLanguage(langDetectModel, doc);
             if (std::find(languages.begin(), languages.end(), doc.Language) != languages.end()) {
-                doc.IsNews = DetectIsNews(newsDetectModel, doc);
-                doc.Category = DetectCategory(catDetectModel, doc);
+                doc.IsNews = DetectIsNews(*models.at("news_detect_model"), doc);
+                doc.Category = DetectCategory(*models.at(doc.Language + "_cat_detect_model"), doc);
                 docs.push_back(doc);
             }
         }
@@ -122,12 +126,11 @@ int main(int argc, char** argv) {
         std::cerr << docs.size() << " documents saved" << std::endl;
 
         // Output
-        nlohmann::json outputJson = nlohmann::json::array();
         if (mode == "languages") {
+            nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> langToFiles;
             for (const Document& doc : docs) {
-                std::string fileName = doc.FileName.substr(doc.FileName.find_last_of("/") + 1);
-                langToFiles[doc.Language].push_back(fileName);
+                langToFiles[doc.Language].push_back(GetCleanFileName(doc.FileName));
             }
             for (const auto& pair : langToFiles) {
                 const std::string& language = pair.first;
@@ -140,6 +143,7 @@ int main(int argc, char** argv) {
             }
             std::cout << outputJson.dump(4) << std::endl;
         } else if (mode == "sites") {
+            nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> siteToTitles;
             for (const Document& doc : docs) {
                 siteToTitles[doc.SiteName].push_back(doc.Title);
@@ -155,6 +159,7 @@ int main(int argc, char** argv) {
             }
             std::cout << outputJson.dump(4) << std::endl;
         } else if (mode == "json") {
+            nlohmann::json outputJson = nlohmann::json::array();
             for (const Document& doc : docs) {
                 nlohmann::json object = {
                     {"url", doc.Url},
@@ -163,47 +168,87 @@ int main(int argc, char** argv) {
                     {"title", doc.Title},
                     {"description", doc.Description},
                     {"text", doc.Text},
-                    {"out_links", doc.OutLinks}
+                    {"out_links", doc.OutLinks},
+                    {"language", doc.Language},
+                    {"category", doc.Category},
+                    {"is_news", doc.IsNews}
                 };
                 outputJson.push_back(object);
             }
             std::cout << outputJson.dump(4) << std::endl;
         } else if (mode == "news") {
+            nlohmann::json articles = nlohmann::json::array();
             for (const Document& doc : docs) {
-                if (doc.Language != "ru") {
+                if (!doc.IsNews) {
                     continue;
                 }
-                if (!doc.IsNews) {
-                    std::cout << doc.Title << std::endl;
-                }
+                articles.push_back(GetCleanFileName(doc.FileName));
             }
+            nlohmann::json outputJson = nlohmann::json::object();
+            outputJson["articles"] = articles;
+            std::cout << outputJson.dump(4) << std::endl;
         } else if (mode == "categories") {
+            nlohmann::json outputJson = nlohmann::json::array();
+            std::map<std::string, std::vector<std::string>> catToFiles;
             for (const Document& doc : docs) {
-                std::cout << doc.Category << " " << doc.Title << std::endl;
+                if (!doc.IsNews || doc.Category == "not_news") {
+                    continue;
+                }
+                catToFiles[doc.Category].push_back(GetCleanFileName(doc.FileName));
             }
+            for (const auto& pair : catToFiles) {
+                const std::string& category = pair.first;
+                const std::vector<std::string>& files = pair.second;
+                nlohmann::json object = {
+                    {"category", category},
+                    {"articles", files}
+                };
+                outputJson.push_back(object);
+            }
+            std::cout << outputJson.dump(4) << std::endl;
         } else if (mode == "threads") {
-
-            const std::string vectorModelPath = vm["vector_model"].as<std::string>();
-
-            std::unique_ptr<Clustering> clustering;
+            std::unique_ptr<Clustering> ruClustering;
+            std::unique_ptr<Clustering> enClustering;
 
             const std::string clusteringType = vm["clustering_type"].as<std::string>();
             if (clusteringType == "slink") {
                 const float distanceThreshold = vm["clustering_distance_threshold"].as<float>();
-                clustering = std::unique_ptr<Clustering>(new SlinkClustering(vectorModelPath, distanceThreshold));
+                ruClustering = std::unique_ptr<Clustering>(new SlinkClustering(*models.at("ru_vector_model"), distanceThreshold));
+                enClustering = std::unique_ptr<Clustering>(new SlinkClustering(*models.at("en_vector_model"), distanceThreshold));
             }
             else if (clusteringType == "dbscan") {
                 const double eps = vm["clustering_eps"].as<double>();
                 const size_t minPoints = vm["clustering_min_points"].as<size_t>();
-                clustering = std::unique_ptr<Clustering>(new Dbscan(vectorModelPath, eps, minPoints));
+                ruClustering = std::unique_ptr<Clustering>(new Dbscan(*models.at("ru_vector_model"), eps, minPoints));
+                enClustering = std::unique_ptr<Clustering>(new Dbscan(*models.at("en_vector_model"), eps, minPoints));
             }
 
             Timer<std::chrono::high_resolution_clock, std::chrono::milliseconds> timer;
-            const Clustering::Clusters clusters = clustering->Cluster(docs);
-            std::cout << "CLUSTERING: " << timer.Elapsed() << " ms (" << clusters.size() << "clusters)" << std::endl;
 
-            const auto clustersSummarized = InClusterRanging(clusters, agencyRating);
-            for (const auto& cluster : clustersSummarized) {
+            std::vector<Document> ruDocs;
+            std::vector<Document> enDocs;
+            while (!docs.empty()) {
+                const Document& doc = docs.back();
+                if (!doc.IsNews || doc.Category == "not_news") {
+                    docs.pop_back();
+                    continue;
+                }
+                if (doc.Language == "en") {
+                    enDocs.push_back(doc);
+                } else if (doc.Language == "ru") {
+                    ruDocs.push_back(doc);
+                }
+                docs.pop_back();
+            }
+            docs.shrink_to_fit();
+            docs.clear();
+
+            const Clustering::Clusters ruClusters = ruClustering->Cluster(ruDocs);
+            const Clustering::Clusters enClusters = enClustering->Cluster(enDocs);
+            std::cout << "CLUSTERING: " << timer.Elapsed() << " ms (" << ruClusters.size() << "clusters)" << std::endl;
+
+            const auto ruClustersSummarized = InClusterRanging(ruClusters, agencyRating);
+            for (const auto& cluster : ruClustersSummarized) {
                 if (cluster.size() < 2) {
                     continue;
                 }

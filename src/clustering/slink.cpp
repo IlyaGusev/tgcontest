@@ -5,10 +5,10 @@
 
 
 SlinkClustering::SlinkClustering(
-    const std::string& modelPath,
+    fasttext::FastText& model,
     float distanceThreshold
 )
-    : FastTextEmbedder(modelPath)
+    : FastTextEmbedder(model)
     , DistanceThreshold(distanceThreshold)
 {}
 

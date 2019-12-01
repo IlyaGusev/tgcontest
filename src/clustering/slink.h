@@ -7,7 +7,7 @@
 class SlinkClustering : public FastTextEmbedder, public Clustering {
 public:
     SlinkClustering(
-        const std::string& modelPath,
+        fasttext::FastText& model,
         float distanceThreshold
     );
 

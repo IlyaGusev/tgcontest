@@ -1,19 +1,33 @@
 #include <set>
 #include <cmath>
+#include <queue>
 #include "rank.h"
 #include "../util.h"
 #include "../clustering/in_cluster_ranging.h"
 
 uint64_t GetIterTimestamp(const std::vector<NewsCluster>& clusters) {
-    uint64_t maxTimestamp = 0;
+    // in production here should be ts.now().
+    // but here we have 0.995 percentile of doc timestamps because of small percent of wrong dates
+    std::priority_queue<uint64_t, std::vector<uint64_t>, std::greater<uint64_t>> timestamps;
+    const float PERCENTILE = 0.995;
+    uint64_t numDocs = 0;
+    
+    for (const auto& cluster: clusters) {
+        numDocs += cluster.size();
+    }
+    
+    size_t prioritySize = numDocs - std::floor(PERCENTILE * numDocs);
+
     for (const auto& cluster : clusters) {
         for (const auto& doc: cluster) {
-            if (doc.get().Timestamp > maxTimestamp) {
-                maxTimestamp = doc.get().Timestamp;
+            timestamps.push(doc.get().Timestamp);
+            if (timestamps.size() > prioritySize) {
+                timestamps.pop();
             }
         }
     }
-    return maxTimestamp;
+
+    return timestamps.size() > 0 ? timestamps.top() : 0;
 } 
 
 std::string ComputeClusterCategory(const NewsCluster& cluster) {
@@ -57,6 +71,7 @@ double ComputeClusterWeight(
     
     double clusterTimestampRemapped = (clusterTimestamp - iterTimestamp) / 3600.0 + 12;
     double timeMultiplier = Sigmoid(clusterTimestampRemapped); // ~1 for freshest ts, 0.5 for 12 hour old ts, ~0 for 24 hour old ts
+
     return output * timeMultiplier;
 }
 

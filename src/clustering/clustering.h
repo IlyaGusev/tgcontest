@@ -34,7 +34,6 @@ public:
         const std::string& biasPath = "");
     virtual ~FastTextEmbedder() = default;
 
-protected:
     size_t GetEmbeddingSize() const;
     fasttext::Vector GetSentenceEmbedding(const Document& str);
 

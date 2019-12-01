@@ -8,7 +8,11 @@ class SlinkClustering : public FastTextEmbedder, public Clustering {
 public:
     SlinkClustering(
         fasttext::FastText& model,
-        float distanceThreshold
+        float distanceThreshold,
+        FastTextEmbedder::AggregationMode mode = AM_Avg,
+        size_t maxWords = 100,
+        const std::string& matrixPath = "",
+        const std::string& biasPath = ""
     );
 
     Clusters Cluster(

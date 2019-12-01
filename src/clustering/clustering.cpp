@@ -26,14 +26,18 @@ FastTextEmbedder::FastTextEmbedder(
     while (std::getline(matrixIn, line)) {
         std::string num;
         for (char ch : line) {
-            if (ch == ' ' || ch == '\n') {
+            if (ch == ' ') {
                 continue;
             }
-            if (ch != ',') {
+            if (ch != ',' && ch != '\n') {
                 num += ch;
                 continue;
             }
             Matrix(col++, row) = std::stof(num);
+            num = "";
+        }
+        if (!num.empty()) {
+            Matrix(col, row) = std::stof(num);
             num = "";
         }
         col = 0;

@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
             ("ru_vector_model", po::value<std::string>()->default_value("models/ru_tg_lenta_vector_model.bin"), "ru_vector_model")
             ("en_vector_model", po::value<std::string>()->default_value("models/en_tg_bbc_nc_vector_model.bin"), "en_vector_model")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
-            ("clustering_distance_threshold", po::value<float>()->default_value(0.01f), "clustering_distance_threshold")
+            ("clustering_distance_threshold", po::value<float>()->default_value(0.04f), "clustering_distance_threshold")
             ("clustering_eps", po::value<double>()->default_value(0.3), "clustering_eps")
             ("clustering_min_points", po::value<size_t>()->default_value(1), "clustering_min_points")
             ("ru_sentence_embedder_matrix", po::value<std::string>()->default_value("models/sentence_embedder/matrix.txt"), "ru_sentence_embedder_matrix")
@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
                 new SlinkClustering(
                     *models.at("ru_vector_model"),
                     distanceThreshold,
-                    SlinkClustering::AM_Avg,
+                    SlinkClustering::AM_Matrix,
                     100,
                     matrixPath,
                     biasPath
@@ -253,7 +253,7 @@ int main(int argc, char** argv) {
                     *models.at("ru_vector_model"),
                     eps,
                     minPoints,
-                    Dbscan::AM_Avg,
+                    Dbscan::AM_Matrix,
                     100,
                     matrixPath,
                     biasPath

@@ -67,7 +67,7 @@ uint64_t DateToTimestamp(const std::string& date) {
 
 }
 
-Document ParseFile(const char* fileName) {
+Document ParseFile(const char* fileName, bool parseLinks) {
     tinyxml2::XMLDocument originalDoc;
     originalDoc.LoadFile(fileName);
     const tinyxml2::XMLElement* htmlElement = originalDoc.FirstChildElement("html");
@@ -118,7 +118,9 @@ Document ParseFile(const char* fileName) {
         std::vector<std::string> links;
         while (pElement) {
             doc.Text += GetFullText(pElement) + "\n";
-            ParseLinksFromText(pElement, links);
+            if (parseLinks) {
+                ParseLinksFromText(pElement, links);
+            }
             pElement = pElement->NextSiblingElement("p");
         }
         doc.OutLinks = std::move(links);

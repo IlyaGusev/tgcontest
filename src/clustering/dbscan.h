@@ -7,7 +7,7 @@
 class Dbscan : public FastTextEmbedder, public Clustering {
 public:
     Dbscan(
-        const std::string& modelPath,
+        fasttext::FastText& model,
         double epsilon,
         size_t minPoints
     );

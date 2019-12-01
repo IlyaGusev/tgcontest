@@ -18,7 +18,7 @@ public:
 
 class FastTextEmbedder {
 public:
-    FastTextEmbedder(const std::string& modelPath);
+    FastTextEmbedder(fasttext::FastText& model);
     virtual ~FastTextEmbedder() = default;
 
 protected:
@@ -26,5 +26,5 @@ protected:
     fasttext::Vector GetSentenceEmbedding(const Document& str);
 
 private:
-    fasttext::FastText embedder;
+    fasttext::FastText& Model;
 };

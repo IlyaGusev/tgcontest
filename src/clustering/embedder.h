@@ -23,7 +23,7 @@ public:
     virtual ~FastTextEmbedder() = default;
 
     size_t GetEmbeddingSize() const;
-    fasttext::Vector GetSentenceEmbedding(const Document& str);
+    fasttext::Vector GetSentenceEmbedding(const Document& doc) const;
 
 private:
     fasttext::FastText& Model;

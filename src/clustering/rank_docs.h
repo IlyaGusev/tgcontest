@@ -21,12 +21,22 @@ struct WeightedDoc {
 
 std::unordered_map<std::string, double> LoadRatings(const std::vector<std::string>& ratingFiles);
 
+double ComputeDocAgencyWeight(
+    const Document& doc,
+    const std::unordered_map<std::string, double>& agencyRating
+);
+
 double ComputeDocWeight(
     const Document& doc,
     const std::unordered_map<std::string, double>& agencyRating,
+    const double docRelevance,
     const uint64_t freshestTimestamp = 0,
     const bool useTimeMultiplier = false
 );
 
-
-std::vector<NewsCluster> RankClustersDocs(const Clustering::Clusters& clusters, const std::unordered_map<std::string, double>& agencyRating);
+std::vector<NewsCluster> RankClustersDocs(
+    const Clustering::Clusters& clusters,
+    const std::unordered_map<std::string, double>& agencyRating,
+    const FastTextEmbedder& ruModel,
+    const FastTextEmbedder& enModel 
+);

@@ -12,7 +12,6 @@
 #include <fasttext.h>
 #include <nlohmann_json/json.hpp>
 
-#include "clustering/dbscan.h"
 #include "clustering/slink.h"
 #include "clustering/rank_docs.h"
 #include "rank/rank.h"
@@ -264,29 +263,17 @@ int main(int argc, char** argv) {
             enMatrixPath,
             enBiasPath
         );
-        if (clusteringType == "slink") {
-            const float ruDistanceThreshold = vm["ru_clustering_distance_threshold"].as<float>();
-            ruClustering = std::unique_ptr<Clustering>(
-                new SlinkClustering(ruEmbedder, ruDistanceThreshold)
-            );
-            const float enDistanceThreshold = vm["en_clustering_distance_threshold"].as<float>();
-            enClustering = std::unique_ptr<Clustering>(
-                new SlinkClustering(enEmbedder, enDistanceThreshold)
-            );
-        }
-        else if (clusteringType == "dbscan") {
-            const double eps = vm["clustering_eps"].as<double>();
-            const size_t minPoints = vm["clustering_min_points"].as<size_t>();
-            ruClustering = std::unique_ptr<Clustering>(
-                new Dbscan(ruEmbedder, eps, minPoints)
-            );
-            enClustering = std::unique_ptr<Clustering>(
-                new Dbscan(enEmbedder, eps, minPoints)
-            );
-        }
+        assert(clusteringType == "slink");
+        const float ruDistanceThreshold = vm["ru_clustering_distance_threshold"].as<float>();
+        ruClustering = std::unique_ptr<Clustering>(
+            new SlinkClustering(ruEmbedder, ruDistanceThreshold)
+        );
+        const float enDistanceThreshold = vm["en_clustering_distance_threshold"].as<float>();
+        enClustering = std::unique_ptr<Clustering>(
+            new SlinkClustering(enEmbedder, enDistanceThreshold)
+        );
 
-        Timer<std::chrono::high_resolution_clock, std::chrono::milliseconds> timer;
-
+        Timer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
         std::vector<Document> ruDocs;
         std::vector<Document> enDocs;
         while (!docs.empty()) {
@@ -322,7 +309,7 @@ int main(int argc, char** argv) {
                 }
             );
         }
-        LOG_DEBUG("Clustering: " << timer.Elapsed() << " ms (" << clusters.size() << " clusters)");
+        LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms (" << clusters.size() << " clusters)");
         const auto clustersSummarized = RankClustersDocs(clusters, agencyRating);
 
         if (mode == "threads") {

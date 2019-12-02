@@ -36,32 +36,41 @@ uint64_t DateToTimestamp(const std::string& date) {
     //TO DO: parse timezones (std cant handle them)
     std::regex ex("(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)T(\\d\\d):(\\d\\d):(\\d\\d)([+-])(\\d\\d):(\\d\\d)");
     std::smatch what;
-    if (std::regex_match(date, what, ex) && what.size() >= 10) {
-        std::tm t = {
-            .tm_sec = std::stoi(what[6]),
-            .tm_min = std::stoi(what[5]),
-            .tm_hour = std::stoi(what[4]),
-            .tm_mday = std::stoi(what[3]),
-            .tm_mon = std::stoi(what[2]) - 1,
-            .tm_year = std::stoi(what[1]) - 1900,
-            .tm_wday = 0,
-            .tm_yday = 0,
-            .tm_isdst = 0
-        };
-        std::tm worldBeginning = {
-            .tm_sec = 0,
-            .tm_min = 0,
-            .tm_hour = 0,
-            .tm_mday = 1,
-            .tm_mon = 0,
-            .tm_year = 70,
-            .tm_wday = 0,
-            .tm_yday = 0,
-            .tm_isdst = 0
-        };
+    try {
+        if (std::regex_match(date, what, ex) && what.size() >= 10) {
+            std::tm t = {
+                .tm_sec = std::stoi(what[6]),
+                .tm_min = std::stoi(what[5]),
+                .tm_hour = std::stoi(what[4]),
+                .tm_mday = std::stoi(what[3]),
+                .tm_mon = std::stoi(what[2]) - 1,
+                .tm_year = std::stoi(what[1]) - 1900,
+                .tm_wday = 0,
+                .tm_yday = 0,
+                .tm_isdst = 0
+            };
+            std::tm worldBeginning = {
+                .tm_sec = 0,
+                .tm_min = 0,
+                .tm_hour = 0,
+                .tm_mday = 1,
+                .tm_mon = 0,
+                .tm_year = 70,
+                .tm_wday = 0,
+                .tm_yday = 0,
+                .tm_isdst = 0
+            };
 
-        const auto timestamp = std::difftime(std::mktime(&t), std::mktime(&worldBeginning));
-        return timestamp > 0 ? timestamp : 0;
+            auto timestamp = std::difftime(std::mktime(&t), std::mktime(&worldBeginning));
+            if (what[7] == "+") {
+                timestamp -= std::stoi(what[8]) * 60 * 60 + std::stoi(what[9]) * 60;
+            } else if (what[8] == "-") {
+                timestamp += std::(stoi(what[8])) * 60 * 60 + std::stoi(what[9]) * 60;
+            }
+            return timestamp > 0 ? timestamp : 0;
+        }
+    } catch (...) {
+        LOG_DEBUG("Doc has wrong date format" << date);
     }
     return 0;
 

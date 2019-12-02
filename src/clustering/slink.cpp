@@ -49,15 +49,15 @@ SlinkClustering::Clusters SlinkClustering::Cluster(
             oldLabelsToNew[oldLabel] = newLabel;
         }
         if (batchStart == 0) {
-            for (size_t i = 0; i < BatchIntersectionSize; i++) {
+            for (size_t i = 0; i < std::min(BatchIntersectionSize, newLabels.size()); i++) {
                 labels.push_back(newLabels[i]);
             }
         }
         for (size_t i = BatchIntersectionSize; i < newLabels.size(); i++) {
             labels.push_back(newLabels[i]);
         }
-        assert(batchStart == std::distance(docs.begin(), begin));
-        assert(batchStart + batchSize == std::distance(docs.begin(), end));
+        assert(batchStart == static_cast<size_t>(std::distance(docs.begin(), begin)));
+        assert(batchStart + batchSize == static_cast<size_t>(std::distance(docs.begin(), end)));
         for (const auto& pair : oldLabelsToNew) {
             assert(pair.first < pair.second);
         }

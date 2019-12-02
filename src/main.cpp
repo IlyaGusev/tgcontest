@@ -21,6 +21,12 @@
 #include "timer.h"
 #include "util.h"
 
+#ifdef NDEBUG
+#define LOG_DEBUG(x)
+#else
+#define LOG_DEBUG(x) std::cerr << x << std::endl;
+#endif
+
 namespace po = boost::program_options;
 
 int main(int argc, char** argv) {
@@ -70,7 +76,7 @@ int main(int argc, char** argv) {
             return -1;
         }
         std::string mode = vm["mode"].as<std::string>();
-        std::cerr << "Mode: " << mode << std::endl;
+        LOG_DEBUG("Mode: " << mode);
         std::vector<std::string> modes = {
             "languages",
             "news",
@@ -87,7 +93,7 @@ int main(int argc, char** argv) {
         }
 
         // Load models
-        std::cerr << "Loading models..." << std::endl;
+        LOG_DEBUG("Loading models...");
         std::vector<std::string> modelsOptions = {
             "lang_detect_model",
             "en_news_detect_model",
@@ -103,26 +109,26 @@ int main(int argc, char** argv) {
             std::unique_ptr<fasttext::FastText> model(new fasttext::FastText());
             models.emplace(optionName, std::move(model));
             models.at(optionName)->loadModel(modelPath);
-            std::cerr << "FastText " << optionName << " loaded" << std::endl;
+            LOG_DEBUG("FastText " << optionName << " loaded");
         }
 
         // Load agency ratings
-        std::cerr << "Loading agency ratings..." << std::endl;
+        LOG_DEBUG("Loading agency ratings...");
         std::vector<std::string> ratingFiles = {vm["en_rating"].as<std::string>(), vm["ru_rating"].as<std::string>()};;
         std::unordered_map<std::string, double> agencyRating = LoadRatings(ratingFiles);
-        std::cerr << "Agency ratings loaded" << std::endl;
+        LOG_DEBUG("Agency ratings loaded");
 
         // Read file names
-        std::cerr << "Reading file names..." << std::endl;
+        LOG_DEBUG("Reading file names...");
         std::string sourceDir = vm["source_dir"].as<std::string>();
         int nDocs = vm["ndocs"].as<int>();
         std::vector<std::string> fileNames;
         ReadFileNames(sourceDir, fileNames, nDocs);
-        std::cerr << "Files count: " << fileNames.size() << std::endl;
+        LOG_DEBUG("Files count: " << fileNames.size());
 
         // Parse files and annotate with classifiers
         std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
-        std::cerr << "Parsing " << fileNames.size() << " files..." << std::endl;
+        LOG_DEBUG("Parsing " << fileNames.size() << " files...");
         std::vector<Document> docs;
         docs.reserve(fileNames.size() / 2);
         const auto& langDetectModel = *models.at("lang_detect_model");
@@ -143,7 +149,7 @@ int main(int argc, char** argv) {
             docs.push_back(doc);
         }
         docs.shrink_to_fit();
-        std::cerr << docs.size() << " documents saved" << std::endl;
+        LOG_DEBUG(docs.size() << " documents saved");
 
         // Output
         if (mode == "languages") {
@@ -315,7 +321,7 @@ int main(int argc, char** argv) {
                 }
             );
         }
-        std::cerr << "CLUSTERING: " << timer.Elapsed() << " ms (" << clusters.size() << "clusters)" << std::endl;
+        LOG_DEBUG("Clustering: " << timer.Elapsed() << " ms (" << clusters.size() << " clusters)");
         const auto clustersSummarized = RankClustersDocs(clusters, agencyRating);
 
         if (mode == "threads") {
@@ -332,13 +338,13 @@ int main(int argc, char** argv) {
                 outputJson.push_back(object);
 
                 if (cluster.size() >= 2) {
-                    std::cerr << "         CLUSTER: " << cluster[0].get().Title << std::endl;
+                    LOG_DEBUG("         CLUSTER: " << cluster[0].get().Title);
                     for (const auto& doc : cluster) {
-                        std::cerr << "   " << doc.get().Title << " (" << doc.get().Url << ")" << std::endl;
+                        LOG_DEBUG("  " << doc.get().Title << " (" << doc.get().Url << ")");
                     }
                 }
             }
-            //std::cout << outputJson.dump(4) << std::endl;
+            std::cout << outputJson.dump(4) << std::endl;
         } else if (mode == "top") {
             nlohmann::json outputJson = nlohmann::json::array();
             const auto tops = Rank(clustersSummarized, agencyRating);

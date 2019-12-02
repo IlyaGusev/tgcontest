@@ -310,8 +310,8 @@ int main(int argc, char** argv) {
             );
         }
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms (" << clusters.size() << " clusters)");
-        const auto clustersSummarized = RankClustersDocs(clusters, agencyRating);
 
+        const auto clustersSummarized = RankClustersDocs(clusters, agencyRating, ruEmbedder, enEmbedder);
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();
             for (const auto& cluster : clustersSummarized) {

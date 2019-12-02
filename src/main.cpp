@@ -228,6 +228,9 @@ int main(int argc, char** argv) {
         } else if (mode != "threads" && mode != "top") {
             assert(false);
         }
+        std::stable_sort(docs.begin(), docs.end(),
+            [](const Document& d1, const Document& d2) { return d1.Timestamp < d2.Timestamp; }
+        );
 
         // Clustering
         std::unique_ptr<Clustering> ruClustering;

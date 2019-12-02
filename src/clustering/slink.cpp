@@ -6,21 +6,107 @@
 SlinkClustering::SlinkClustering(
     FastTextEmbedder& embedder
     , float distanceThreshold
+    , size_t batchSize
+    , size_t batchIntersectionSize
 )
     : Clustering(embedder)
     , DistanceThreshold(distanceThreshold)
+    , BatchSize(batchSize)
+    , BatchIntersectionSize(batchIntersectionSize)
 {}
 
-// SLINK: https://sites.cs.ucsb.edu/~veronika/MAE/summary_SLINK_Sibson72.pdf
-SlinkClustering::Clusters SlinkClustering::Cluster(const std::vector<Document>& docs) {
+SlinkClustering::Clusters SlinkClustering::Cluster(
+    const std::vector<Document>& docs
+) {
     const size_t docSize = docs.size();
+    std::vector<size_t> labels;
+    labels.reserve(docSize);
+
+    std::vector<Document>::const_iterator begin = docs.cbegin();
+    std::unordered_map<size_t, size_t> oldLabelsToNew;
+    size_t batchStart = 0;
+    size_t prevBatchEnd = batchStart;
+    size_t maxLabel = 0;
+    while (prevBatchEnd < docs.size()) {
+        size_t remainingDocsCount = docSize - batchStart;
+        size_t batchSize = std::min(remainingDocsCount, BatchSize);
+        std::vector<Document>::const_iterator end = begin + batchSize;
+
+        std::vector<size_t> newLabels = ClusterBatch(begin, end);
+        size_t newMaxLabel = maxLabel;
+        for (auto& label : newLabels) {
+            label += maxLabel;
+            newMaxLabel = std::max(newMaxLabel, label);
+        }
+        maxLabel = newMaxLabel;
+
+        assert(begin->Url == docs[batchStart].Url);
+        for (size_t i = batchStart; i < batchStart + BatchIntersectionSize && i < labels.size(); i++) {
+            size_t oldLabel = labels[i];
+            size_t j = i - batchStart;
+            assert(j >= 0 && j < newLabels.size());
+            size_t newLabel = newLabels[j];
+            oldLabelsToNew[oldLabel] = newLabel;
+        }
+        if (batchStart == 0) {
+            for (size_t i = 0; i < BatchIntersectionSize; i++) {
+                labels.push_back(newLabels[i]);
+            }
+        }
+        for (size_t i = BatchIntersectionSize; i < newLabels.size(); i++) {
+            labels.push_back(newLabels[i]);
+        }
+        assert(batchStart == std::distance(docs.begin(), begin));
+        assert(batchStart + batchSize == std::distance(docs.begin(), end));
+        for (const auto& pair : oldLabelsToNew) {
+            assert(pair.first < pair.second);
+        }
+
+        prevBatchEnd = batchStart + batchSize;
+        batchStart = batchStart + batchSize - BatchIntersectionSize;
+        begin = end - BatchIntersectionSize;
+    }
+    assert(labels.size() == docs.size());
+    for (auto& label : labels) {
+        auto it = oldLabelsToNew.find(label);
+        if (it == oldLabelsToNew.end()) {
+            continue;
+        }
+        label = it->second;
+    }
+
+    std::unordered_map<size_t, size_t> clusterLabels;
+    SlinkClustering::Clusters clusters;
+    for (size_t i = 0; i < docSize; ++i) {
+        const size_t clusterId = labels[i];
+        auto it = clusterLabels.find(clusterId);
+        if (it == clusterLabels.end()) {
+            size_t newLabel = clusters.size();
+            clusterLabels[clusterId] = newLabel;
+            clusters.push_back(NewsCluster());
+            clusters[newLabel].push_back(std::cref(docs[i]));
+        } else {
+            clusters[it->second].push_back(std::cref(docs[i]));
+        }
+    }
+    return clusters;
+}
+
+// SLINK: https://sites.cs.ucsb.edu/~veronika/MAE/summary_SLINK_Sibson72.pdf
+std::vector<size_t> SlinkClustering::ClusterBatch(
+    const std::vector<Document>::const_iterator begin,
+    const std::vector<Document>::const_iterator end
+) {
+    const size_t docSize = std::distance(begin, end);
     const size_t embSize = Embedder.GetEmbeddingSize();
 
     Eigen::MatrixXf points(docSize, embSize);
-    for (size_t i = 0; i < docSize; i++) {
-        fasttext::Vector embedding = Embedder.GetSentenceEmbedding(docs[i]);
+    std::vector<Document>::const_iterator docsIt = begin;
+    for (size_t i = 0; i < docSize; ++i) {
+        fasttext::Vector embedding = Embedder.GetSentenceEmbedding(*docsIt);
         Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
         points.row(i) = eigenVector / eigenVector.norm();
+        docsIt++;
     }
 
     Eigen::MatrixXf distances(points.rows(), points.rows());
@@ -83,21 +169,7 @@ SlinkClustering::Clusters SlinkClustering::Cluster(const std::vector<Document>& 
         level += 1;
     }
 
-    std::unordered_map<size_t, size_t> clusterLabels;
-    SlinkClustering::Clusters clusters;
-    for (size_t i = 0; i < docSize; ++i) {
-        const size_t clusterId = labels[i];
-        auto it = clusterLabels.find(clusterId);
-        if (it == clusterLabels.end()) {
-            size_t newLabel = clusters.size();
-            clusterLabels[clusterId] = newLabel;
-            clusters.push_back(NewsCluster());
-            clusters[newLabel].push_back(std::cref(docs[i]));
-        } else {
-            clusters[it->second].push_back(std::cref(docs[i]));
-        }
-    }
-    return clusters;
+    return labels;
 }
 
 void SlinkClustering::FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const {

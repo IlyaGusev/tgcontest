@@ -19,7 +19,7 @@ struct WeightedDoc {
     {}
 };
 
-std::unordered_map<std::string, double> LoadRatings(const std::vector<std::string>& ratingFiles);
+std::unordered_map<std::string, double> LoadRatings(const std::string& ratingFiles);
 
 double ComputeDocAgencyWeight(
     const Document& doc,

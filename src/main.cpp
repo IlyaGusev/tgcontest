@@ -51,8 +51,7 @@ int main(int argc, char** argv) {
             ("en_sentence_embedder_bias", po::value<std::string>()->default_value("models/en_sentence_embedder/bias.txt"), "ru_sentence_embedder_bias")
             ("ru_sentence_embedder_matrix", po::value<std::string>()->default_value("models/ru_sentence_embedder/matrix.txt"), "ru_sentence_embedder_matrix")
             ("ru_sentence_embedder_bias", po::value<std::string>()->default_value("models/ru_sentence_embedder/bias.txt"), "ru_sentence_embedder_bias")
-            ("en_rating", po::value<std::string>()->default_value("ratings/en_rating.txt"), "en_rating")
-            ("ru_rating", po::value<std::string>()->default_value("ratings/ru_rating.txt"), "ru_rating")
+            ("rating", po::value<std::string>()->default_value("ratings/rating_merged.txt"), "rating")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ;
@@ -112,8 +111,8 @@ int main(int argc, char** argv) {
 
         // Load agency ratings
         LOG_DEBUG("Loading agency ratings...");
-        std::vector<std::string> ratingFiles = {vm["en_rating"].as<std::string>(), vm["ru_rating"].as<std::string>()};;
-        std::unordered_map<std::string, double> agencyRating = LoadRatings(ratingFiles);
+        const std::string ratingPath = vm["rating"].as<std::string>();
+        std::unordered_map<std::string, double> agencyRating = LoadRatings(ratingPath);
         LOG_DEBUG("Agency ratings loaded");
 
         // Read file names
@@ -351,7 +350,7 @@ int main(int argc, char** argv) {
                         {"articles", nlohmann::json::array()}
                     };
                     for (const auto& doc : cluster.Cluster.get()) {
-                        object["articles"].push_back(doc.get().Url);
+                        object["articles"].push_back(GetCleanFileName(doc.get().FileName));
                     }
                     rubricTop["threads"].push_back(object);
                 }

@@ -20,6 +20,7 @@ make
 cd ..
 mv build/tgnews tgnews
 chmod +x tgnews
+cp tgnews ../tgnews
 zip -r submission.zip src scripts models ratings thirdparty LICENSE NOTICE README.md CMakeLists.txt deb-packages.txt tgnews build_zip.sh
 mv submission.zip ../submission.zip
 cd ..

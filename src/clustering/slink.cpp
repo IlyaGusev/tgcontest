@@ -1,4 +1,5 @@
 #include "slink.h"
+#include "../util.h"
 
 #include <string>
 #include <vector>
@@ -8,11 +9,13 @@ SlinkClustering::SlinkClustering(
     , float distanceThreshold
     , size_t batchSize
     , size_t batchIntersectionSize
+    , bool useTimestampMoving
 )
     : Clustering(embedder)
     , DistanceThreshold(distanceThreshold)
     , BatchSize(batchSize)
     , BatchIntersectionSize(batchIntersectionSize)
+    , UseTimestampMoving(useTimestampMoving)
 {}
 
 SlinkClustering::Clusters SlinkClustering::Cluster(
@@ -111,9 +114,29 @@ std::vector<size_t> SlinkClustering::ClusterBatch(
 
     Eigen::MatrixXf distances(points.rows(), points.rows());
     FillDistanceMatrix(points, distances);
+    const float INF_DISTANCE = 1.0f;
+
+    if (UseTimestampMoving) {
+        std::vector<Document>::const_iterator iIt = begin;
+        std::vector<Document>::const_iterator jIt = begin + 1;
+        for (size_t i = 0; i < docSize; ++i, ++iIt) {
+            jIt = iIt + 1;
+            for (size_t j = i + 1; j < docSize; ++j, ++jIt) {
+                uint64_t leftTs = iIt->Timestamp;
+                uint64_t rightTs = jIt->Timestamp;
+                uint64_t diff = rightTs > leftTs ? rightTs - leftTs : leftTs - rightTs;
+                float diffHours = static_cast<float>(diff) / 3600.0f;
+                float penalty = 1.0f;
+                if (diffHours >= 24.0f) {
+                    penalty = diffHours / 24.0f;
+                }
+                distances(i, j) = std::min(penalty * distances(i, j), INF_DISTANCE);
+                distances(j, i) = distances(i, j);
+            }
+        }
+    }
 
     // Prepare 3 arrays
-    const float INF_DISTANCE = 1.0f;
     std::vector<size_t> labels(docSize);
     for (size_t i = 0; i < docSize; i++) {
         labels[i] = i;

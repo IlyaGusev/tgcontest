@@ -1,4 +1,5 @@
-#include "clustering.h"
+#include "embedder.h"
+#include "../document.h"
 
 #include <sstream>
 #include <cassert>

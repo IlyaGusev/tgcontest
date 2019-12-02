@@ -12,10 +12,10 @@ add_subdirectory(thirdparty/tinyxml2)
 add_subdirectory(thirdparty/eigen EXCLUDE_FROM_ALL)
 
 set(SOURCE_FILES
-    src/clustering/clustering.cpp
+    src/clustering/embedder.cpp
     src/clustering/dbscan.cpp
     src/clustering/slink.cpp
-    src/clustering/in_cluster_ranging.cpp
+    src/clustering/rank_docs.cpp
     src/rank/rank.cpp
     src/detect.cpp
     src/main.cpp
@@ -25,9 +25,10 @@ set(SOURCE_FILES
 
 set(HEADER_FILES
     src/clustering/clustering.h
+    src/clustering/embedder.h
     src/clustering/dbscan.h
     src/clustering/slink.h
-    src/clustering/in_cluster_ranging.h
+    src/clustering/rank_docs.h
     src/rank/rank.h
     src/detect.h
     src/document.h

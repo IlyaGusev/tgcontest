@@ -1,18 +1,15 @@
 #pragma once
 
 #include "clustering.h"
+#include "embedder.h"
 
 #include <Eigen/Core>
 
-class SlinkClustering : public FastTextEmbedder, public Clustering {
+class SlinkClustering : public Clustering {
 public:
     SlinkClustering(
-        fasttext::FastText& model,
-        float distanceThreshold,
-        FastTextEmbedder::AggregationMode mode = AM_Avg,
-        size_t maxWords = 100,
-        const std::string& matrixPath = "",
-        const std::string& biasPath = ""
+        FastTextEmbedder& embedder,
+        float distanceThreshold
     );
 
     Clusters Cluster(

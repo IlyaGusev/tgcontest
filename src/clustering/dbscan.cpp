@@ -3,15 +3,11 @@
 #include <mlpack/methods/dbscan/dbscan.hpp>
 
 Dbscan::Dbscan(
-    fasttext::FastText& model
+    FastTextEmbedder& embedder
     , double epsilon
     , size_t minPoints
-    , FastTextEmbedder::AggregationMode mode
-    , size_t maxWords
-    , const std::string& matrixPath
-    , const std::string& biasPath
 )
-    : FastTextEmbedder(model, mode, maxWords, matrixPath, biasPath)
+    : Clustering(embedder)
     , Epsilon(epsilon)
     , MinPoints(minPoints)
 {
@@ -21,10 +17,10 @@ Dbscan::Clusters Dbscan::Cluster(
     const std::vector<Document>& docs
 ) {
     const size_t docSize = docs.size();
-    const size_t embSize = GetEmbeddingSize();
+    const size_t embSize = Embedder.GetEmbeddingSize();
     arma::mat data(embSize, docSize);
     for (size_t i = 0; i < docSize; ++i) {
-        fasttext::Vector embedding = GetSentenceEmbedding(docs[i]);
+        fasttext::Vector embedding = Embedder.GetSentenceEmbedding(docs[i]);
 
         arma::fcolvec fvec(embedding.data(), embSize, /*copy_aux_mem*/ false, /*strict*/ true);
         data.col(i) = arma::normalise(arma::conv_to<arma::colvec>::from(fvec));

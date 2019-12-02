@@ -14,7 +14,7 @@
 
 #include "clustering/dbscan.h"
 #include "clustering/slink.h"
-#include "clustering/in_cluster_ranging.h"
+#include "clustering/rank_docs.h"
 #include "rank/rank.h"
 #include "detect.h"
 #include "parser.h"
@@ -129,14 +129,18 @@ int main(int argc, char** argv) {
         for (const std::string& path: fileNames) {
             Document doc = ParseFile(path.c_str());
             doc.Language = DetectLanguage(langDetectModel, doc);
-            if (std::find(languages.begin(), languages.end(), doc.Language) != languages.end()) {
-                doc.IsNews = DetectIsNews(*models.at(doc.Language + "_news_detect_model"), doc);
-                doc.Category = DetectCategory(*models.at(doc.Language + "_cat_detect_model"), doc);
-                if (doc.Category == "not_news") {
-                    doc.IsNews = false;
-                }
-                docs.push_back(doc);
+            if (std::find(languages.begin(), languages.end(), doc.Language) == languages.end()) {
+                continue;
             }
+            doc.IsNews = DetectIsNews(*models.at(doc.Language + "_news_detect_model"), doc);
+            doc.Category = DetectCategory(*models.at(doc.Language + "_cat_detect_model"), doc);
+            if (doc.Category == "not_news") {
+                doc.IsNews = false;
+            }
+            if (!doc.IsNews) {
+                continue;
+            }
+            docs.push_back(doc);
         }
         docs.shrink_to_fit();
         std::cerr << docs.size() << " documents saved" << std::endl;
@@ -198,9 +202,6 @@ int main(int argc, char** argv) {
         } else if (mode == "news") {
             nlohmann::json articles = nlohmann::json::array();
             for (const Document& doc : docs) {
-                if (!doc.IsNews) {
-                    continue;
-                }
                 articles.push_back(GetCleanFileName(doc.FileName));
             }
             nlohmann::json outputJson = nlohmann::json::object();
@@ -211,9 +212,6 @@ int main(int argc, char** argv) {
             nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> catToFiles;
             for (const Document& doc : docs) {
-                if (!doc.IsNews || doc.Category == "not_news") {
-                    continue;
-                }
                 catToFiles[doc.Category].push_back(GetCleanFileName(doc.FileName));
             }
             for (const auto& pair : catToFiles) {
@@ -241,54 +239,39 @@ int main(int argc, char** argv) {
         const std::string enBiasPath = vm["en_sentence_embedder_bias"].as<std::string>();
         const size_t ruMaxWords = vm["ru_clustering_max_words"].as<size_t>();
         const size_t enMaxWords = vm["en_clustering_max_words"].as<size_t>();
+        FastTextEmbedder ruEmbedder(
+            *models.at("ru_vector_model"),
+            FastTextEmbedder::AM_Matrix,
+            ruMaxWords,
+            ruMatrixPath,
+            ruBiasPath
+        );
+
+        FastTextEmbedder enEmbedder(
+            *models.at("en_vector_model"),
+            FastTextEmbedder::AM_Matrix,
+            enMaxWords,
+            enMatrixPath,
+            enBiasPath
+        );
         if (clusteringType == "slink") {
             const float ruDistanceThreshold = vm["ru_clustering_distance_threshold"].as<float>();
             ruClustering = std::unique_ptr<Clustering>(
-                new SlinkClustering(
-                    *models.at("ru_vector_model"),
-                    ruDistanceThreshold,
-                    SlinkClustering::AM_Matrix,
-                    ruMaxWords,
-                    ruMatrixPath,
-                    ruBiasPath
-                )
+                new SlinkClustering(ruEmbedder, ruDistanceThreshold)
             );
             const float enDistanceThreshold = vm["en_clustering_distance_threshold"].as<float>();
             enClustering = std::unique_ptr<Clustering>(
-                new SlinkClustering(
-                    *models.at("en_vector_model"),
-                    enDistanceThreshold,
-                    SlinkClustering::AM_Matrix,
-                    enMaxWords,
-                    enMatrixPath,
-                    enBiasPath
-                )
+                new SlinkClustering(enEmbedder, enDistanceThreshold)
             );
         }
         else if (clusteringType == "dbscan") {
             const double eps = vm["clustering_eps"].as<double>();
             const size_t minPoints = vm["clustering_min_points"].as<size_t>();
             ruClustering = std::unique_ptr<Clustering>(
-                new Dbscan(
-                    *models.at("ru_vector_model"),
-                    eps,
-                    minPoints,
-                    Dbscan::AM_Matrix,
-                    ruMaxWords,
-                    ruMatrixPath,
-                    ruBiasPath
-                    )
+                new Dbscan(ruEmbedder, eps, minPoints)
             );
             enClustering = std::unique_ptr<Clustering>(
-                new Dbscan(
-                    *models.at("en_vector_model"),
-                    eps,
-                    minPoints,
-                    Dbscan::AM_Matrix,
-                    enMaxWords,
-                    enMatrixPath,
-                    enBiasPath
-                )
+                new Dbscan(enEmbedder, eps, minPoints)
             );
         }
 
@@ -298,10 +281,6 @@ int main(int argc, char** argv) {
         std::vector<Document> enDocs;
         while (!docs.empty()) {
             const Document& doc = docs.back();
-            if (!doc.IsNews || doc.Category == "not_news") {
-                docs.pop_back();
-                continue;
-            }
             if (doc.Language == "en") {
                 enDocs.push_back(doc);
             } else if (doc.Language == "ru") {
@@ -320,7 +299,7 @@ int main(int argc, char** argv) {
                 ruClusters.cbegin(),
                 ruClusters.cend(),
                 std::back_inserter(clusters),
-                [](NewsCluster cluster) {
+                [](const NewsCluster& cluster) {
                     return cluster.size() > 0;
                 }
             );
@@ -328,13 +307,13 @@ int main(int argc, char** argv) {
                 enClusters.cbegin(),
                 enClusters.cend(),
                 std::back_inserter(clusters),
-                [](NewsCluster cluster) {
+                [](const NewsCluster& cluster) {
                     return cluster.size() > 0;
                 }
             );
         }
-        std::cout << "CLUSTERING: " << timer.Elapsed() << " ms (" << clusters.size() << "clusters)" << std::endl;
-        const auto clustersSummarized = InClusterRanging(clusters, agencyRating);
+        std::cerr << "CLUSTERING: " << timer.Elapsed() << " ms (" << clusters.size() << "clusters)" << std::endl;
+        const auto clustersSummarized = RankClustersDocs(clusters, agencyRating);
 
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();

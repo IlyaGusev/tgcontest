@@ -4,26 +4,9 @@ Trello: https://trello.com/b/36OkBvly/tgcontest
 
 Wiki: https://github.com/IlyaGusev/tgcontest/wiki
 
-Prerequisites: CMake, Boost, MLPack
+Prerequisites: CMake, Boost
 ```
-$ sudo apt-get install cmake libboost-all-dev libmlpack-dev
-```
-
-To build Armadillo and MLPack from source:
-```
-$ wget http://sourceforge.net/projects/arma/files/armadillo-9.800.2.tar.xz
-$ tar -xvf armadillo-9.800.2.tar.xz
-$ mkdir armadillo-9.800.2/build && cd armadillo-9.800.2/build
-$ cmake ../
-$ sudo make install
-$ cd ../../
-
-$ wget https://www.mlpack.org/files/mlpack-3.2.1.tar.gz
-$ tar -xvzpf mlpack-3.2.1.tar.gz
-$ mkdir mlpack-3.2.1/build && cd mlpack-3.2.1/build
-$ cmake ../
-$ make -j4
-$ sudo make install
+$ sudo apt-get install cmake libboost-all-dev
 ```
 
 Before cloning install git-lfs. To download code and models:

@@ -1,5 +1,5 @@
 #include "../util.h"
-#include "in_cluster_ranging.h"
+#include "rank_docs.h"
 #include "clustering.h"
 
 
@@ -31,7 +31,7 @@ uint64_t GetFreshestTimestamp(const NewsCluster& cluster) {
         }
     }
     return maxTimestamp;
-} 
+}
 
 double ComputeDocWeight(
     const Document& doc,
@@ -46,12 +46,12 @@ double ComputeDocWeight(
         // ~ 1 for freshest doc, 0.5 for 12 hour late, ~0 for 24 hour late doc
         const double timeMultiplier = useTimeMultiplier ? Sigmoid((static_cast<double>(doc.Timestamp) - static_cast<double>(freshestTimestamp)) / 3600.0 + 12) : 1.0;
         return iter->second * timeMultiplier;
-    } 
+    }
 
     return 0.000015;
 }
 
-std::vector<NewsCluster> InClusterRanging(const Clustering::Clusters& clusters, const std::unordered_map<std::string, double>& agencyRating) {
+std::vector<NewsCluster> RankClustersDocs(const Clustering::Clusters& clusters, const std::unordered_map<std::string, double>& agencyRating) {
     std::vector<NewsCluster> output;
 
     for (auto& cluster : clusters) {
@@ -65,18 +65,17 @@ std::vector<NewsCluster> InClusterRanging(const Clustering::Clusters& clusters, 
                 freshestTimestamp,
                 /* useTimeMultiplier = */ true
             );
-            WeightedDoc weightedDoc(doc, weight);
-            weightedDocs.emplace_back(std::move(weightedDoc)); 
+            weightedDocs.emplace_back(doc, weight);
         }
-        
         std::stable_sort(weightedDocs.begin(), weightedDocs.end(), [](WeightedDoc a, WeightedDoc b) {
             return a.Weight > b.Weight;
         });
-        
         NewsCluster clusterSorted;
-        std::transform(weightedDocs.cbegin(), weightedDocs.cend(), std::back_inserter(clusterSorted), [](WeightedDoc elem) {
-            return elem.Doc;
-        });
+        std::transform(weightedDocs.cbegin(), weightedDocs.cend(), std::back_inserter(clusterSorted),
+            [] (const WeightedDoc& elem) {
+                return elem.Doc;
+            }
+        );
         output.emplace_back(std::move(clusterSorted));
     }
     return output;

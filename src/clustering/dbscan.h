@@ -1,20 +1,17 @@
 #pragma once
 
 #include "clustering.h"
+#include "embedder.h"
 
 #include <functional>
 
-class Dbscan : public FastTextEmbedder, public Clustering {
+class Dbscan : public Clustering {
 public:
     Dbscan(
-        fasttext::FastText& model,
+        FastTextEmbedder& embedder,
         double epsilon,
-        size_t minPoints,
-        FastTextEmbedder::AggregationMode mode = AM_Avg,
-        size_t maxWords = 100,
-        const std::string& matrixPath = "",
-        const std::string& biasPath = ""
-   );
+        size_t minPoints
+    );
 
     Clusters Cluster(
         const std::vector<Document>& docs

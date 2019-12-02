@@ -3,27 +3,22 @@
 #include <string>
 #include <vector>
 
-
 SlinkClustering::SlinkClustering(
-    fasttext::FastText& model
+    FastTextEmbedder& embedder
     , float distanceThreshold
-    , FastTextEmbedder::AggregationMode mode
-    , size_t maxWords
-    , const std::string& matrixPath
-    , const std::string& biasPath
 )
-    : FastTextEmbedder(model, mode, maxWords, matrixPath, biasPath)
+    : Clustering(embedder)
     , DistanceThreshold(distanceThreshold)
 {}
 
 // SLINK: https://sites.cs.ucsb.edu/~veronika/MAE/summary_SLINK_Sibson72.pdf
 SlinkClustering::Clusters SlinkClustering::Cluster(const std::vector<Document>& docs) {
     const size_t docSize = docs.size();
-    const size_t embSize = GetEmbeddingSize();
+    const size_t embSize = Embedder.GetEmbeddingSize();
 
     Eigen::MatrixXf points(docSize, embSize);
     for (size_t i = 0; i < docSize; i++) {
-        fasttext::Vector embedding = GetSentenceEmbedding(docs[i]);
+        fasttext::Vector embedding = Embedder.GetSentenceEmbedding(docs[i]);
         Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
         points.row(i) = eigenVector / eigenVector.norm();
     }
@@ -88,19 +83,21 @@ SlinkClustering::Clusters SlinkClustering::Cluster(const std::vector<Document>& 
         level += 1;
     }
 
-    SlinkClustering::Clusters clusters(docSize);
+    std::unordered_map<size_t, size_t> clusterLabels;
+    SlinkClustering::Clusters clusters;
     for (size_t i = 0; i < docSize; ++i) {
         const size_t clusterId = labels[i];
-        clusters[clusterId].push_back(std::cref(docs[i]));
-    }
-    SlinkClustering::Clusters filteredClusters;
-    for (const auto& cluster : clusters) {
-        if (cluster.size() >= 1) {
-            filteredClusters.push_back(cluster);
+        auto it = clusterLabels.find(clusterId);
+        if (it == clusterLabels.end()) {
+            size_t newLabel = clusters.size();
+            clusterLabels[clusterId] = newLabel;
+            clusters.push_back(NewsCluster());
+            clusters[newLabel].push_back(std::cref(docs[i]));
+        } else {
+            clusters[it->second].push_back(std::cref(docs[i]));
         }
     }
-
-    return filteredClusters;
+    return clusters;
 }
 
 void SlinkClustering::FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const {

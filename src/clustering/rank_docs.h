@@ -29,4 +29,4 @@ double ComputeDocWeight(
 );
 
 
-std::vector<NewsCluster> InClusterRanging(const Clustering::Clusters& clusters, const std::unordered_map<std::string, double>& agencyRating);
+std::vector<NewsCluster> RankClustersDocs(const Clustering::Clusters& clusters, const std::unordered_map<std::string, double>& agencyRating);

@@ -69,7 +69,19 @@ double ComputeClusterWeight(
     double clusterTimestampRemapped = (clusterTimestamp - iterTimestamp) / 3600.0 + 12;
     double timeMultiplier = Sigmoid(clusterTimestampRemapped); // ~1 for freshest ts, 0.5 for 12 hour old ts, ~0 for 24 hour old ts
 
-    return output * timeMultiplier;
+    const size_t clusterSize = cluster.size();
+    double smallClusterCoef = 1.0;
+    if (clusterSize == 1) {
+        smallClusterCoef = 0.2;
+    } else if (clusterSize == 2) {
+        smallClusterCoef = 0.4;
+    } else if (clusterSize == 3) {
+        smallClusterCoef = 0.6;
+    } else if (clusterSize == 4) {
+        smallClusterCoef = 0.8;
+    } // pessimize only clusters with size < 5
+
+    return output * timeMultiplier * smallClusterCoef;
 }
 
 

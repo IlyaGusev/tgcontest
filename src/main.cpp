@@ -350,7 +350,7 @@ int main(int argc, char** argv) {
                         {"articles", nlohmann::json::array()}
                     };
                     for (const auto& doc : cluster.Cluster.get()) {
-                        object["articles"].push_back(doc.get().Url);
+                        object["articles"].push_back(GetCleanFileName(doc.get().FileName));
                     }
                     rubricTop["threads"].push_back(object);
                 }

@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <ctime>
 #include <tinyxml2/tinyxml2.h>
+#include <iostream>
 
 std::string GetFullText(const tinyxml2::XMLElement* element) {
     if (element->ToText()) {
@@ -33,7 +34,6 @@ void ParseLinksFromText(const tinyxml2::XMLElement* element, std::vector<std::st
 }
 
 uint64_t DateToTimestamp(const std::string& date) {
-    //TO DO: parse timezones (std cant handle them)
     std::regex ex("(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)T(\\d\\d):(\\d\\d):(\\d\\d)([+-])(\\d\\d):(\\d\\d)");
     std::smatch what;
     try {
@@ -63,14 +63,14 @@ uint64_t DateToTimestamp(const std::string& date) {
 
             auto timestamp = std::difftime(std::mktime(&t), std::mktime(&worldBeginning));
             if (what[7] == "+") {
-                timestamp -= std::stoi(what[8]) * 60 * 60 + std::stoi(what[9]) * 60;
-            } else if (what[8] == "-") {
-                timestamp += std::(stoi(what[8])) * 60 * 60 + std::stoi(what[9]) * 60;
+                timestamp = timestamp - std::stoi(what[8]) * 60 * 60 - std::stoi(what[9]) * 60;
+            } else if (what[7] == "-") {
+                timestamp = timestamp + std::stoi(what[8]) * 60 * 60 + std::stoi(what[9]) * 60;
             }
             return timestamp > 0 ? timestamp : 0;
         }
     } catch (...) {
-        LOG_DEBUG("Doc has wrong date format" << date);
+        //LOG_DEBUG(date + " has wrong date format");
     }
     return 0;
 

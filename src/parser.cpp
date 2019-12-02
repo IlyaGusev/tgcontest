@@ -2,6 +2,8 @@
 #include <regex>
 #include <stdexcept>
 #include <ctime>
+#include <sstream>
+#include <iostream>
 #include <tinyxml2/tinyxml2.h>
 
 std::string GetFullText(const tinyxml2::XMLElement* element) {
@@ -67,7 +69,7 @@ uint64_t DateToTimestamp(const std::string& date) {
 
 }
 
-Document ParseFile(const char* fileName, bool parseLinks) {
+Document ParseFile(const char* fileName, bool parseLinks, bool shrinkText, size_t maxWords) {
     tinyxml2::XMLDocument originalDoc;
     originalDoc.LoadFile(fileName);
     const tinyxml2::XMLElement* htmlElement = originalDoc.FirstChildElement("html");
@@ -116,8 +118,17 @@ Document ParseFile(const char* fileName, bool parseLinks) {
     const tinyxml2::XMLElement* pElement = articleElement->FirstChildElement("p");
     {
         std::vector<std::string> links;
-        while (pElement) {
-            doc.Text += GetFullText(pElement) + "\n";
+        size_t wordCount = 0;
+        while (pElement && (!shrinkText || wordCount < maxWords)) {
+            std::string pText = GetFullText(pElement);
+            if (shrinkText) {
+                std::istringstream iss(pText);
+                std::string word;
+                while (iss >> word) {
+                    wordCount++;
+                }
+            }
+            doc.Text += pText + "\n";
             if (parseLinks) {
                 ParseLinksFromText(pElement, links);
             }

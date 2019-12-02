@@ -60,7 +60,7 @@ size_t FastTextEmbedder::GetEmbeddingSize() const {
     return Model.getDimension();
 }
 
-fasttext::Vector FastTextEmbedder::GetSentenceEmbedding(const Document& doc) {
+fasttext::Vector FastTextEmbedder::GetSentenceEmbedding(const Document& doc) const {
     std::istringstream ss(doc.Title + " " + doc.Text);
     fasttext::Vector wordVector(FastTextEmbedder::GetEmbeddingSize());
     fasttext::Vector avgVector(FastTextEmbedder::GetEmbeddingSize());

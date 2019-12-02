@@ -6,8 +6,10 @@ Wiki: https://github.com/IlyaGusev/tgcontest/wiki
 
 Prerequisites: CMake, Boost
 ```
-$ sudo apt-get install cmake libboost-all-dev
+$ sudo apt-get install cmake libboost-all-dev build-essential
 ```
+
+If you got zip archive, just go to building binary
 
 Before cloning install git-lfs. To download code and models:
 ```
@@ -24,7 +26,7 @@ $ bash download.sh
 
 To build binary (in "tgcontest" dir):
 ```
-$ mkdir build && cd build && cmake ..
+$ mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
 $ make
 ```
 

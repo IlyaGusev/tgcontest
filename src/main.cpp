@@ -316,7 +316,7 @@ int main(int argc, char** argv) {
             );
         }
         std::cerr << "CLUSTERING: " << timer.Elapsed() << " ms (" << clusters.size() << "clusters)" << std::endl;
-        const auto clustersSummarized = RankClustersDocs(clusters, agencyRating);
+        const auto clustersSummarized = RankClustersDocs(clusters, agencyRating, ruEmbedder, enEmbedder);
 
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();

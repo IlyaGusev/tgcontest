@@ -58,7 +58,7 @@ double ComputeClusterWeight(
 
     for (const auto& doc : cluster) {
         if (seenHosts.insert(GetHost(doc.get().Url)).second) {
-            output += ComputeDocWeight(doc, agencyRating);
+            output += ComputeDocAgencyWeight(doc, agencyRating);
         }
         clusterTimestamps.push_back(doc.get().Timestamp);
     }

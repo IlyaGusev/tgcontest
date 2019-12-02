@@ -44,7 +44,6 @@ int main(int argc, char** argv) {
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
             ("en_clustering_distance_threshold", po::value<float>()->default_value(0.045f), "en_clustering_distance_threshold")
             ("en_clustering_max_words", po::value<size_t>()->default_value(100), "en_clustering_max_words")
-
             ("ru_clustering_distance_threshold", po::value<float>()->default_value(0.045f), "ru_clustering_distance_threshold")
             ("ru_clustering_max_words", po::value<size_t>()->default_value(100), "ru_clustering_max_words")
             ("en_sentence_embedder_matrix", po::value<std::string>()->default_value("models/en_sentence_embedder/matrix.txt"), "ru_sentence_embedder_matrix")
@@ -131,7 +130,13 @@ int main(int argc, char** argv) {
         docs.reserve(fileNames.size() / 2);
         const auto& langDetectModel = *models.at("lang_detect_model");
         for (const std::string& path: fileNames) {
-            Document doc = ParseFile(path.c_str());
+            Document doc;
+            try {
+                doc = ParseFile(path.c_str());
+            } catch (...) {
+                LOG_DEBUG("Bad html: " << path);
+                continue;
+            }
             doc.Language = DetectLanguage(langDetectModel, doc);
             if (std::find(languages.begin(), languages.end(), doc.Language) == languages.end()) {
                 continue;

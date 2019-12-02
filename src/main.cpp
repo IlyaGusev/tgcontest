@@ -127,6 +127,7 @@ int main(int argc, char** argv) {
         LOG_DEBUG("Files count: " << fileNames.size());
 
         // Parse files and annotate with classifiers
+        Timer<std::chrono::high_resolution_clock, std::chrono::milliseconds> parsingTimer;
         std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
         LOG_DEBUG("Parsing " << fileNames.size() << " files...");
         std::vector<Document> docs;
@@ -149,7 +150,7 @@ int main(int argc, char** argv) {
             docs.push_back(doc);
         }
         docs.shrink_to_fit();
-        LOG_DEBUG(docs.size() << " documents saved");
+        LOG_DEBUG("Parsing: " << docs.size() << " documents saved, " << parsingTimer.Elapsed() << " ms");
 
         // Output
         if (mode == "languages") {

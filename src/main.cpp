@@ -42,9 +42,9 @@ int main(int argc, char** argv) {
             ("ru_vector_model", po::value<std::string>()->default_value("models/ru_tg_lenta_vector_model.bin"), "ru_vector_model")
             ("en_vector_model", po::value<std::string>()->default_value("models/en_tg_bbc_nc_vector_model.bin"), "en_vector_model")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
-            ("ru_clustering_distance_threshold", po::value<float>()->default_value(0.04f), "ru_clustering_distance_threshold")
+            ("ru_clustering_distance_threshold", po::value<float>()->default_value(0.045f), "ru_clustering_distance_threshold")
             ("ru_clustering_max_words", po::value<size_t>()->default_value(100), "ru_clustering_max_words")
-            ("en_clustering_distance_threshold", po::value<float>()->default_value(0.06f), "en_clustering_distance_threshold")
+            ("en_clustering_distance_threshold", po::value<float>()->default_value(0.045f), "en_clustering_distance_threshold")
             ("en_clustering_max_words", po::value<size_t>()->default_value(100), "en_clustering_max_words")
             ("en_sentence_embedder_matrix", po::value<std::string>()->default_value("models/en_sentence_embedder/matrix.txt"), "ru_sentence_embedder_matrix")
             ("en_sentence_embedder_bias", po::value<std::string>()->default_value("models/en_sentence_embedder/bias.txt"), "ru_sentence_embedder_bias")
@@ -324,7 +324,7 @@ int main(int argc, char** argv) {
                 outputJson.push_back(object);
 
                 if (cluster.size() >= 2) {
-                    LOG_DEBUG("         CLUSTER: " << cluster[0].get().Title);
+                    LOG_DEBUG("\n         CLUSTER: " << cluster[0].get().Title);
                     for (const auto& doc : cluster) {
                         LOG_DEBUG("  " << doc.get().Title << " (" << doc.get().Url << ")");
                     }

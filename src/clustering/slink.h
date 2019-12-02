@@ -11,7 +11,8 @@ public:
         FastTextEmbedder& embedder,
         float distanceThreshold,
         size_t batchSize = 10000,
-        size_t batchIntersectionSize = 2000
+        size_t batchIntersectionSize = 2000,
+        bool useTimestampMoving = false
     );
 
     Clusters Cluster(
@@ -29,4 +30,5 @@ private:
     const float DistanceThreshold;
     const size_t BatchSize;
     const size_t BatchIntersectionSize;
+    bool UseTimestampMoving;
 };

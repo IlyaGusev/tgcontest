@@ -76,23 +76,21 @@ std::vector<NewsCluster> RankClustersDocs(
 
         Eigen::MatrixXf docsCosine; // NxN matrix with cosine titles
 
-        if (cluster.size() > 0) {
-            size_t embSize = cluster[0].get().Language == "ru" ? ruModel.GetEmbeddingSize() : enModel.GetEmbeddingSize();
-
-            Eigen::MatrixXf points(cluster.size(), embSize);
-            for (size_t i = 0; i < cluster.size(); i++) {
-                const Document& doc = cluster[i];
-                if ((doc.Language != "ru") && (doc.Language != "en")) {
-                    std::cerr << "Doc " << doc.Url << " has unknown language " << doc.Language << std::endl;
-                    assert(1);
-                }
-                auto& model = doc.Language == "ru" ? ruModel : enModel;
-                fasttext::Vector embedding = model.GetSentenceEmbedding(doc);
-                Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
-                points.row(i) = eigenVector / eigenVector.norm();
-            }
-            docsCosine = points * points.transpose();
+        if (cluster.empty()) {
+            continue;
         }
+        size_t embSize = cluster[0].get().Language == "ru" ? ruModel.GetEmbeddingSize() : enModel.GetEmbeddingSize();
+
+        Eigen::MatrixXf points(cluster.size(), embSize);
+        for (size_t i = 0; i < cluster.size(); i++) {
+            const Document& doc = cluster[i];
+
+            auto& model = doc.Language == "ru" ? ruModel : enModel;
+            fasttext::Vector embedding = model.GetSentenceEmbedding(doc);
+            Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
+            points.row(i) = eigenVector / eigenVector.norm();
+        }
+        docsCosine = points * points.transpose();
 
         for (size_t i = 0; i < cluster.size(); ++i) {
             const Document& doc = cluster[i];
@@ -104,7 +102,7 @@ std::vector<NewsCluster> RankClustersDocs(
                 freshestTimestamp,
                 /* useTimeMultiplier = */ true
             );
- 
+
             weightedDocs.emplace_back(doc, weight);
         }
         std::stable_sort(weightedDocs.begin(), weightedDocs.end(), [](WeightedDoc a, WeightedDoc b) {

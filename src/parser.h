@@ -2,7 +2,7 @@
 
 #include "document.h"
 
-Document ParseFile(
+TDocument ParseFile(
     const char* fileName,
     bool parseLinks=false,
     bool shrinkText=false,

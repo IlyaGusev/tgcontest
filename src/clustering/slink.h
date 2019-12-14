@@ -5,25 +5,25 @@
 
 #include <Eigen/Core>
 
-class SlinkClustering : public Clustering {
+class TSlinkClustering : public TClustering {
 public:
-    SlinkClustering(
-        FastTextEmbedder& embedder,
+    TSlinkClustering(
+        TFastTextEmbedder& embedder,
         float distanceThreshold,
         size_t batchSize = 10000,
         size_t batchIntersectionSize = 2000,
         bool useTimestampMoving = false
     );
 
-    Clusters Cluster(
-        const std::vector<Document>& docs
+    TClusters Cluster(
+        const std::vector<TDocument>& docs
     ) override;
 
 private:
     void FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const;
     std::vector<size_t> ClusterBatch(
-        const std::vector<Document>::const_iterator begin,
-        const std::vector<Document>::const_iterator end
+        const std::vector<TDocument>::const_iterator begin,
+        const std::vector<TDocument>::const_iterator end
     );
 
 private:

@@ -5,11 +5,11 @@
 #include "../util.h"
 #include "../clustering/rank_docs.h"
 
-uint64_t GetIterTimestamp(const std::vector<NewsCluster>& clusters) {
+uint64_t GetIterTimestamp(const std::vector<TNewsCluster>& clusters) {
     // in production here should be ts.now().
     // but here we have 0.995 percentile of doc timestamps because of small percent of wrong dates
     std::priority_queue<uint64_t, std::vector<uint64_t>, std::greater<uint64_t>> timestamps;
-    const float PERCENTILE = 0.995;
+    const float PERCENTILE = 0.99;
     uint64_t numDocs = 0;
     for (const auto& cluster: clusters) {
         numDocs += cluster.size();
@@ -18,7 +18,7 @@ uint64_t GetIterTimestamp(const std::vector<NewsCluster>& clusters) {
 
     for (const auto& cluster : clusters) {
         for (const auto& doc: cluster) {
-            timestamps.push(doc.get().Timestamp);
+            timestamps.push(doc.get().FetchTime);
             if (timestamps.size() > prioritySize) {
                 timestamps.pop();
             }
@@ -28,7 +28,7 @@ uint64_t GetIterTimestamp(const std::vector<NewsCluster>& clusters) {
     return timestamps.size() > 0 ? timestamps.top() : 0;
 }
 
-std::string ComputeClusterCategory(const NewsCluster& cluster) {
+std::string ComputeClusterCategory(const TNewsCluster& cluster) {
     std::unordered_map<std::string, size_t> categoryCount;
     for (const auto& doc : cluster) {
         std::string docCategory = doc.get().Category;
@@ -46,7 +46,7 @@ std::string ComputeClusterCategory(const NewsCluster& cluster) {
 }
 
 double ComputeClusterWeight(
-    const NewsCluster& cluster,
+    const TNewsCluster& cluster,
     const std::unordered_map<std::string, double>& agencyRating,
     const uint64_t iterTimestamp
 ) {
@@ -60,7 +60,7 @@ double ComputeClusterWeight(
         if (seenHosts.insert(GetHost(doc.get().Url)).second) {
             output += ComputeDocAgencyWeight(doc, agencyRating);
         }
-        clusterTimestamps.push_back(doc.get().Timestamp);
+        clusterTimestamps.push_back(doc.get().FetchTime);
     }
 
     std::sort(clusterTimestamps.begin(), clusterTimestamps.end());
@@ -85,13 +85,13 @@ double ComputeClusterWeight(
 }
 
 
-std::unordered_map<std::string, std::vector<WeightedNewsCluster>> Rank(
-    const std::vector<NewsCluster>& clusters,
+std::unordered_map<std::string, std::vector<TWeightedNewsCluster>> Rank(
+    const std::vector<TNewsCluster>& clusters,
     const std::unordered_map<std::string, double>& agencyRating
 ) {
-    std::vector<std::string> categoryList = {"any", "society", "economy", "technology", "sports", "entartainment", "science", "other"};
-    std::unordered_map<std::string, std::vector<WeightedNewsCluster>> output;
-    std::vector<WeightedNewsCluster> weightedClusters;
+    std::vector<std::string> categoryList = {"any", "society", "economy", "technology", "sports", "entertainment", "science", "other"};
+    std::unordered_map<std::string, std::vector<TWeightedNewsCluster>> output;
+    std::vector<TWeightedNewsCluster> weightedClusters;
 
     uint64_t iterTimestamp = GetIterTimestamp(clusters);
 
@@ -102,17 +102,17 @@ std::unordered_map<std::string, std::vector<WeightedNewsCluster>> Rank(
         weightedClusters.emplace_back(cluster, clusterCategory, title, weight);
     }
 
-    std::sort(weightedClusters.begin(), weightedClusters.end(), [](const WeightedNewsCluster a, const WeightedNewsCluster b) {
+    std::sort(weightedClusters.begin(), weightedClusters.end(), [](const TWeightedNewsCluster a, const TWeightedNewsCluster b) {
         return a.Weight > b.Weight;
     });
 
     for (const auto& category : categoryList) {
-        std::vector<WeightedNewsCluster> categoryWeightedClusters;
+        std::vector<TWeightedNewsCluster> categoryWeightedClusters;
         std::copy_if(
             weightedClusters.cbegin(),
             weightedClusters.cend(),
             std::back_inserter(categoryWeightedClusters),
-            [&category](const WeightedNewsCluster a) {
+            [&category](const TWeightedNewsCluster a) {
                 return ((a.Category == category) || (category == "any")) ? true : false;
             }
         );

@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstdint>
 
-struct Document {
+struct TDocument {
     std::string Title;
     std::string Url;
     std::string SiteName;
@@ -13,9 +13,11 @@ struct Document {
     std::string FileName;
     std::string Language;
     std::string Text;
-    std::string DateTime;
+    std::string PubDateTime;
+    std::string FetchDateTime;
     std::string Author;
     std::string Category;
-    uint64_t Timestamp = 0;
+    uint64_t PubTime = 0;
+    uint64_t FetchTime = 0;
     bool IsNews;
 };

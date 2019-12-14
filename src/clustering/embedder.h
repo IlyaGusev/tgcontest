@@ -3,9 +3,9 @@
 #include <fasttext.h>
 #include <Eigen/Core>
 
-struct Document;
+struct TDocument;
 
-class FastTextEmbedder {
+class TFastTextEmbedder {
 public:
     enum AggregationMode {
         AM_Avg = 0,
@@ -14,16 +14,16 @@ public:
         AM_Matrix = 3
     };
 
-    FastTextEmbedder(
+    TFastTextEmbedder(
         fasttext::FastText& model,
         AggregationMode mode = AM_Avg,
         size_t maxWords = 100,
         const std::string& matrixPath = "",
         const std::string& biasPath = "");
-    virtual ~FastTextEmbedder() = default;
+    virtual ~TFastTextEmbedder() = default;
 
     size_t GetEmbeddingSize() const;
-    fasttext::Vector GetSentenceEmbedding(const Document& doc) const;
+    fasttext::Vector GetSentenceEmbedding(const TDocument& doc) const;
 
 private:
     fasttext::FastText& Model;

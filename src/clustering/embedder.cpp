@@ -4,9 +4,9 @@
 #include <sstream>
 #include <cassert>
 
-FastTextEmbedder::FastTextEmbedder(
+TFastTextEmbedder::TFastTextEmbedder(
     fasttext::FastText& model
-    , FastTextEmbedder::AggregationMode mode
+    , TFastTextEmbedder::AggregationMode mode
     , size_t maxWords
     , const std::string& matrixPath
     , const std::string& biasPath
@@ -56,16 +56,16 @@ FastTextEmbedder::FastTextEmbedder(
     biasIn.close();
 }
 
-size_t FastTextEmbedder::GetEmbeddingSize() const {
+size_t TFastTextEmbedder::GetEmbeddingSize() const {
     return Model.getDimension();
 }
 
-fasttext::Vector FastTextEmbedder::GetSentenceEmbedding(const Document& doc) const {
+fasttext::Vector TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc) const {
     std::istringstream ss(doc.Title + " " + doc.Text);
-    fasttext::Vector wordVector(FastTextEmbedder::GetEmbeddingSize());
-    fasttext::Vector avgVector(FastTextEmbedder::GetEmbeddingSize());
-    fasttext::Vector maxVector(FastTextEmbedder::GetEmbeddingSize());
-    fasttext::Vector minVector(FastTextEmbedder::GetEmbeddingSize());
+    fasttext::Vector wordVector(GetEmbeddingSize());
+    fasttext::Vector avgVector(GetEmbeddingSize());
+    fasttext::Vector maxVector(GetEmbeddingSize());
+    fasttext::Vector minVector(GetEmbeddingSize());
     std::string word;
     size_t count = 0;
     while (ss >> word) {
@@ -84,7 +84,7 @@ fasttext::Vector FastTextEmbedder::GetSentenceEmbedding(const Document& doc) con
             maxVector = wordVector;
             minVector = wordVector;
         } else {
-            for (size_t i = 0; i < FastTextEmbedder::GetEmbeddingSize(); i++) {
+            for (size_t i = 0; i < GetEmbeddingSize(); i++) {
                 maxVector[i] = std::max(maxVector[i], wordVector[i]);
                 minVector[i] = std::min(minVector[i], wordVector[i]);
             }
@@ -102,15 +102,15 @@ fasttext::Vector FastTextEmbedder::GetSentenceEmbedding(const Document& doc) con
         return maxVector;
     }
     assert(Mode == AM_Matrix);
-    fasttext::Vector resultVector(FastTextEmbedder::GetEmbeddingSize());
-    Eigen::VectorXf concatVector(FastTextEmbedder::GetEmbeddingSize() * 3);
-    for (size_t i = 0; i < FastTextEmbedder::GetEmbeddingSize(); i++) {
+    fasttext::Vector resultVector(GetEmbeddingSize());
+    Eigen::VectorXf concatVector(GetEmbeddingSize() * 3);
+    for (size_t i = 0; i < GetEmbeddingSize(); i++) {
         concatVector[i] = avgVector[i];
-        concatVector[FastTextEmbedder::GetEmbeddingSize() + i] = maxVector[i];
-        concatVector[2 * FastTextEmbedder::GetEmbeddingSize() + i] = minVector[i];
+        concatVector[GetEmbeddingSize() + i] = maxVector[i];
+        concatVector[2 * GetEmbeddingSize() + i] = minVector[i];
     }
     auto eigenResult = ((Matrix.transpose() * concatVector) + Bias).transpose();
-    for (size_t i = 0; i < FastTextEmbedder::GetEmbeddingSize(); i++) {
+    for (size_t i = 0; i < GetEmbeddingSize(); i++) {
         resultVector[i] = eigenResult(0, i);
     }
     return resultVector;

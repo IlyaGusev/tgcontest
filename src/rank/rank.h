@@ -5,12 +5,12 @@
 #include "../clustering/clustering.h"
 
 
-struct WeightedNewsCluster {
-    std::reference_wrapper<const NewsCluster> Cluster;
+struct TWeightedNewsCluster {
+    std::reference_wrapper<const TNewsCluster> Cluster;
     std::string Category;
     std::string Title;
     double Weight = 0.0;
-    WeightedNewsCluster(const NewsCluster& cluster, const std::string& category, const std::string& title, double weight)
+    TWeightedNewsCluster(const TNewsCluster& cluster, const std::string& category, const std::string& title, double weight)
         : Cluster(cluster)
         , Category(category)
         , Title(title)
@@ -19,17 +19,17 @@ struct WeightedNewsCluster {
 
 };
 
-uint64_t GetIterTimestamp(const std::vector<NewsCluster>&); // the latest document timestamp
+uint64_t GetIterTimestamp(const std::vector<TNewsCluster>&); // the latest document timestamp
 
-std::string ComputeClusterCategory(const NewsCluster& cluster);
+std::string ComputeClusterCategory(const TNewsCluster& cluster);
 
 double ComputeClusterWeight(
-    const NewsCluster& cluster,
+    const TNewsCluster& cluster,
     const std::unordered_map<std::string, double>& agencyRating,
     const uint64_t iterTimestamp
 );
 
-std::unordered_map<std::string, std::vector<WeightedNewsCluster>> Rank(
-    const std::vector<NewsCluster>& clusters,
+std::unordered_map<std::string, std::vector<TWeightedNewsCluster>> Rank(
+    const std::vector<TNewsCluster>& clusters,
     const std::unordered_map<std::string, double>& agencyRating
 );

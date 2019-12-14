@@ -4,28 +4,28 @@
 #include <string>
 #include <vector>
 
-SlinkClustering::SlinkClustering(
-    FastTextEmbedder& embedder
+TSlinkClustering::TSlinkClustering(
+    TFastTextEmbedder& embedder
     , float distanceThreshold
     , size_t batchSize
     , size_t batchIntersectionSize
     , bool useTimestampMoving
 )
-    : Clustering(embedder)
+    : TClustering(embedder)
     , DistanceThreshold(distanceThreshold)
     , BatchSize(batchSize)
     , BatchIntersectionSize(batchIntersectionSize)
     , UseTimestampMoving(useTimestampMoving)
 {}
 
-SlinkClustering::Clusters SlinkClustering::Cluster(
-    const std::vector<Document>& docs
+TSlinkClustering::TClusters TSlinkClustering::Cluster(
+    const std::vector<TDocument>& docs
 ) {
     const size_t docSize = docs.size();
     std::vector<size_t> labels;
     labels.reserve(docSize);
 
-    std::vector<Document>::const_iterator begin = docs.cbegin();
+    std::vector<TDocument>::const_iterator begin = docs.cbegin();
     std::unordered_map<size_t, size_t> oldLabelsToNew;
     size_t batchStart = 0;
     size_t prevBatchEnd = batchStart;
@@ -33,7 +33,7 @@ SlinkClustering::Clusters SlinkClustering::Cluster(
     while (prevBatchEnd < docs.size()) {
         size_t remainingDocsCount = docSize - batchStart;
         size_t batchSize = std::min(remainingDocsCount, BatchSize);
-        std::vector<Document>::const_iterator end = begin + batchSize;
+        std::vector<TDocument>::const_iterator end = begin + batchSize;
 
         std::vector<size_t> newLabels = ClusterBatch(begin, end);
         size_t newMaxLabel = maxLabel;
@@ -79,14 +79,14 @@ SlinkClustering::Clusters SlinkClustering::Cluster(
     }
 
     std::unordered_map<size_t, size_t> clusterLabels;
-    SlinkClustering::Clusters clusters;
+    TSlinkClustering::TClusters clusters;
     for (size_t i = 0; i < docSize; ++i) {
         const size_t clusterId = labels[i];
         auto it = clusterLabels.find(clusterId);
         if (it == clusterLabels.end()) {
             size_t newLabel = clusters.size();
             clusterLabels[clusterId] = newLabel;
-            clusters.push_back(NewsCluster());
+            clusters.push_back(TNewsCluster());
             clusters[newLabel].push_back(std::cref(docs[i]));
         } else {
             clusters[it->second].push_back(std::cref(docs[i]));
@@ -96,15 +96,15 @@ SlinkClustering::Clusters SlinkClustering::Cluster(
 }
 
 // SLINK: https://sites.cs.ucsb.edu/~veronika/MAE/summary_SLINK_Sibson72.pdf
-std::vector<size_t> SlinkClustering::ClusterBatch(
-    const std::vector<Document>::const_iterator begin,
-    const std::vector<Document>::const_iterator end
+std::vector<size_t> TSlinkClustering::ClusterBatch(
+    const std::vector<TDocument>::const_iterator begin,
+    const std::vector<TDocument>::const_iterator end
 ) {
     const size_t docSize = std::distance(begin, end);
     const size_t embSize = Embedder.GetEmbeddingSize();
 
     Eigen::MatrixXf points(docSize, embSize);
-    std::vector<Document>::const_iterator docsIt = begin;
+    std::vector<TDocument>::const_iterator docsIt = begin;
     for (size_t i = 0; i < docSize; ++i) {
         fasttext::Vector embedding = Embedder.GetSentenceEmbedding(*docsIt);
         Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
@@ -117,13 +117,13 @@ std::vector<size_t> SlinkClustering::ClusterBatch(
     const float INF_DISTANCE = 1.0f;
 
     if (UseTimestampMoving) {
-        std::vector<Document>::const_iterator iIt = begin;
-        std::vector<Document>::const_iterator jIt = begin + 1;
+        std::vector<TDocument>::const_iterator iIt = begin;
+        std::vector<TDocument>::const_iterator jIt = begin + 1;
         for (size_t i = 0; i < docSize; ++i, ++iIt) {
             jIt = iIt + 1;
             for (size_t j = i + 1; j < docSize; ++j, ++jIt) {
-                uint64_t leftTs = iIt->Timestamp;
-                uint64_t rightTs = jIt->Timestamp;
+                uint64_t leftTs = iIt->FetchTime;
+                uint64_t rightTs = jIt->FetchTime;
                 uint64_t diff = rightTs > leftTs ? rightTs - leftTs : leftTs - rightTs;
                 float diffHours = static_cast<float>(diff) / 3600.0f;
                 float penalty = 1.0f;
@@ -195,7 +195,7 @@ std::vector<size_t> SlinkClustering::ClusterBatch(
     return labels;
 }
 
-void SlinkClustering::FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const {
+void TSlinkClustering::FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const {
     // Assuming points are on unit sphere
     // Normalize to [0.0, 1.0]
     distances = -((points * points.transpose()).array() + 1.0f) / 2.0f + 1.0f;

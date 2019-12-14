@@ -78,7 +78,7 @@ uint64_t DateToTimestamp(const std::string& date) {
 
 }
 
-Document ParseFile(const char* fileName, bool parseLinks, bool shrinkText, size_t maxWords) {
+TDocument ParseFile(const char* fileName, bool parseLinks, bool shrinkText, size_t maxWords) {
     tinyxml2::XMLDocument originalDoc;
     originalDoc.LoadFile(fileName);
     const tinyxml2::XMLElement* htmlElement = originalDoc.FirstChildElement("html");
@@ -93,7 +93,7 @@ Document ParseFile(const char* fileName, bool parseLinks, bool shrinkText, size_
     if (!metaElement) {
         throw std::runtime_error("Parser error: no meta");
     }
-    Document doc;
+    TDocument doc;
     doc.FileName = fileName;
     while (metaElement != 0) {
         const char* property = metaElement->Attribute("property");
@@ -113,6 +113,10 @@ Document ParseFile(const char* fileName, bool parseLinks, bool shrinkText, size_
         }
         if (std::string(property) == "og:description") {
             doc.Description = content;
+        }
+        if (std::string(property) == "article:published_time") {
+            doc.FetchDateTime = content;
+            doc.FetchTime = DateToTimestamp(content);
         }
         metaElement = metaElement->NextSiblingElement("meta");
     }
@@ -149,8 +153,8 @@ Document ParseFile(const char* fileName, bool parseLinks, bool shrinkText, size_
     if (addressElement) {
         const tinyxml2::XMLElement* timeElement = addressElement->FirstChildElement("time");
         if (timeElement && timeElement->Attribute("datetime")) {
-            doc.DateTime = timeElement->Attribute("datetime");
-            doc.Timestamp = DateToTimestamp(doc.DateTime);
+            doc.PubDateTime = timeElement->Attribute("datetime");
+            doc.PubTime = DateToTimestamp(doc.PubDateTime);
         }
         const tinyxml2::XMLElement* aElement = addressElement->FirstChildElement("a");
         if (aElement && aElement->Attribute("rel") && std::string(aElement->Attribute("rel")) == "author") {

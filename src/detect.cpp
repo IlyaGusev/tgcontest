@@ -5,7 +5,7 @@
 
 #include <fasttext.h>
 
-std::string DetectLanguage(const fasttext::FastText& model, const Document& document) {
+std::string DetectLanguage(const fasttext::FastText& model, const TDocument& document) {
     std::string sample(document.Title + " " + document.Description + " " + document.Text.substr(0, 100));
     std::replace(sample.begin(), sample.end(), '\n', ' ');
     std::istringstream ifs(sample);
@@ -21,7 +21,7 @@ std::string DetectLanguage(const fasttext::FastText& model, const Document& docu
     return label;
 }
 
-bool DetectIsNews(const fasttext::FastText& model, const Document& document) {
+bool DetectIsNews(const fasttext::FastText& model, const TDocument& document) {
     std::string sample(document.Title + " " + document.Text);
     std::replace(sample.begin(), sample.end(), '\n', ' ');
     std::istringstream ifs(sample);
@@ -34,7 +34,7 @@ bool DetectIsNews(const fasttext::FastText& model, const Document& document) {
     return label == "news";
 }
 
-std::string DetectCategory(const fasttext::FastText& model, const Document& document) {
+std::string DetectCategory(const fasttext::FastText& model, const TDocument& document) {
     std::string sample(document.Title + " " + document.Text);
     std::replace(sample.begin(), sample.end(), '\n', ' ');
     std::istringstream ifs(sample);

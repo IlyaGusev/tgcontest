@@ -11,9 +11,9 @@
 #include "../document.h"
 
 struct WeightedDoc {
-    std::reference_wrapper<const Document> Doc;
+    std::reference_wrapper<const TDocument> Doc;
     double Weight = 0.0;
-    WeightedDoc(const Document& doc, double weight)
+    WeightedDoc(const TDocument& doc, double weight)
         : Doc(doc)
         , Weight(weight)
     {}
@@ -22,21 +22,21 @@ struct WeightedDoc {
 std::unordered_map<std::string, double> LoadRatings(const std::string& ratingFiles);
 
 double ComputeDocAgencyWeight(
-    const Document& doc,
+    const TDocument& doc,
     const std::unordered_map<std::string, double>& agencyRating
 );
 
 double ComputeDocWeight(
-    const Document& doc,
+    const TDocument& doc,
     const std::unordered_map<std::string, double>& agencyRating,
     const double docRelevance,
     const uint64_t freshestTimestamp = 0,
     const bool useTimeMultiplier = false
 );
 
-std::vector<NewsCluster> RankClustersDocs(
-    const Clustering::Clusters& clusters,
+std::vector<TNewsCluster> RankClustersDocs(
+    const TClustering::TClusters& clusters,
     const std::unordered_map<std::string, double>& agencyRating,
-    const FastTextEmbedder& ruModel,
-    const FastTextEmbedder& enModel 
+    const TFastTextEmbedder& ruModel,
+    const TFastTextEmbedder& enModel
 );

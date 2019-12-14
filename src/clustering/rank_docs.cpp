@@ -18,23 +18,23 @@ std::unordered_map<std::string, double> LoadRatings(const std::string& ratingPat
             output[lineSplitted[1]] = std::stod(lineSplitted[0]);
         }
     } else {
-        std::cerr << "rating file is not available" << std::endl;
+        LOG_DEBUG("Rating file is not available")
     }
     return output;
 }
 
-uint64_t GetFreshestTimestamp(const NewsCluster& cluster) {
+uint64_t GetFreshestTimestamp(const TNewsCluster& cluster) {
     uint64_t maxTimestamp = 0;
     for (const auto& doc: cluster) {
-        if (doc.get().Timestamp > maxTimestamp) {
-            maxTimestamp = doc.get().Timestamp;
+        if (doc.get().FetchTime > maxTimestamp) {
+            maxTimestamp = doc.get().FetchTime;
         }
     }
     return maxTimestamp;
 }
 
 double ComputeDocAgencyWeight(
-    const Document& doc,
+    const TDocument& doc,
     const std::unordered_map<std::string, double>& agencyRating
 ) {
     const auto host = GetHost(doc.Url);
@@ -48,25 +48,25 @@ double ComputeDocAgencyWeight(
 }
 
 double ComputeDocWeight(
-    const Document& doc,
+    const TDocument& doc,
     const std::unordered_map<std::string, double>& agencyRating,
     const double docRelevance,
     const uint64_t freshestTimestamp,
     const bool useTimeMultiplier
 ) {
     // ~ 1 for freshest doc, 0.5 for 12 hour late, ~0 for 24 hour late doc
-    const double timeMultiplier = useTimeMultiplier ? Sigmoid((static_cast<double>(doc.Timestamp) - static_cast<double>(freshestTimestamp)) / 3600.0 + 12) : 1.0;
+    const double timeMultiplier = useTimeMultiplier ? Sigmoid((static_cast<double>(doc.FetchTime) - static_cast<double>(freshestTimestamp)) / 3600.0 + 12) : 1.0;
 
     return (ComputeDocAgencyWeight(doc, agencyRating) + docRelevance) * timeMultiplier;
 }
 
-std::vector<NewsCluster> RankClustersDocs(
-    const Clustering::Clusters& clusters,
+std::vector<TNewsCluster> RankClustersDocs(
+    const TClustering::TClusters& clusters,
     const std::unordered_map<std::string, double>& agencyRating,
-    const FastTextEmbedder& ruModel,
-    const FastTextEmbedder& enModel 
+    const TFastTextEmbedder& ruModel,
+    const TFastTextEmbedder& enModel
 ) {
-    std::vector<NewsCluster> output;
+    std::vector<TNewsCluster> output;
 
     for (auto& cluster : clusters) {
         std::vector<WeightedDoc> weightedDocs;
@@ -81,7 +81,7 @@ std::vector<NewsCluster> RankClustersDocs(
 
         Eigen::MatrixXf points(cluster.size(), embSize);
         for (size_t i = 0; i < cluster.size(); i++) {
-            const Document& doc = cluster[i];
+            const TDocument& doc = cluster[i];
 
             auto& model = doc.Language == "ru" ? ruModel : enModel;
             fasttext::Vector embedding = model.GetSentenceEmbedding(doc);
@@ -91,7 +91,7 @@ std::vector<NewsCluster> RankClustersDocs(
         docsCosine = points * points.transpose();
 
         for (size_t i = 0; i < cluster.size(); ++i) {
-            const Document& doc = cluster[i];
+            const TDocument& doc = cluster[i];
             const double docRelevance = docsCosine.row(i).mean();
             double weight = ComputeDocWeight(
                 doc,
@@ -106,7 +106,7 @@ std::vector<NewsCluster> RankClustersDocs(
         std::stable_sort(weightedDocs.begin(), weightedDocs.end(), [](WeightedDoc a, WeightedDoc b) {
             return a.Weight > b.Weight;
         });
-        NewsCluster clusterSorted;
+        TNewsCluster clusterSorted;
         std::transform(weightedDocs.cbegin(), weightedDocs.cend(), std::back_inserter(clusterSorted),
             [] (const WeightedDoc& elem) {
                 return elem.Doc;

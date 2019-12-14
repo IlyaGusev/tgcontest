@@ -6,17 +6,17 @@
 #include <fasttext.h>
 #include <Eigen/Core>
 
-typedef std::vector<std::reference_wrapper<const Document>> NewsCluster;
+typedef std::vector<std::reference_wrapper<const TDocument>> TNewsCluster;
 
-class Clustering {
+class TClustering {
 public:
-    using Clusters = std::vector<NewsCluster>;
+    using TClusters = std::vector<TNewsCluster>;
 
-    Clustering(FastTextEmbedder& embedder) : Embedder(embedder) {}
-    virtual ~Clustering() = default;
+    TClustering(TFastTextEmbedder& embedder) : Embedder(embedder) {}
+    virtual ~TClustering() = default;
 
-    virtual Clusters Cluster(const std::vector<Document>& docs) = 0;
+    virtual TClusters Cluster(const std::vector<TDocument>& docs) = 0;
 
 protected:
-    FastTextEmbedder& Embedder;
+    TFastTextEmbedder& Embedder;
 };

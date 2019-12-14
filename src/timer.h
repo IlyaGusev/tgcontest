@@ -5,9 +5,9 @@
 template <
     typename Clock = std::chrono::high_resolution_clock,
     typename Duration = std::chrono::microseconds>
-class Timer {
+class TTimer {
 public:
-    Timer()
+    TTimer()
         : Begin(Clock::now())
     {
     }

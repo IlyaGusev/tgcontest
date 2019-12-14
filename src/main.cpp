@@ -20,12 +20,6 @@
 #include "timer.h"
 #include "util.h"
 
-#ifdef NDEBUG
-#define LOG_DEBUG(x)
-#else
-#define LOG_DEBUG(x) std::cerr << x << std::endl;
-#endif
-
 namespace po = boost::program_options;
 
 int main(int argc, char** argv) {
@@ -78,7 +72,6 @@ int main(int argc, char** argv) {
             "news",
             "sites",
             "json",
-            "toloka",
             "categories",
             "threads",
             "top"
@@ -123,14 +116,14 @@ int main(int argc, char** argv) {
         LOG_DEBUG("Files count: " << fileNames.size());
 
         // Parse files and annotate with classifiers
-        Timer<std::chrono::high_resolution_clock, std::chrono::milliseconds> parsingTimer;
+        TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> parsingTimer;
         std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
         LOG_DEBUG("Parsing " << fileNames.size() << " files...");
-        std::vector<Document> docs;
+        std::vector<TDocument> docs;
         docs.reserve(fileNames.size() / 2);
         const auto& langDetectModel = *models.at("lang_detect_model");
         for (const std::string& path: fileNames) {
-            Document doc;
+            TDocument doc;
             try {
                 doc = ParseFile(path.c_str());
             } catch (...) {
@@ -161,7 +154,7 @@ int main(int argc, char** argv) {
         if (mode == "languages") {
             nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> langToFiles;
-            for (const Document& doc : docs) {
+            for (const TDocument& doc : docs) {
                 langToFiles[doc.Language].push_back(GetCleanFileName(doc.FileName));
             }
             for (const auto& pair : langToFiles) {
@@ -178,7 +171,7 @@ int main(int argc, char** argv) {
         } else if (mode == "sites") {
             nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> siteToTitles;
-            for (const Document& doc : docs) {
+            for (const TDocument& doc : docs) {
                 siteToTitles[doc.SiteName].push_back(doc.Title);
             }
             for (const auto& pair : siteToTitles) {
@@ -194,11 +187,11 @@ int main(int argc, char** argv) {
             return 0;
         } else if (mode == "json") {
             nlohmann::json outputJson = nlohmann::json::array();
-            for (const Document& doc : docs) {
+            for (const TDocument& doc : docs) {
                 nlohmann::json object = {
                     {"url", doc.Url},
                     {"site_name", doc.SiteName},
-                    {"date", doc.DateTime},
+                    {"date", doc.FetchDateTime},
                     {"title", doc.Title},
                     {"description", doc.Description},
                     {"text", doc.Text},
@@ -213,7 +206,7 @@ int main(int argc, char** argv) {
             return 0;
         } else if (mode == "news") {
             nlohmann::json articles = nlohmann::json::array();
-            for (const Document& doc : docs) {
+            for (const TDocument& doc : docs) {
                 articles.push_back(GetCleanFileName(doc.FileName));
             }
             nlohmann::json outputJson = nlohmann::json::object();
@@ -223,7 +216,7 @@ int main(int argc, char** argv) {
         } else if (mode == "categories") {
             nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> catToFiles;
-            for (const Document& doc : docs) {
+            for (const TDocument& doc : docs) {
                 catToFiles[doc.Category].push_back(GetCleanFileName(doc.FileName));
             }
             for (const auto& pair : catToFiles) {
@@ -241,12 +234,12 @@ int main(int argc, char** argv) {
             assert(false);
         }
         std::stable_sort(docs.begin(), docs.end(),
-            [](const Document& d1, const Document& d2) { return d1.Timestamp < d2.Timestamp; }
+            [](const TDocument& d1, const TDocument& d2) { return d1.FetchTime < d2.FetchTime; }
         );
 
         // Clustering
-        std::unique_ptr<Clustering> ruClustering;
-        std::unique_ptr<Clustering> enClustering;
+        std::unique_ptr<TClustering> ruClustering;
+        std::unique_ptr<TClustering> enClustering;
         const std::string clusteringType = vm["clustering_type"].as<std::string>();
         const std::string ruMatrixPath = vm["ru_sentence_embedder_matrix"].as<std::string>();
         const std::string ruBiasPath = vm["ru_sentence_embedder_bias"].as<std::string>();
@@ -254,36 +247,36 @@ int main(int argc, char** argv) {
         const std::string enBiasPath = vm["en_sentence_embedder_bias"].as<std::string>();
         const size_t ruMaxWords = vm["ru_clustering_max_words"].as<size_t>();
         const size_t enMaxWords = vm["en_clustering_max_words"].as<size_t>();
-        FastTextEmbedder ruEmbedder(
+        TFastTextEmbedder ruEmbedder(
             *models.at("ru_vector_model"),
-            FastTextEmbedder::AM_Matrix,
+            TFastTextEmbedder::AM_Matrix,
             ruMaxWords,
             ruMatrixPath,
             ruBiasPath
         );
 
-        FastTextEmbedder enEmbedder(
+        TFastTextEmbedder enEmbedder(
             *models.at("en_vector_model"),
-            FastTextEmbedder::AM_Matrix,
+            TFastTextEmbedder::AM_Matrix,
             enMaxWords,
             enMatrixPath,
             enBiasPath
         );
         assert(clusteringType == "slink");
         const float ruDistanceThreshold = vm["ru_clustering_distance_threshold"].as<float>();
-        ruClustering = std::unique_ptr<Clustering>(
-            new SlinkClustering(ruEmbedder, ruDistanceThreshold)
+        ruClustering = std::unique_ptr<TClustering>(
+            new TSlinkClustering(ruEmbedder, ruDistanceThreshold)
         );
         const float enDistanceThreshold = vm["en_clustering_distance_threshold"].as<float>();
-        enClustering = std::unique_ptr<Clustering>(
-            new SlinkClustering(enEmbedder, enDistanceThreshold)
+        enClustering = std::unique_ptr<TClustering>(
+            new TSlinkClustering(enEmbedder, enDistanceThreshold)
         );
 
-        Timer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
-        std::vector<Document> ruDocs;
-        std::vector<Document> enDocs;
+        TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
+        std::vector<TDocument> ruDocs;
+        std::vector<TDocument> enDocs;
         while (!docs.empty()) {
-            const Document& doc = docs.back();
+            const TDocument& doc = docs.back();
             if (doc.Language == "en") {
                 enDocs.push_back(doc);
             } else if (doc.Language == "ru") {
@@ -294,15 +287,15 @@ int main(int argc, char** argv) {
         docs.shrink_to_fit();
         docs.clear();
 
-        Clustering::Clusters clusters;
+        TClustering::TClusters clusters;
         {
-            const Clustering::Clusters ruClusters = ruClustering->Cluster(ruDocs);
-            const Clustering::Clusters enClusters = enClustering->Cluster(enDocs);
+            const TClustering::TClusters ruClusters = ruClustering->Cluster(ruDocs);
+            const TClustering::TClusters enClusters = enClustering->Cluster(enDocs);
             std::copy_if(
                 ruClusters.cbegin(),
                 ruClusters.cend(),
                 std::back_inserter(clusters),
-                [](const NewsCluster& cluster) {
+                [](const TNewsCluster& cluster) {
                     return cluster.size() > 0;
                 }
             );
@@ -310,7 +303,7 @@ int main(int argc, char** argv) {
                 enClusters.cbegin(),
                 enClusters.cend(),
                 std::back_inserter(clusters),
-                [](const NewsCluster& cluster) {
+                [](const TNewsCluster& cluster) {
                     return cluster.size() > 0;
                 }
             );

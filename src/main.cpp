@@ -47,6 +47,7 @@ int main(int argc, char** argv) {
             ("rating", po::value<std::string>()->default_value("ratings/rating_merged.txt"), "rating")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
+            ("iter_timestamp_percentile", po::value<double>()->default_value(0.99), "iter_timestamp_percentile")
             ;
 
         po::positional_options_description p;
@@ -218,6 +219,7 @@ int main(int argc, char** argv) {
             std::map<std::string, std::vector<std::string>> catToFiles;
             for (const TDocument& doc : docs) {
                 catToFiles[doc.Category].push_back(GetCleanFileName(doc.FileName));
+                LOG_DEBUG(doc.Category << "\t" << doc.Title);
             }
             for (const auto& pair : catToFiles) {
                 const std::string& category = pair.first;
@@ -334,7 +336,9 @@ int main(int argc, char** argv) {
             std::cout << outputJson.dump(4) << std::endl;
         } else if (mode == "top") {
             nlohmann::json outputJson = nlohmann::json::array();
-            const auto tops = Rank(clustersSummarized, agencyRating);
+            double iterTimestampPercentile = vm["iter_timestamp_percentile"].as<double>();
+            uint64_t iterTimestamp = GetIterTimestamp(clusters, iterTimestampPercentile);
+            const auto tops = Rank(clustersSummarized, agencyRating, iterTimestamp);
             for (auto it = tops.begin(); it != tops.end(); ++it) {
                 const auto categoryName = it->first;
                 nlohmann::json rubricTop = {

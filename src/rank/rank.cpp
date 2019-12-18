@@ -5,16 +5,15 @@
 #include "../util.h"
 #include "../clustering/rank_docs.h"
 
-uint64_t GetIterTimestamp(const std::vector<TNewsCluster>& clusters) {
+uint64_t GetIterTimestamp(const std::vector<TNewsCluster>& clusters, double percentile) {
     // in production here should be ts.now().
-    // but here we have 0.995 percentile of doc timestamps because of small percent of wrong dates
+    // but here we have percentile of doc timestamps because of small percent of wrong dates
     std::priority_queue<uint64_t, std::vector<uint64_t>, std::greater<uint64_t>> timestamps;
-    const float PERCENTILE = 0.99;
     uint64_t numDocs = 0;
     for (const auto& cluster: clusters) {
         numDocs += cluster.size();
     }
-    size_t prioritySize = numDocs - std::floor(PERCENTILE * numDocs);
+    size_t prioritySize = numDocs - std::floor(percentile * numDocs);
 
     for (const auto& cluster : clusters) {
         for (const auto& doc: cluster) {
@@ -87,13 +86,12 @@ double ComputeClusterWeight(
 
 std::unordered_map<std::string, std::vector<TWeightedNewsCluster>> Rank(
     const std::vector<TNewsCluster>& clusters,
-    const std::unordered_map<std::string, double>& agencyRating
+    const std::unordered_map<std::string, double>& agencyRating,
+    uint64_t iterTimestamp
 ) {
     std::vector<std::string> categoryList = {"any", "society", "economy", "technology", "sports", "entertainment", "science", "other"};
     std::unordered_map<std::string, std::vector<TWeightedNewsCluster>> output;
     std::vector<TWeightedNewsCluster> weightedClusters;
-
-    uint64_t iterTimestamp = GetIterTimestamp(clusters);
 
     for (const auto& cluster : clusters) {
         const std::string clusterCategory = ComputeClusterCategory(cluster);

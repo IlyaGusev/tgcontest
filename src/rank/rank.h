@@ -16,10 +16,10 @@ struct TWeightedNewsCluster {
         , Title(title)
         , Weight(weight)
     {}
-
 };
 
-uint64_t GetIterTimestamp(const std::vector<TNewsCluster>&); // the latest document timestamp
+// Get the latest document timestamp by percentile
+uint64_t GetIterTimestamp(const std::vector<TNewsCluster>&, double percentile=0.99);
 
 std::string ComputeClusterCategory(const TNewsCluster& cluster);
 
@@ -31,5 +31,6 @@ double ComputeClusterWeight(
 
 std::unordered_map<std::string, std::vector<TWeightedNewsCluster>> Rank(
     const std::vector<TNewsCluster>& clusters,
-    const std::unordered_map<std::string, double>& agencyRating
+    const std::unordered_map<std::string, double>& agencyRating,
+    uint64_t iterTimestamp
 );

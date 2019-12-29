@@ -14,9 +14,9 @@
 
 #include "clustering/slink.h"
 #include "clustering/rank_docs.h"
-#include "rank/rank.h"
 #include "detect.h"
-#include "parser.h"
+#include "document.h"
+#include "rank/rank.h"
 #include "timer.h"
 #include "util.h"
 
@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
         for (const std::string& path: fileNames) {
             TDocument doc;
             try {
-                doc = ParseFile(path.c_str());
+                doc.FromHtml(path.c_str());
             } catch (...) {
                 LOG_DEBUG("Bad html: " << path);
                 continue;
@@ -189,19 +189,7 @@ int main(int argc, char** argv) {
         } else if (mode == "json") {
             nlohmann::json outputJson = nlohmann::json::array();
             for (const TDocument& doc : docs) {
-                nlohmann::json object = {
-                    {"url", doc.Url},
-                    {"site_name", doc.SiteName},
-                    {"date", doc.FetchDateTime},
-                    {"title", doc.Title},
-                    {"description", doc.Description},
-                    {"text", doc.Text},
-                    {"out_links", doc.OutLinks},
-                    {"language", doc.Language},
-                    {"category", doc.Category},
-                    {"is_news", doc.IsNews}
-                };
-                outputJson.push_back(object);
+                outputJson.push_back(doc.ToJson());
             }
             std::cout << outputJson.dump(4) << std::endl;
             return 0;

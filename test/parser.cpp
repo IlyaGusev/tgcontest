@@ -13,10 +13,10 @@
 
 BOOST_AUTO_TEST_CASE( parser )
 {
-    const char* testHtmlFile = STR(TEST_PATH)"/example1.html";
+    const char* testHtmlFile = STR(TEST_PATH)"/data/example1.html";
     TDocument htmlDocument(testHtmlFile);
 
-    const char* testJsonFile = STR(TEST_PATH)"/example1.json";
+    const char* testJsonFile = STR(TEST_PATH)"/data/example1.json";
     TDocument jsonDocument(testJsonFile);
 
     //std::cerr << document.ToJson() << std::endl;

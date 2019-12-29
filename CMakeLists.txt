@@ -7,7 +7,7 @@ include(CTest)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-pthread -funroll-loops -O3 -march=native -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-pthread -funroll-loops -O3 -march=native -Wall -Wextra -Wno-sign-compare")
 
 set(BUILD_TESTING 0)
 add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
@@ -25,7 +25,7 @@ set(SOURCE_FILES
     src/clustering/rank_docs.cpp
     src/rank/rank.cpp
     src/detect.cpp
-    src/parser.cpp
+    src/document.cpp
     src/util.cpp
 )
 
@@ -37,7 +37,6 @@ set(HEADER_FILES
     src/rank/rank.h
     src/detect.h
     src/document.h
-    src/parser.h
     src/timer.h
     src/util.h
 )

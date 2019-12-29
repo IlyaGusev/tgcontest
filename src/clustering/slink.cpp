@@ -46,7 +46,7 @@ TSlinkClustering::TClusters TSlinkClustering::Cluster(
         assert(begin->Url == docs[batchStart].Url);
         for (size_t i = batchStart; i < batchStart + BatchIntersectionSize && i < labels.size(); i++) {
             size_t oldLabel = labels[i];
-            size_t j = i - batchStart;
+            int j = i - batchStart;
             assert(j >= 0 && j < newLabels.size());
             size_t newLabel = newLabels[j];
             oldLabelsToNew[oldLabel] = newLabel;

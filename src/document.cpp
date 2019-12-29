@@ -1,0 +1,167 @@
+#include "document.h"
+#include "util.h"
+
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
+#include <tinyxml2/tinyxml2.h>
+
+#include <sstream>
+#include <fstream>
+
+TDocument::TDocument(const char* fileName) {
+    if (boost::algorithm::ends_with(fileName, ".html")) {
+        FromHtml(fileName);
+    } else if (boost::algorithm::ends_with(fileName, ".json")) {
+        FromJson(fileName);
+    }
+}
+
+nlohmann::json TDocument::ToJson() const {
+    return nlohmann::json({
+        {"url", Url},
+        {"site_name", SiteName},
+        {"timestamp", FetchTime},
+        {"title", Title},
+        {"description", Description},
+        {"text", Text},
+        {"out_links", OutLinks},
+        {"language", Language},
+        {"category", Category},
+        {"is_news", IsNews}
+    });
+}
+
+void TDocument::FromJson(const char* fileName) {
+    std::ifstream fileStream(fileName);
+    nlohmann::json json;
+    fileStream >> json;
+    Url = json["url"];
+    SiteName = json["site_name"];
+    FetchTime = json["timestamp"];
+    Title = json["title"];
+    Description = json["description"];
+    Text = json["text"];
+    for (const std::string& link : json["out_links"]) {
+        OutLinks.push_back(link);
+    }
+    Language = json["language"];
+    Category = json["category"];
+    IsNews = json["is_news"];
+}
+
+std::string GetFullText(const tinyxml2::XMLElement* element) {
+    if (const tinyxml2::XMLText* textNode = element->ToText()) {
+        return textNode->Value();
+    }
+    std::string text;
+    const tinyxml2::XMLNode* node = element->FirstChild();
+    while (node) {
+        if (const tinyxml2::XMLElement* elementNode = node->ToElement()) {
+            text += GetFullText(elementNode);
+        } else if (const tinyxml2::XMLText* textNode = node->ToText()) {
+            text += textNode->Value();
+        }
+        node = node->NextSibling();
+    }
+    return text;
+}
+
+void ParseLinksFromText(const tinyxml2::XMLElement* element, std::vector<std::string>& links) {
+    const tinyxml2::XMLNode* node = element->FirstChild();
+    while (node) {
+        if (const tinyxml2::XMLElement* nodeElement = node->ToElement()) {
+            if (std::strcmp(nodeElement->Value(), "a") == 0 && nodeElement->Attribute("href")) {
+                links.push_back(nodeElement->Attribute("href"));
+            }
+            ParseLinksFromText(nodeElement, links);
+        }
+        node = node->NextSibling();
+    }
+}
+
+void TDocument::FromHtml(const char* fileName, bool parseLinks, bool shrinkText, size_t maxWords) {
+    if (!boost::filesystem::exists(fileName)) {
+        throw std::runtime_error("No HTML file");
+    }
+    FileName = fileName;
+    tinyxml2::XMLDocument originalDoc;
+    originalDoc.LoadFile(fileName);
+    const tinyxml2::XMLElement* htmlElement = originalDoc.FirstChildElement("html");
+    if (!htmlElement) {
+        throw std::runtime_error("Parser error: no html tag");
+    }
+    const tinyxml2::XMLElement* headElement = htmlElement->FirstChildElement("head");
+    if (!headElement) {
+        throw std::runtime_error("Parser error: no head");
+    }
+    const tinyxml2::XMLElement* metaElement = headElement->FirstChildElement("meta");
+    if (!metaElement) {
+        throw std::runtime_error("Parser error: no meta");
+    }
+    while (metaElement != 0) {
+        const char* property = metaElement->Attribute("property");
+        const char* content = metaElement->Attribute("content");
+        if (content == nullptr || property == nullptr) {
+            metaElement = metaElement->NextSiblingElement("meta");
+            continue;
+        }
+        if (std::strcmp(property, "og:title") == 0) {
+            Title = content;
+        }
+        if (std::strcmp(property, "og:url") == 0) {
+            Url = content;
+        }
+        if (std::strcmp(property, "og:site_name") == 0) {
+            SiteName = content;
+        }
+        if (std::strcmp(property, "og:description") == 0) {
+            Description = content;
+        }
+        if (std::strcmp(property, "article:published_time") == 0) {
+            FetchTime = DateToTimestamp(content);
+        }
+        metaElement = metaElement->NextSiblingElement("meta");
+    }
+    const tinyxml2::XMLElement* bodyElement = htmlElement->FirstChildElement("body");
+    if (!bodyElement) {
+        throw std::runtime_error("Parser error: no body");
+    }
+    const tinyxml2::XMLElement* articleElement = bodyElement->FirstChildElement("article");
+    if (!articleElement) {
+        throw std::runtime_error("Parser error: no article");
+    }
+    const tinyxml2::XMLElement* pElement = articleElement->FirstChildElement("p");
+    {
+        std::vector<std::string> links;
+        size_t wordCount = 0;
+        while (pElement && (!shrinkText || wordCount < maxWords)) {
+            std::string pText = GetFullText(pElement);
+            if (shrinkText) {
+                std::istringstream iss(pText);
+                std::string word;
+                while (iss >> word) {
+                    wordCount++;
+                }
+            }
+            Text += pText + "\n";
+            if (parseLinks) {
+                ParseLinksFromText(pElement, links);
+            }
+            pElement = pElement->NextSiblingElement("p");
+        }
+        OutLinks = std::move(links);
+    }
+    const tinyxml2::XMLElement* addressElement = articleElement->FirstChildElement("address");
+    if (!addressElement) {
+        return;
+    }
+    const tinyxml2::XMLElement* timeElement = addressElement->FirstChildElement("time");
+    if (timeElement && timeElement->Attribute("datetime")) {
+        PubTime = DateToTimestamp(timeElement->Attribute("datetime"));
+    }
+    const tinyxml2::XMLElement* aElement = addressElement->FirstChildElement("a");
+    if (aElement && aElement->Attribute("rel") && std::string(aElement->Attribute("rel")) == "author") {
+        Author = aElement->GetText();
+    }
+}
+

@@ -2,14 +2,22 @@ cmake_minimum_required(VERSION 3.0.2)
 
 project(tgnews)
 
+include(CTest)
+
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-pthread -funroll-loops -O3 -march=native -Wall -Wextra")
 
+set(BUILD_TESTING 0)
 add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/tinyxml2)
 add_subdirectory(thirdparty/eigen EXCLUDE_FROM_ALL)
+unset(BUILD_TESTING)
+
+find_package(Boost COMPONENTS program_options filesystem unit_test_framework REQUIRED)
+include_directories(${Boost_INCLUDE_DIR})
+link_directories(${Boost_LIBRARY_DIR})
 
 set(SOURCE_FILES
     src/clustering/embedder.cpp
@@ -17,7 +25,6 @@ set(SOURCE_FILES
     src/clustering/rank_docs.cpp
     src/rank/rank.cpp
     src/detect.cpp
-    src/main.cpp
     src/parser.cpp
     src/util.cpp
 )
@@ -35,25 +42,26 @@ set(HEADER_FILES
     src/util.h
 )
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-
-find_package(OpenMP)
-if (OPENMP_FOUND)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif()
-
-set(Boost_USE_MULTITHREADED ON)
-find_package(Boost COMPONENTS program_options filesystem REQUIRED)
-include_directories(${Boost_INCLUDE_DIR})
-link_directories(${Boost_LIBRARY_DIR})
-
 set(LIB_LIST
     ${Boost_LIBRARIES}
+    fasttext-static
+    tinyxml2
+    eigen
 )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fasttext/src")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${LIB_LIST} PRIVATE fasttext-static PRIVATE tinyxml2 PRIVATE eigen)
+add_executable(${PROJECT_NAME} src/main.cpp ${SOURCE_FILES} ${HEADER_FILES})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB_LIST})
+
+enable_testing()
+
+file(GLOB TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
+add_definitions(-DTEST_PATH=${CMAKE_CURRENT_SOURCE_DIR}/test)
+foreach(testSrc ${TEST_SRCS})
+    get_filename_component(testName ${testSrc} NAME_WE)
+    add_executable(${testName} ${testSrc} ${SOURCE_FILES} ${HEADER_FILES})
+    target_link_libraries(${testName} PRIVATE ${LIB_LIST})
+    add_test(NAME ${testName} COMMAND ${testName})
+endforeach(testSrc)

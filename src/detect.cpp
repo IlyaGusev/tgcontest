@@ -43,7 +43,8 @@ bool DetectIsNews(const fasttext::FastText& model, const TDocument& document) {
     return RunFasttextClf(model, sample, 0.0, "news").first == "news";
 }
 
-std::string DetectCategory(const fasttext::FastText& model, const TDocument& document) {
+ENewsCategory DetectCategory(const fasttext::FastText& model, const TDocument& document) {
     std::string sample(document.Title + " " + document.Text);
-    return RunFasttextClf(model, sample, 0.0, "other").first;
+    nlohmann::json category = RunFasttextClf(model, sample, 0.0, "other").first;
+    return category;
 }

@@ -8,12 +8,13 @@
 #include <unordered_map>
 #include <algorithm>
 
+#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <fasttext.h>
 #include <nlohmann_json/json.hpp>
 
-#include "clustering/slink.h"
 #include "clustering/rank_docs.h"
+#include "clustering/slink.h"
 #include "detect.h"
 #include "document.h"
 #include "rank/rank.h"
@@ -22,6 +23,62 @@
 #include "util.h"
 
 namespace po = boost::program_options;
+using TModelStorage = std::unordered_map<std::string, std::unique_ptr<fasttext::FastText>>;
+
+void Annotate(
+    const std::vector<std::string>& fileNames,
+    const TModelStorage& models,
+    const std::vector<std::string>& languages,
+    std::vector<TDocument>& docs,
+    size_t minTextLength = 20)
+{
+    LOG_DEBUG("Annotating " << fileNames.size() << " files...");
+    TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> timer;
+    docs.clear();
+    docs.reserve(fileNames.size() / 2);
+    TThreadPool threadPool;
+    const auto& langDetectModel = *models.at("lang_detect_model");
+    auto annotateDocument = [&](const std::string& path) -> boost::optional<TDocument> {
+        TDocument doc;
+        try {
+            doc.FromHtml(path.c_str());
+        } catch (...) {
+            LOG_DEBUG("Bad html: " << path);
+            return boost::none;
+        }
+        if (doc.Text.length() < minTextLength) {
+            return boost::none;
+        }
+        doc.Language = DetectLanguage(langDetectModel, doc);
+        if (!doc.Language || std::find(languages.begin(), languages.end(), doc.Language.get()) == languages.end()) {
+            return boost::none;
+        }
+        bool isNews = DetectIsNews(*models.at(*doc.Language + "_news_detect_model"), doc);
+        doc.Category = isNews ? DetectCategory(*models.at(*doc.Language + "_cat_detect_model"), doc) : NC_NOT_NEWS;
+        return doc;
+    };
+
+    std::vector<std::future<boost::optional<TDocument>>> futures;
+    futures.reserve(fileNames.size());
+    for (const std::string& path: fileNames) {
+        futures.push_back(threadPool.enqueue(annotateDocument, path));
+    }
+
+    for (auto& futureDoc : futures) {
+        boost::optional<TDocument> doc = futureDoc.get();
+        if (!doc
+            || !doc->Language
+            || doc->Category == NC_UNDEFINED
+            || doc->Category == NC_NOT_NEWS)
+        {
+            continue;
+        }
+        docs.push_back(std::move(doc.get()));
+    }
+    docs.shrink_to_fit();
+    LOG_DEBUG("Annotation: " << docs.size() << " documents saved, " << timer.Elapsed() << " ms");
+}
+
 
 int main(int argc, char** argv) {
     try {
@@ -94,7 +151,7 @@ int main(int argc, char** argv) {
             "en_vector_model",
             "ru_vector_model"
         };
-        std::unordered_map<std::string, std::unique_ptr<fasttext::FastText>>models;
+        TModelStorage models;
         for (const auto& optionName : modelsOptions) {
             const std::string modelPath = vm[optionName].as<std::string>();
             std::unique_ptr<fasttext::FastText> model(new fasttext::FastText());
@@ -118,55 +175,9 @@ int main(int argc, char** argv) {
         LOG_DEBUG("Files count: " << fileNames.size());
 
         // Parse files and annotate with classifiers
-        TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> parsingTimer;
         std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
-        LOG_DEBUG("Parsing " << fileNames.size() << " files...");
         std::vector<TDocument> docs;
-        docs.reserve(fileNames.size() / 2);
-        const auto& langDetectModel = *models.at("lang_detect_model");
-        {
-            TThreadPool threadPool;
-            auto function = [&](const std::string& path) {
-                TDocument doc;
-                try {
-                    doc.FromHtml(path.c_str());
-                } catch (...) {
-                    LOG_DEBUG("Bad html: " << path);
-                    return doc;
-                }
-                if (doc.Text.length() < 20) {
-                    return doc;
-                }
-                std::string language = DetectLanguage(langDetectModel, doc);
-                doc.Language = language;
-                if (std::find(languages.begin(), languages.end(), language) == languages.end()) {
-                    return doc;
-                }
-                bool isNews = DetectIsNews(*models.at(language + "_news_detect_model"), doc);
-                doc.Category = isNews ? DetectCategory(*models.at(language + "_cat_detect_model"), doc) : NC_NOT_NEWS;
-                return doc;
-            };
-
-            std::vector<std::future<TDocument>> futures;
-            futures.reserve(fileNames.size());
-            for (const std::string& path: fileNames) {
-                futures.push_back(threadPool.enqueue(function, path));
-            }
-
-            for (auto& futureDoc : futures) {
-                TDocument doc = futureDoc.get();
-                if (!doc.Language
-                    || doc.Category == NC_UNDEFINED
-                    || doc.Category == NC_NOT_NEWS)
-                {
-                    continue;
-                }
-                docs.push_back(doc);
-            }
-        }
-
-        docs.shrink_to_fit();
-        LOG_DEBUG("Parsing: " << docs.size() << " documents saved, " << parsingTimer.Elapsed() << " ms");
+        Annotate(fileNames, models, languages, docs);
 
         // Output
         if (mode == "languages") {
@@ -188,7 +199,7 @@ int main(int argc, char** argv) {
             return 0;
         } else if (mode == "sites") {
             nlohmann::json outputJson = nlohmann::json::array();
-            std::map<std::string, std::vector<std::string>> siteToTitles;
+            std::unordered_map<std::string, std::vector<std::string>> siteToTitles;
             for (const TDocument& doc : docs) {
                 siteToTitles[doc.SiteName].push_back(doc.Title);
             }
@@ -244,46 +255,44 @@ int main(int argc, char** argv) {
         } else if (mode != "threads" && mode != "top") {
             assert(false);
         }
+
+        // Clustering
+        for (const auto& language : languages) {
+            if (language != "ru" && language != "en") {
+                LOG_DEBUG("Only Russian and English are supported for clustering!");
+            }
+        }
+
         std::stable_sort(docs.begin(), docs.end(),
             [](const TDocument& d1, const TDocument& d2) { return d1.FetchTime < d2.FetchTime; }
         );
 
-        // Clustering
-        std::unique_ptr<TClustering> ruClustering;
-        std::unique_ptr<TClustering> enClustering;
         const std::string clusteringType = vm["clustering_type"].as<std::string>();
-        const std::string ruMatrixPath = vm["ru_sentence_embedder_matrix"].as<std::string>();
-        const std::string ruBiasPath = vm["ru_sentence_embedder_bias"].as<std::string>();
-        const std::string enMatrixPath = vm["en_sentence_embedder_matrix"].as<std::string>();
-        const std::string enBiasPath = vm["en_sentence_embedder_bias"].as<std::string>();
-        const size_t ruMaxWords = vm["ru_clustering_max_words"].as<size_t>();
-        const size_t enMaxWords = vm["en_clustering_max_words"].as<size_t>();
-        TFastTextEmbedder ruEmbedder(
-            *models.at("ru_vector_model"),
-            TFastTextEmbedder::AM_Matrix,
-            ruMaxWords,
-            ruMatrixPath,
-            ruBiasPath
-        );
-
-        TFastTextEmbedder enEmbedder(
-            *models.at("en_vector_model"),
-            TFastTextEmbedder::AM_Matrix,
-            enMaxWords,
-            enMatrixPath,
-            enBiasPath
-        );
         assert(clusteringType == "slink");
-        const float ruDistanceThreshold = vm["ru_clustering_distance_threshold"].as<float>();
-        ruClustering = std::unique_ptr<TClustering>(
-            new TSlinkClustering(ruEmbedder, ruDistanceThreshold)
-        );
-        const float enDistanceThreshold = vm["en_clustering_distance_threshold"].as<float>();
-        enClustering = std::unique_ptr<TClustering>(
-            new TSlinkClustering(enEmbedder, enDistanceThreshold)
-        );
 
-        TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
+        const std::array<std::string, 2> clusteringLanguages = {"ru", "en"};
+        std::map<std::string, std::unique_ptr<TClustering>> clusterings;
+        std::map<std::string, std::unique_ptr<TFastTextEmbedder>> embedders;
+        for (const std::string& language : clusteringLanguages) {
+            const std::string matrixPath = vm[language + "_sentence_embedder_matrix"].as<std::string>();
+            const std::string biasPath = vm[language + "_sentence_embedder_bias"].as<std::string>();
+            const size_t maxWords = vm[language + "_clustering_max_words"].as<size_t>();
+
+            std::unique_ptr<TFastTextEmbedder> embedder(new TFastTextEmbedder(
+                *models.at(language + "_vector_model"),
+                TFastTextEmbedder::AM_Matrix,
+                maxWords,
+                matrixPath,
+                biasPath
+            ));
+            embedders[language] = std::move(embedder);
+            const float distanceThreshold = vm[language+"_clustering_distance_threshold"].as<float>();
+            std::unique_ptr<TClustering> clustering(
+                new TSlinkClustering(*embedders[language], distanceThreshold)
+            );
+            clusterings[language] = std::move(clustering);
+        }
+
         std::vector<TDocument> ruDocs;
         std::vector<TDocument> enDocs;
         while (!docs.empty()) {
@@ -298,10 +307,11 @@ int main(int argc, char** argv) {
         docs.shrink_to_fit();
         docs.clear();
 
+        TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
         TClustering::TClusters clusters;
         {
-            const TClustering::TClusters ruClusters = ruClustering->Cluster(ruDocs);
-            const TClustering::TClusters enClusters = enClustering->Cluster(enDocs);
+            const TClustering::TClusters ruClusters = clusterings["ru"]->Cluster(ruDocs);
+            const TClustering::TClusters enClusters = clusterings["en"]->Cluster(enDocs);
             std::copy_if(
                 ruClusters.cbegin(),
                 ruClusters.cend(),
@@ -321,7 +331,7 @@ int main(int argc, char** argv) {
         }
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms (" << clusters.size() << " clusters)");
 
-        const auto clustersSummarized = RankClustersDocs(clusters, agencyRating, ruEmbedder, enEmbedder);
+        const auto clustersSummarized = RankClustersDocs(clusters, agencyRating, *embedders["ru"], *embedders["en"]);
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();
             for (const auto& cluster : clustersSummarized) {

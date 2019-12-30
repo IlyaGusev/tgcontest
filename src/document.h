@@ -53,7 +53,7 @@ public:
 
     // Calculated fields
     boost::optional<std::string> Language;
-    ENewsCategory Category;
+    ENewsCategory Category = NC_UNDEFINED;
 
 public:
     TDocument() = default;

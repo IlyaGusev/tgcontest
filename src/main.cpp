@@ -17,6 +17,7 @@
 #include "detect.h"
 #include "document.h"
 #include "rank/rank.h"
+#include "thread_pool.h"
 #include "timer.h"
 #include "util.h"
 
@@ -123,26 +124,47 @@ int main(int argc, char** argv) {
         std::vector<TDocument> docs;
         docs.reserve(fileNames.size() / 2);
         const auto& langDetectModel = *models.at("lang_detect_model");
-        for (const std::string& path: fileNames) {
-            TDocument doc;
-            try {
-                doc.FromHtml(path.c_str());
-            } catch (...) {
-                LOG_DEBUG("Bad html: " << path);
-                continue;
+        {
+            TThreadPool threadPool;
+            auto function = [&](const std::string& path) {
+                TDocument doc;
+                try {
+                    doc.FromHtml(path.c_str());
+                } catch (...) {
+                    LOG_DEBUG("Bad html: " << path);
+                    return doc;
+                }
+                if (doc.Text.length() < 20) {
+                    return doc;
+                }
+                std::string language = DetectLanguage(langDetectModel, doc);
+                doc.Language = language;
+                if (std::find(languages.begin(), languages.end(), language) == languages.end()) {
+                    return doc;
+                }
+                bool isNews = DetectIsNews(*models.at(language + "_news_detect_model"), doc);
+                doc.Category = isNews ? DetectCategory(*models.at(language + "_cat_detect_model"), doc) : NC_NOT_NEWS;
+                return doc;
+            };
+
+            std::vector<std::future<TDocument>> futures;
+            futures.reserve(fileNames.size());
+            for (const std::string& path: fileNames) {
+                futures.push_back(threadPool.enqueue(function, path));
             }
-            std::string language = DetectLanguage(langDetectModel, doc);
-            doc.Language = language;
-            if (std::find(languages.begin(), languages.end(), language) == languages.end()) {
-                continue;
+
+            for (auto& futureDoc : futures) {
+                TDocument doc = futureDoc.get();
+                if (!doc.Language
+                    || doc.Category == NC_UNDEFINED
+                    || doc.Category == NC_NOT_NEWS)
+                {
+                    continue;
+                }
+                docs.push_back(doc);
             }
-            bool isNews = DetectIsNews(*models.at(language + "_news_detect_model"), doc);
-            doc.Category = isNews ? DetectCategory(*models.at(language + "_cat_detect_model"), doc) : NC_NOT_NEWS;
-            if (doc.Category == NC_UNDEFINED || doc.Category == NC_NOT_NEWS || doc.Text.length() < 20) {
-                continue;
-            }
-            docs.push_back(doc);
         }
+
         docs.shrink_to_fit();
         LOG_DEBUG("Parsing: " << docs.size() << " documents saved, " << parsingTimer.Elapsed() << " ms");
 

@@ -17,36 +17,45 @@ TDocument::TDocument(const char* fileName) {
 }
 
 nlohmann::json TDocument::ToJson() const {
-    return nlohmann::json({
+    nlohmann::json json({
         {"url", Url},
         {"site_name", SiteName},
         {"timestamp", FetchTime},
         {"title", Title},
         {"description", Description},
         {"text", Text},
-        {"out_links", OutLinks},
-        {"language", Language},
-        {"category", Category},
-        {"is_news", IsNews}
     });
+    if (!OutLinks.empty()) {
+        json["out_links"] = OutLinks;
+    }
+    if (Language) {
+        json["language"] = Language.get();
+    }
+    if (Category != NC_UNDEFINED) {
+        json["category"] = Category;
+    }
+    return json;
 }
 
 void TDocument::FromJson(const char* fileName) {
     std::ifstream fileStream(fileName);
     nlohmann::json json;
     fileStream >> json;
-    Url = json["url"];
-    SiteName = json["site_name"];
-    FetchTime = json["timestamp"];
-    Title = json["title"];
-    Description = json["description"];
-    Text = json["text"];
-    for (const std::string& link : json["out_links"]) {
-        OutLinks.push_back(link);
+    json.at("url").get_to(Url);
+    json.at("site_name").get_to(SiteName);
+    json.at("timestamp").get_to(FetchTime);
+    json.at("title").get_to(Title);
+    json.at("description").get_to(Description);
+    json.at("text").get_to(Text);
+    if (json.contains("out_links")) {
+        json.at("out_links").get_to(OutLinks);
     }
-    Language = json["language"];
-    Category = json["category"];
-    IsNews = json["is_news"];
+    if (json.contains("language")) {
+        Language = json.at("language");
+    }
+    if (json.contains("category")) {
+        json.at("category").get_to(Category);
+    }
 }
 
 std::string GetFullText(const tinyxml2::XMLElement* element) {

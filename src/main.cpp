@@ -131,19 +131,14 @@ int main(int argc, char** argv) {
                 LOG_DEBUG("Bad html: " << path);
                 continue;
             }
-            doc.Language = DetectLanguage(langDetectModel, doc);
-            if (std::find(languages.begin(), languages.end(), doc.Language) == languages.end()) {
+            std::string language = DetectLanguage(langDetectModel, doc);
+            doc.Language = language;
+            if (std::find(languages.begin(), languages.end(), language) == languages.end()) {
                 continue;
             }
-            doc.IsNews = DetectIsNews(*models.at(doc.Language + "_news_detect_model"), doc);
-            doc.Category = DetectCategory(*models.at(doc.Language + "_cat_detect_model"), doc);
-            if (doc.Category == "not_news") {
-                doc.IsNews = false;
-            }
-            if (!doc.IsNews) {
-                continue;
-            }
-            if (doc.Text.length() < 20) {
+            bool isNews = DetectIsNews(*models.at(language + "_news_detect_model"), doc);
+            doc.Category = isNews ? DetectCategory(*models.at(language + "_cat_detect_model"), doc) : NC_NOT_NEWS;
+            if (doc.Category == NC_UNDEFINED || doc.Category == NC_NOT_NEWS || doc.Text.length() < 20) {
                 continue;
             }
             docs.push_back(doc);
@@ -156,7 +151,7 @@ int main(int argc, char** argv) {
             nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> langToFiles;
             for (const TDocument& doc : docs) {
-                langToFiles[doc.Language].push_back(GetCleanFileName(doc.FileName));
+                langToFiles[doc.Language.get()].push_back(GetCleanFileName(doc.FileName));
             }
             for (const auto& pair : langToFiles) {
                 const std::string& language = pair.first;
@@ -204,14 +199,18 @@ int main(int argc, char** argv) {
             return 0;
         } else if (mode == "categories") {
             nlohmann::json outputJson = nlohmann::json::array();
-            std::map<std::string, std::vector<std::string>> catToFiles;
+            std::vector<std::vector<std::string>> catToFiles(NC_COUNT);
             for (const TDocument& doc : docs) {
-                catToFiles[doc.Category].push_back(GetCleanFileName(doc.FileName));
-                LOG_DEBUG(doc.Category << "\t" << doc.Title);
+                ENewsCategory category = doc.Category;
+                if (category == NC_UNDEFINED || category == NC_NOT_NEWS) {
+                    continue;
+                }
+                catToFiles[static_cast<size_t>(category)].push_back(GetCleanFileName(doc.FileName));
+                LOG_DEBUG(category << "\t" << doc.Title);
             }
-            for (const auto& pair : catToFiles) {
-                const std::string& category = pair.first;
-                const std::vector<std::string>& files = pair.second;
+            for (size_t i = 0; i < NC_COUNT; i++) {
+                ENewsCategory category = static_cast<ENewsCategory>(i);
+                const std::vector<std::string>& files = catToFiles[i];
                 nlohmann::json object = {
                     {"category", category},
                     {"articles", files}
@@ -267,9 +266,9 @@ int main(int argc, char** argv) {
         std::vector<TDocument> enDocs;
         while (!docs.empty()) {
             const TDocument& doc = docs.back();
-            if (doc.Language == "en") {
+            if (doc.IsEnglish()) {
                 enDocs.push_back(doc);
-            } else if (doc.Language == "ru") {
+            } else if (doc.IsRussian()) {
                 ruDocs.push_back(doc);
             }
             docs.pop_back();
@@ -328,12 +327,12 @@ int main(int argc, char** argv) {
             uint64_t iterTimestamp = GetIterTimestamp(clusters, iterTimestampPercentile);
             const auto tops = Rank(clustersSummarized, agencyRating, iterTimestamp);
             for (auto it = tops.begin(); it != tops.end(); ++it) {
-                const auto categoryName = it->first;
+                const auto category = static_cast<ENewsCategory>(std::distance(tops.begin(), it));
                 nlohmann::json rubricTop = {
-                    {"category", categoryName},
+                    {"category", category},
                     {"threads", nlohmann::json::array()}
                 };
-                for (const auto& cluster : it->second) {
+                for (const auto& cluster : *it) {
                     nlohmann::json object = {
                         {"title", cluster.Title},
                         {"category", cluster.Category},

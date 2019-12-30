@@ -7,8 +7,6 @@
 #include "../util.h"
 #include "../clustering/rank_docs.h"
 
-static const char* MAIN_CATEGORY = "any";
-
 uint64_t GetIterTimestamp(const std::vector<TNewsCluster>& clusters, double percentile) {
     // In production ts.now() should be here.
     // In this case we have percentile of documents timestamps because of the small percent of wrong dates.
@@ -31,19 +29,15 @@ uint64_t GetIterTimestamp(const std::vector<TNewsCluster>& clusters, double perc
     return timestamps.size() > 0 ? timestamps.top() : 0;
 }
 
-std::string ComputeClusterCategory(const TNewsCluster& cluster) {
-    std::unordered_map<std::string, size_t> categoryCount;
+ENewsCategory ComputeClusterCategory(const TNewsCluster& cluster) {
+    std::vector<size_t> categoryCount(NC_COUNT);
     for (const auto& doc : cluster) {
-        std::string docCategory = doc.get().Category;
-        categoryCount[docCategory] += 1;
+        ENewsCategory docCategory = doc.get().Category;
+        assert(docCategory != NC_UNDEFINED && docCategory != NC_NOT_NEWS);
+        categoryCount[static_cast<size_t>(docCategory)] += 1;
     }
-    const std::string& clusterCategory = std::max_element(categoryCount.begin(), categoryCount.end(),
-        [](const std::pair<std::string, size_t>& a, const std::pair<std::string, size_t>& b) {
-            return a.second < b.second;
-        }
-    )->first;
-
-    return clusterCategory;
+    auto it = std::max_element(categoryCount.begin(), categoryCount.end());
+    return static_cast<ENewsCategory>(std::distance(categoryCount.begin(), it));
 }
 
 double ComputeClusterWeight(
@@ -80,14 +74,14 @@ double ComputeClusterWeight(
 }
 
 
-std::unordered_map<std::string, std::vector<TWeightedNewsCluster>> Rank(
+std::vector<std::vector<TWeightedNewsCluster>> Rank(
     const std::vector<TNewsCluster>& clusters,
     const std::unordered_map<std::string, double>& agencyRating,
     uint64_t iterTimestamp
 ) {
     std::vector<TWeightedNewsCluster> weightedClusters;
     for (const TNewsCluster& cluster : clusters) {
-        const std::string clusterCategory = ComputeClusterCategory(cluster);
+        ENewsCategory clusterCategory = ComputeClusterCategory(cluster);
         const std::string& title = cluster[0].get().Title;
         const double weight = ComputeClusterWeight(cluster, agencyRating, iterTimestamp);
         weightedClusters.emplace_back(cluster, clusterCategory, title, weight);
@@ -99,10 +93,11 @@ std::unordered_map<std::string, std::vector<TWeightedNewsCluster>> Rank(
         }
     );
 
-    std::unordered_map<std::string, std::vector<TWeightedNewsCluster>> output;
+    std::vector<std::vector<TWeightedNewsCluster>> output(NC_COUNT);
     for (const TWeightedNewsCluster& cluster : weightedClusters) {
-        output[cluster.Category].push_back(cluster);
-        output[MAIN_CATEGORY].push_back(cluster);
+        assert(cluster.Category != NC_UNDEFINED);
+        output[static_cast<size_t>(cluster.Category)].push_back(cluster);
+        output[static_cast<size_t>(NC_ANY)].push_back(cluster);
     }
 
     return output;

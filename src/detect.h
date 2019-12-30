@@ -1,8 +1,6 @@
 #pragma once
 
-#include <string>
-
-struct TDocument;
+#include "document.h"
 
 namespace fasttext {
     class FastText;
@@ -10,4 +8,4 @@ namespace fasttext {
 
 std::string DetectLanguage(const fasttext::FastText& model, const TDocument& document);
 bool DetectIsNews(const fasttext::FastText& model, const TDocument& document);
-std::string DetectCategory(const fasttext::FastText& model, const TDocument& document);
+ENewsCategory DetectCategory(const fasttext::FastText& model, const TDocument& document);

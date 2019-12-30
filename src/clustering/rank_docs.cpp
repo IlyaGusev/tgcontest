@@ -77,13 +77,13 @@ std::vector<TNewsCluster> RankClustersDocs(
         if (cluster.empty()) {
             continue;
         }
-        size_t embSize = cluster[0].get().Language == "ru" ? ruModel.GetEmbeddingSize() : enModel.GetEmbeddingSize();
+        size_t embSize = cluster[0].get().IsRussian() ? ruModel.GetEmbeddingSize() : enModel.GetEmbeddingSize();
 
         Eigen::MatrixXf points(cluster.size(), embSize);
         for (size_t i = 0; i < cluster.size(); i++) {
             const TDocument& doc = cluster[i];
 
-            auto& model = doc.Language == "ru" ? ruModel : enModel;
+            auto& model = doc.IsRussian() ? ruModel : enModel;
             fasttext::Vector embedding = model.GetSentenceEmbedding(doc);
             Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
             points.row(i) = eigenVector / eigenVector.norm();

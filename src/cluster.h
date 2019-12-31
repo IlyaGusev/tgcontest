@@ -19,5 +19,7 @@ public:
     size_t GetSize() const { return Documents.size(); }
     const std::vector<std::reference_wrapper<const TDocument>>& GetDocuments() const { return Documents; }
     std::string GetLanguage() const { return Documents.at(0).get().Language.get(); }
+    void SortByWeights(const std::vector<double>& weights);
 };
 
+using TClusters = std::vector<TNewsCluster>;

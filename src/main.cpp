@@ -15,11 +15,11 @@
 #include <nlohmann_json/json.hpp>
 
 #include "agency_rating.h"
-#include "clustering/rank_docs.h"
 #include "clustering/slink.h"
 #include "detect.h"
 #include "document.h"
 #include "rank/rank.h"
+#include "summarize.h"
 #include "thread_pool.h"
 #include "timer.h"
 #include "util.h"
@@ -324,9 +324,9 @@ int main(int argc, char** argv) {
         docs.clear();
 
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
-        TClustering::TClusters clusters;
+        TClusters clusters;
         for (const std::string& language : clusteringLanguages) {
-            const TClustering::TClusters langClusters = clusterings[language]->Cluster(lang2Docs[language]);
+            const TClusters langClusters = clusterings[language]->Cluster(lang2Docs[language]);
             std::copy_if(
                 langClusters.cbegin(),
                 langClusters.cend(),
@@ -338,10 +338,11 @@ int main(int argc, char** argv) {
         }
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms (" << clusters.size() << " clusters)");
 
-        const auto clustersSummarized = RankClustersDocs(clusters, agencyRating, embedders);
+        //Summarization
+        Summarize(clusters, agencyRating, embedders);
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();
-            for (const auto& cluster : clustersSummarized) {
+            for (const auto& cluster : clusters) {
                 nlohmann::json files = nlohmann::json::array();
                 for (const TDocument& doc : cluster.GetDocuments()) {
                     files.push_back(GetCleanFileName(doc.FileName));
@@ -365,7 +366,7 @@ int main(int argc, char** argv) {
         }
 
         // Ranking
-        const auto tops = Rank(clustersSummarized, agencyRating, iterTimestamp);
+        const auto tops = Rank(clusters, agencyRating, iterTimestamp);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<ENewsCategory>(std::distance(tops.begin(), it));

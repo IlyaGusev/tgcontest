@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Datasets
-
 data_list=(
     "https://data-static.usercontent.dev/DataClusteringSample0107.tar.gz"
     "https://data-static.usercontent.dev/DataClusteringSample0817.tar.gz"
@@ -13,5 +11,6 @@ data_list=(
 
 mkdir data
 for url in ${data_list[@]}; do
-    wget -qO - $url | tar -xvz -C data
+    echo $url
+    wget -qO - $url | tar -xz -C data
 done

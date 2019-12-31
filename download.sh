@@ -1,8 +1,11 @@
 #!/bin/bash
 
-data_list=(
+data_train_list=(
     "https://data-static.usercontent.dev/DataClusteringSample0107.tar.gz"
     "https://data-static.usercontent.dev/DataClusteringSample0817.tar.gz"
+)
+
+data_test_list=(
     "https://data-static.usercontent.dev/DataClusteringSample1821.tar.gz"
     "https://data-static.usercontent.dev/DataClusteringSample2225.tar.gz"
     "https://data-static.usercontent.dev/DataClusteringDataset.tar.gz"
@@ -10,7 +13,13 @@ data_list=(
 )
 
 mkdir data
-for url in ${data_list[@]}; do
+for url in ${data_train_list[@]}; do
     echo $url
     wget -qO - $url | tar -xz -C data
+done
+
+mkdir data_test
+for url in ${data_test_list[@]}; do
+    echo $url
+    wget -qO - $url | tar -xz -C data_test
 done

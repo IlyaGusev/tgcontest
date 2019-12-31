@@ -2,9 +2,6 @@
 
 [![Build Status](https://travis-ci.com/IlyaGusev/tgcontest.svg?token=9pgxYSDpb2YAVSfz53Nq&branch=master)](https://travis-ci.com/IlyaGusev/tgcontest)
 
-Wiki: https://github.com/IlyaGusev/tgcontest/wiki
-
-
 ## Install
 Prerequisites: CMake, Boost
 ```

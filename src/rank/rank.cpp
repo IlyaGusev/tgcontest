@@ -1,15 +1,10 @@
-#include <set>
-#include <unordered_map>
-#include <cmath>
-#include <queue>
-
 #include "rank.h"
 #include "../util.h"
 #include "../clustering/rank_docs.h"
 
 double ComputeClusterWeight(
     const TNewsCluster& cluster,
-    const std::unordered_map<std::string, double>& agencyRating,
+    const TAgencyRating& agencyRating,
     const uint64_t iterTimestamp
 ) {
     std::set<std::string> seenHosts;
@@ -17,7 +12,7 @@ double ComputeClusterWeight(
     for (const TDocument& doc : cluster.GetDocuments()) {
         const std::string& docHost = GetHost(doc.Url);
         if (seenHosts.insert(docHost).second) {
-            agenciesWeight += ComputeDocAgencyWeight(doc, agencyRating);
+            agenciesWeight += agencyRating.ScoreUrl(doc.Url);
         }
     }
 
@@ -26,7 +21,7 @@ double ComputeClusterWeight(
     double timeMultiplier = Sigmoid(clusterTimestampRemapped);
 
     // Pessimize only clusters with size < 5
-    const size_t clusterSize = cluster.GetSize();
+    size_t clusterSize = cluster.GetSize();
     double smallClusterCoef = std::min(clusterSize * 0.2, 1.0);
 
     return agenciesWeight * timeMultiplier * smallClusterCoef;
@@ -34,8 +29,8 @@ double ComputeClusterWeight(
 
 
 std::vector<std::vector<TWeightedNewsCluster>> Rank(
-    const std::vector<TNewsCluster>& clusters,
-    const std::unordered_map<std::string, double>& agencyRating,
+    const TClustering::TClusters& clusters,
+    const TAgencyRating& agencyRating,
     uint64_t iterTimestamp
 ) {
     std::vector<TWeightedNewsCluster> weightedClusters;

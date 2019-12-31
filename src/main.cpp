@@ -14,6 +14,7 @@
 #include <fasttext.h>
 #include <nlohmann_json/json.hpp>
 
+#include "agency_rating.h"
 #include "clustering/rank_docs.h"
 #include "clustering/slink.h"
 #include "detect.h"
@@ -177,7 +178,7 @@ int main(int argc, char** argv) {
         // Load agency ratings
         LOG_DEBUG("Loading agency ratings...");
         const std::string ratingPath = vm["rating"].as<std::string>();
-        std::unordered_map<std::string, double> agencyRating = LoadRatings(ratingPath);
+        TAgencyRating agencyRating(ratingPath);
         LOG_DEBUG("Agency ratings loaded");
 
         // Read file names
@@ -337,7 +338,7 @@ int main(int argc, char** argv) {
         }
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms (" << clusters.size() << " clusters)");
 
-        const auto clustersSummarized = RankClustersDocs(clusters, agencyRating, *embedders["ru"], *embedders["en"]);
+        const auto clustersSummarized = RankClustersDocs(clusters, agencyRating, embedders);
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();
             for (const auto& cluster : clustersSummarized) {

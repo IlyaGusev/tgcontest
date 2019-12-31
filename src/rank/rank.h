@@ -1,8 +1,10 @@
+#include "../agency_rating.h"
+#include "../clustering/clustering.h"
+
 #include <cstdint>
 #include <unordered_map>
 #include <string>
 #include <vector>
-#include "../clustering/clustering.h"
 
 
 struct TWeightedNewsCluster {
@@ -20,12 +22,12 @@ struct TWeightedNewsCluster {
 
 double ComputeClusterWeight(
     const TNewsCluster& cluster,
-    const std::unordered_map<std::string, double>& agencyRating,
+    const TAgencyRating& agencyRating,
     const uint64_t iterTimestamp
 );
 
 std::vector<std::vector<TWeightedNewsCluster>> Rank(
-    const std::vector<TNewsCluster>& clusters,
-    const std::unordered_map<std::string, double>& agencyRating,
+    const TClustering::TClusters& clusters,
+    const TAgencyRating& agencyRating,
     uint64_t iterTimestamp
 );

@@ -27,12 +27,13 @@ link_directories(${Boost_LIBRARY_DIR})
 
 set(SOURCE_FILES
     src/agency_rating.cpp
+    src/annotate.cpp
     src/cluster.cpp
     src/clustering/slink.cpp
     src/detect.cpp
     src/document.cpp
     src/embedder.cpp
-    src/rank/rank.cpp
+    src/rank.cpp
     src/summarize.cpp
     src/thread_pool.cpp
     src/util.cpp
@@ -40,13 +41,14 @@ set(SOURCE_FILES
 
 set(HEADER_FILES
     src/agency_rating.h
+    src/annotate.h
     src/cluster.h
     src/clustering/clustering.h
     src/clustering/slink.h
     src/detect.h
     src/document.h
     src/embedder.h
-    src/rank/rank.h
+    src/rank.h
     src/summarize.h
     src/thread_pool.h
     src/timer.h

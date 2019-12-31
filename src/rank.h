@@ -1,5 +1,5 @@
-#include "../agency_rating.h"
-#include "../clustering/clustering.h"
+#include "agency_rating.h"
+#include "clustering/clustering.h"
 
 #include <cstdint>
 #include <unordered_map>

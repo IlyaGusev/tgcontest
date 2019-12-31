@@ -1,5 +1,5 @@
 #include "rank.h"
-#include "../util.h"
+#include "util.h"
 
 double ComputeClusterWeight(
     const TNewsCluster& cluster,

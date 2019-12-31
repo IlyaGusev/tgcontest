@@ -1,12 +1,13 @@
+#include <algorithm>
+#include <cassert>
 #include <exception>
 #include <iostream>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <cassert>
 #include <unordered_map>
-#include <algorithm>
 
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
@@ -28,7 +29,7 @@ using TModelStorage = std::unordered_map<std::string, std::unique_ptr<fasttext::
 void Annotate(
     const std::vector<std::string>& fileNames,
     const TModelStorage& models,
-    const std::vector<std::string>& languages,
+    const std::set<std::string>& languages,
     std::vector<TDocument>& docs,
     size_t minTextLength = 20)
 {
@@ -50,7 +51,7 @@ void Annotate(
             return boost::none;
         }
         doc.Language = DetectLanguage(langDetectModel, doc);
-        if (!doc.Language || std::find(languages.begin(), languages.end(), doc.Language.get()) == languages.end()) {
+        if (!doc.Language || languages.find(doc.Language.get()) == languages.end()) {
             return boost::none;
         }
         bool isNews = DetectIsNews(*models.at(*doc.Language + "_news_detect_model"), doc);
@@ -79,6 +80,19 @@ void Annotate(
     LOG_DEBUG("Annotation: " << docs.size() << " documents saved, " << timer.Elapsed() << " ms");
 }
 
+uint64_t GetIterTimestamp(const std::vector<TDocument>& documents, double percentile) {
+    // In production ts.now() should be here.
+    // In this case we have percentile of documents timestamps because of the small percent of wrong dates.
+    if (documents.empty()) {
+        return 0;
+    }
+    assert(std::is_sorted(documents.begin(), documents.end(), [](const TDocument& d1, const TDocument& d2) {
+        return d1.FetchTime < d2.FetchTime;
+    }));
+
+    size_t index = std::floor(percentile * documents.size());
+    return documents[index].FetchTime;
+}
 
 int main(int argc, char** argv) {
     try {
@@ -175,7 +189,8 @@ int main(int argc, char** argv) {
         LOG_DEBUG("Files count: " << fileNames.size());
 
         // Parse files and annotate with classifiers
-        std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
+        std::vector<std::string> l = vm["languages"].as<std::vector<std::string>>();
+        std::set<std::string> languages(l.begin(), l.end());
         std::vector<TDocument> docs;
         Annotate(fileNames, models, languages, docs);
 
@@ -257,20 +272,21 @@ int main(int argc, char** argv) {
         }
 
         // Clustering
+        const std::set<std::string> clusteringLanguages = {"ru", "en"};
         for (const auto& language : languages) {
-            if (language != "ru" && language != "en") {
-                LOG_DEBUG("Only Russian and English are supported for clustering!");
+            if (clusteringLanguages.find(language) == clusteringLanguages.end()) {
+                LOG_DEBUG("Language '" << language << "' is not supported for clustering!");
             }
         }
-
         std::stable_sort(docs.begin(), docs.end(),
             [](const TDocument& d1, const TDocument& d2) { return d1.FetchTime < d2.FetchTime; }
         );
+        const double iterTimestampPercentile = vm["iter_timestamp_percentile"].as<double>();
+        uint64_t iterTimestamp = GetIterTimestamp(docs, iterTimestampPercentile);
 
         const std::string clusteringType = vm["clustering_type"].as<std::string>();
         assert(clusteringType == "slink");
 
-        const std::array<std::string, 2> clusteringLanguages = {"ru", "en"};
         std::map<std::string, std::unique_ptr<TClustering>> clusterings;
         std::map<std::string, std::unique_ptr<TFastTextEmbedder>> embedders;
         for (const std::string& language : clusteringLanguages) {
@@ -293,14 +309,13 @@ int main(int argc, char** argv) {
             clusterings[language] = std::move(clustering);
         }
 
-        std::vector<TDocument> ruDocs;
-        std::vector<TDocument> enDocs;
+        std::map<std::string, std::vector<TDocument>> lang2Docs;
         while (!docs.empty()) {
             const TDocument& doc = docs.back();
-            if (doc.IsEnglish()) {
-                enDocs.push_back(doc);
-            } else if (doc.IsRussian()) {
-                ruDocs.push_back(doc);
+            assert(doc.Language);
+            const std::string& language = doc.Language.get();
+            if (clusteringLanguages.find(language) != clusteringLanguages.end()) {
+                lang2Docs[language].push_back(doc);
             }
             docs.pop_back();
         }
@@ -309,20 +324,11 @@ int main(int argc, char** argv) {
 
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
         TClustering::TClusters clusters;
-        {
-            const TClustering::TClusters ruClusters = clusterings["ru"]->Cluster(ruDocs);
-            const TClustering::TClusters enClusters = clusterings["en"]->Cluster(enDocs);
+        for (const std::string& language : clusteringLanguages) {
+            const TClustering::TClusters langClusters = clusterings[language]->Cluster(lang2Docs[language]);
             std::copy_if(
-                ruClusters.cbegin(),
-                ruClusters.cend(),
-                std::back_inserter(clusters),
-                [](const TNewsCluster& cluster) {
-                    return cluster.size() > 0;
-                }
-            );
-            std::copy_if(
-                enClusters.cbegin(),
-                enClusters.cend(),
+                langClusters.cbegin(),
+                langClusters.cend(),
                 std::back_inserter(clusters),
                 [](const TNewsCluster& cluster) {
                     return cluster.size() > 0;
@@ -353,32 +359,33 @@ int main(int argc, char** argv) {
                 }
             }
             std::cout << outputJson.dump(4) << std::endl;
-        } else if (mode == "top") {
-            nlohmann::json outputJson = nlohmann::json::array();
-            double iterTimestampPercentile = vm["iter_timestamp_percentile"].as<double>();
-            uint64_t iterTimestamp = GetIterTimestamp(clusters, iterTimestampPercentile);
-            const auto tops = Rank(clustersSummarized, agencyRating, iterTimestamp);
-            for (auto it = tops.begin(); it != tops.end(); ++it) {
-                const auto category = static_cast<ENewsCategory>(std::distance(tops.begin(), it));
-                nlohmann::json rubricTop = {
-                    {"category", category},
-                    {"threads", nlohmann::json::array()}
-                };
-                for (const auto& cluster : *it) {
-                    nlohmann::json object = {
-                        {"title", cluster.Title},
-                        {"category", cluster.Category},
-                        {"articles", nlohmann::json::array()}
-                    };
-                    for (const auto& doc : cluster.Cluster.get()) {
-                        object["articles"].push_back(GetCleanFileName(doc.get().FileName));
-                    }
-                    rubricTop["threads"].push_back(object);
-                }
-                outputJson.push_back(rubricTop);
-            }
-            std::cout << outputJson.dump(4) << std::endl;
+        } else if (mode != "top") {
+            assert(false);
         }
+
+        // Ranking
+        const auto tops = Rank(clustersSummarized, agencyRating, iterTimestamp);
+        nlohmann::json outputJson = nlohmann::json::array();
+        for (auto it = tops.begin(); it != tops.end(); ++it) {
+            const auto category = static_cast<ENewsCategory>(std::distance(tops.begin(), it));
+            nlohmann::json rubricTop = {
+                {"category", category},
+                {"threads", nlohmann::json::array()}
+            };
+            for (const auto& cluster : *it) {
+                nlohmann::json object = {
+                    {"title", cluster.Title},
+                    {"category", cluster.Category},
+                    {"articles", nlohmann::json::array()}
+                };
+                for (const auto& doc : cluster.Cluster.get()) {
+                    object["articles"].push_back(GetCleanFileName(doc.get().FileName));
+                }
+                rubricTop["threads"].push_back(object);
+            }
+            outputJson.push_back(rubricTop);
+        }
+        std::cout << outputJson.dump(4) << std::endl;
         return 0;
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;

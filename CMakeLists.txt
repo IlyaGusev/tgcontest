@@ -29,9 +29,10 @@ set(SOURCE_FILES
     src/clustering/embedder.cpp
     src/clustering/slink.cpp
     src/clustering/rank_docs.cpp
-    src/rank/rank.cpp
     src/detect.cpp
     src/document.cpp
+    src/rank/rank.cpp
+    src/thread_pool.cpp
     src/util.cpp
 )
 
@@ -40,9 +41,10 @@ set(HEADER_FILES
     src/clustering/embedder.h
     src/clustering/slink.h
     src/clustering/rank_docs.h
-    src/rank/rank.h
     src/detect.h
     src/document.h
+    src/rank/rank.h
+    src/thread_pool.h
     src/timer.h
     src/util.h
 )
@@ -57,7 +59,7 @@ set(LIB_LIST
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fasttext/src")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")
 
-add_executable(${PROJECT_NAME} src/main.cpp ${SOURCE_FILES} ${HEADER_FILES})
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} src/main.cpp ${HEADER_FILES})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB_LIST})
 
 enable_testing()
@@ -66,7 +68,7 @@ file(GLOB TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
 add_definitions(-DTEST_PATH=${CMAKE_CURRENT_SOURCE_DIR}/test)
 foreach(testSrc ${TEST_SRCS})
     get_filename_component(testName ${testSrc} NAME_WE)
-    add_executable(${testName} ${testSrc} ${SOURCE_FILES} ${HEADER_FILES})
+    add_executable(${testName} ${SOURCE_FILES} ${testSrc} ${HEADER_FILES})
     target_link_libraries(${testName} PRIVATE ${LIB_LIST})
     add_test(NAME ${testName} COMMAND ${testName})
 endforeach(testSrc)

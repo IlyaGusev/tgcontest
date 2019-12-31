@@ -13,7 +13,7 @@ $ sudo apt-get install cmake libboost-all-dev build-essential
 
 If you got zip archive, just go to building binary
 
-Install [https://git-lfs.github.com/](git-lfs) before cloning repo. To download code and models:
+Install [git-lfs](https://git-lfs.github.com/) before cloning repo. To download code and models:
 ```
 $ git clone https://github.com/IlyaGusev/tgcontest
 $ cd tgcontest

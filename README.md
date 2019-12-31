@@ -1,5 +1,7 @@
 # TGNews
 
+[![Build Status](https://travis-ci.com/IlyaGusev/tgcontest.svg?token=9pgxYSDpb2YAVSfz53Nq&branch=master)](https://travis-ci.com/IlyaGusev/tgcontest)
+
 Wiki: https://github.com/IlyaGusev/tgcontest/wiki
 
 
@@ -11,7 +13,7 @@ $ sudo apt-get install cmake libboost-all-dev build-essential
 
 If you got zip archive, just go to building binary
 
-Install git-lfs before cloning repo. To download code and models:
+Install [https://git-lfs.github.com/](git-lfs) before cloning repo. To download code and models:
 ```
 $ git clone https://github.com/IlyaGusev/tgcontest
 $ cd tgcontest
@@ -32,7 +34,7 @@ $ bash download.sh
 
 Run on sample:
 ```
-./build/tgnews threads data --ndocs 10000
+./build/tgnews top data --ndocs 10000
 ```
 
 ## Training

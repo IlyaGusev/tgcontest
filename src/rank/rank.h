@@ -18,7 +18,6 @@ struct TWeightedNewsCluster {
     {}
 };
 
-// Get the latest document timestamp by percentile
 uint64_t GetIterTimestamp(const std::vector<TNewsCluster>&, double percentile=0.99);
 
 ENewsCategory ComputeClusterCategory(const TNewsCluster& cluster);

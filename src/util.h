@@ -10,9 +10,18 @@
 #define LOG_DEBUG(x) std::cerr << x << std::endl;
 #endif
 
+// Read names of all files in directory
 void ReadFileNames(const std::string& directory, std::vector<std::string>& fileNames, int nDocs=-1);
-std::string GetHost(const std::string&);
+
+// Get host from url
+std::string GetHost(const std::string& url);
+
+// Get name of the file without a path to it
 std::string GetCleanFileName(const std::string& fileName);
+
+// Stable sigmoids
 float Sigmoid(float x);
 double Sigmoid(double x);
+
+// ISO 8601 with timezone date to timestamp
 uint64_t DateToTimestamp(const std::string& date);

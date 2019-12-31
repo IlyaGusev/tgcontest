@@ -1,12 +1,10 @@
 #pragma once
 
-#include "../document.h"
+#include "../cluster.h"
 #include "embedder.h"
 
 #include <fasttext.h>
 #include <Eigen/Core>
-
-typedef std::vector<std::reference_wrapper<const TDocument>> TNewsCluster;
 
 class TClustering {
 public:

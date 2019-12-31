@@ -26,6 +26,7 @@ include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
 
 set(SOURCE_FILES
+    src/cluster.cpp
     src/clustering/embedder.cpp
     src/clustering/slink.cpp
     src/clustering/rank_docs.cpp
@@ -37,6 +38,7 @@ set(SOURCE_FILES
 )
 
 set(HEADER_FILES
+    src/cluster.h
     src/clustering/clustering.h
     src/clustering/embedder.h
     src/clustering/slink.h

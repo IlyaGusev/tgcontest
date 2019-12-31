@@ -87,9 +87,9 @@ TSlinkClustering::TClusters TSlinkClustering::Cluster(
             size_t newLabel = clusters.size();
             clusterLabels[clusterId] = newLabel;
             clusters.push_back(TNewsCluster());
-            clusters[newLabel].push_back(std::cref(docs[i]));
+            clusters[newLabel].AddDocument(docs[i]);
         } else {
-            clusters[it->second].push_back(std::cref(docs[i]));
+            clusters[it->second].AddDocument(docs[i]);
         }
     }
     return clusters;

@@ -23,16 +23,6 @@ std::unordered_map<std::string, double> LoadRatings(const std::string& ratingPat
     return output;
 }
 
-uint64_t GetFreshestTimestamp(const TNewsCluster& cluster) {
-    uint64_t maxTimestamp = 0;
-    for (const auto& doc: cluster) {
-        if (doc.get().FetchTime > maxTimestamp) {
-            maxTimestamp = doc.get().FetchTime;
-        }
-    }
-    return maxTimestamp;
-}
-
 double ComputeDocAgencyWeight(
     const TDocument& doc,
     const std::unordered_map<std::string, double>& agencyRating
@@ -70,28 +60,25 @@ std::vector<TNewsCluster> RankClustersDocs(
 
     for (auto& cluster : clusters) {
         std::vector<WeightedDoc> weightedDocs;
-        uint64_t freshestTimestamp = GetFreshestTimestamp(cluster);
+        uint64_t freshestTimestamp = cluster.GetFreshestTimestamp();
 
         Eigen::MatrixXf docsCosine; // NxN matrix with cosine titles
 
-        if (cluster.empty()) {
-            continue;
-        }
-        size_t embSize = cluster[0].get().IsRussian() ? ruModel.GetEmbeddingSize() : enModel.GetEmbeddingSize();
+        assert(cluster.GetSize() != 0);
+        size_t embSize = cluster.GetDocuments()[0].get().IsRussian() ? ruModel.GetEmbeddingSize() : enModel.GetEmbeddingSize();
 
-        Eigen::MatrixXf points(cluster.size(), embSize);
-        for (size_t i = 0; i < cluster.size(); i++) {
-            const TDocument& doc = cluster[i];
-
-            auto& model = doc.IsRussian() ? ruModel : enModel;
+        Eigen::MatrixXf points(cluster.GetSize(), embSize);
+        for (size_t i = 0; i < cluster.GetSize(); i++) {
+            const TDocument& doc = cluster.GetDocuments()[i];
+            const TFastTextEmbedder& model = doc.IsRussian() ? ruModel : enModel;
             fasttext::Vector embedding = model.GetSentenceEmbedding(doc);
             Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
             points.row(i) = eigenVector / eigenVector.norm();
         }
         docsCosine = points * points.transpose();
 
-        for (size_t i = 0; i < cluster.size(); ++i) {
-            const TDocument& doc = cluster[i];
+        for (size_t i = 0; i < cluster.GetSize(); ++i) {
+            const TDocument& doc = cluster.GetDocuments()[i];
             const double docRelevance = docsCosine.row(i).mean();
             double weight = ComputeDocWeight(
                 doc,
@@ -107,11 +94,9 @@ std::vector<TNewsCluster> RankClustersDocs(
             return a.Weight > b.Weight;
         });
         TNewsCluster clusterSorted;
-        std::transform(weightedDocs.cbegin(), weightedDocs.cend(), std::back_inserter(clusterSorted),
-            [] (const WeightedDoc& elem) {
-                return elem.Doc;
-            }
-        );
+        for (const WeightedDoc& elem : weightedDocs) {
+            clusterSorted.AddDocument(elem.Doc);
+        }
         output.emplace_back(std::move(clusterSorted));
     }
     return output;

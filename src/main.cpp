@@ -331,7 +331,7 @@ int main(int argc, char** argv) {
                 langClusters.cend(),
                 std::back_inserter(clusters),
                 [](const TNewsCluster& cluster) {
-                    return cluster.size() > 0;
+                    return cluster.GetSize() > 0;
                 }
             );
         }
@@ -342,19 +342,19 @@ int main(int argc, char** argv) {
             nlohmann::json outputJson = nlohmann::json::array();
             for (const auto& cluster : clustersSummarized) {
                 nlohmann::json files = nlohmann::json::array();
-                for (const auto& doc : cluster) {
-                    files.push_back(GetCleanFileName(doc.get().FileName));
+                for (const TDocument& doc : cluster.GetDocuments()) {
+                    files.push_back(GetCleanFileName(doc.FileName));
                 }
                 nlohmann::json object = {
-                    {"title", cluster[0].get().Title},
+                    {"title", cluster.GetTitle()},
                     {"articles", files}
                 };
                 outputJson.push_back(object);
 
-                if (cluster.size() >= 2) {
-                    LOG_DEBUG("\n         CLUSTER: " << cluster[0].get().Title);
-                    for (const auto& doc : cluster) {
-                        LOG_DEBUG("  " << doc.get().Title << " (" << doc.get().Url << ")");
+                if (cluster.GetSize() >= 2) {
+                    LOG_DEBUG("\n         CLUSTER: " << cluster.GetTitle());
+                    for (const TDocument& doc : cluster.GetDocuments()) {
+                        LOG_DEBUG("  " << doc.Title << " (" << doc.Url << ")");
                     }
                 }
             }
@@ -378,8 +378,8 @@ int main(int argc, char** argv) {
                     {"category", cluster.Category},
                     {"articles", nlohmann::json::array()}
                 };
-                for (const auto& doc : cluster.Cluster.get()) {
-                    object["articles"].push_back(GetCleanFileName(doc.get().FileName));
+                for (const TDocument& doc : cluster.Cluster.get().GetDocuments()) {
+                    object["articles"].push_back(GetCleanFileName(doc.FileName));
                 }
                 rubricTop["threads"].push_back(object);
             }

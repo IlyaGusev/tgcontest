@@ -18,10 +18,6 @@ struct TWeightedNewsCluster {
     {}
 };
 
-uint64_t GetIterTimestamp(const std::vector<TNewsCluster>&, double percentile=0.99);
-
-ENewsCategory ComputeClusterCategory(const TNewsCluster& cluster);
-
 double ComputeClusterWeight(
     const TNewsCluster& cluster,
     const std::unordered_map<std::string, double>& agencyRating,

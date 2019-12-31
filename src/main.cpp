@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
             ("en_sentence_embedder_bias", po::value<std::string>()->default_value("models/en_sentence_embedder/bias.txt"), "ru_sentence_embedder_bias")
             ("ru_sentence_embedder_matrix", po::value<std::string>()->default_value("models/ru_sentence_embedder/matrix.txt"), "ru_sentence_embedder_matrix")
             ("ru_sentence_embedder_bias", po::value<std::string>()->default_value("models/ru_sentence_embedder/bias.txt"), "ru_sentence_embedder_bias")
-            ("rating", po::value<std::string>()->default_value("ratings/rating_merged.txt"), "rating")
+            ("rating", po::value<std::string>()->default_value("models/pagerank_rating.txt"), "rating")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ("iter_timestamp_percentile", po::value<double>()->default_value(0.99), "iter_timestamp_percentile")

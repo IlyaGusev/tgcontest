@@ -18,7 +18,7 @@ TSlinkClustering::TSlinkClustering(
     , UseTimestampMoving(useTimestampMoving)
 {}
 
-TSlinkClustering::TClusters TSlinkClustering::Cluster(
+TClusters TSlinkClustering::Cluster(
     const std::vector<TDocument>& docs
 ) {
     const size_t docSize = docs.size();
@@ -79,7 +79,7 @@ TSlinkClustering::TClusters TSlinkClustering::Cluster(
     }
 
     std::unordered_map<size_t, size_t> clusterLabels;
-    TSlinkClustering::TClusters clusters;
+    TClusters clusters;
     for (size_t i = 0; i < docSize; ++i) {
         const size_t clusterId = labels[i];
         auto it = clusterLabels.find(clusterId);

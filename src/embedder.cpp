@@ -1,5 +1,5 @@
 #include "embedder.h"
-#include "../document.h"
+#include "document.h"
 
 #include <sstream>
 #include <cassert>

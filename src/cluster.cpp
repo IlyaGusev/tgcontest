@@ -38,3 +38,26 @@ ENewsCategory TNewsCluster::GetCategory() const {
     return static_cast<ENewsCategory>(std::distance(categoryCount.begin(), it));
 }
 
+struct TWeightedDoc {
+    std::reference_wrapper<const TDocument> Doc;
+    double Weight = 0.0;
+    TWeightedDoc(const TDocument& doc, double weight)
+        : Doc(doc)
+        , Weight(weight)
+    {}
+};
+
+void TNewsCluster::SortByWeights(const std::vector<double>& weights) {
+    std::vector<TWeightedDoc> weightedDocs;
+    weightedDocs.reserve(Documents.size());
+    for (size_t i = 0; i < Documents.size(); i++) {
+        weightedDocs.emplace_back(Documents[i], weights[i]);
+    }
+    std::stable_sort(weightedDocs.begin(), weightedDocs.end(), [](const TWeightedDoc& a, const TWeightedDoc& b) {
+        return a.Weight > b.Weight;
+    });
+    Documents.clear();
+    for (const TWeightedDoc& elem : weightedDocs) {
+        AddDocument(elem.Doc);
+    }
+}

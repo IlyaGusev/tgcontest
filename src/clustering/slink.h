@@ -1,7 +1,7 @@
 #pragma once
 
 #include "clustering.h"
-#include "embedder.h"
+#include "../embedder.h"
 
 #include <Eigen/Core>
 

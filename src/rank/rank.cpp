@@ -1,6 +1,5 @@
 #include "rank.h"
 #include "../util.h"
-#include "../clustering/rank_docs.h"
 
 double ComputeClusterWeight(
     const TNewsCluster& cluster,
@@ -29,7 +28,7 @@ double ComputeClusterWeight(
 
 
 std::vector<std::vector<TWeightedNewsCluster>> Rank(
-    const TClustering::TClusters& clusters,
+    const TClusters& clusters,
     const TAgencyRating& agencyRating,
     uint64_t iterTimestamp
 ) {

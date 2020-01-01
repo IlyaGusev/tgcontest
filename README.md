@@ -36,6 +36,8 @@ Run on sample:
 
 ## Training
 
+Russian fasttext vectors training: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1QeyhqsHy5MO3yzvsn446LsqK_PqOjIVb)
+
 FastText installation (for training):
 ```
 $ git clone https://github.com/facebookresearch/fastText.git

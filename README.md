@@ -37,6 +37,7 @@ Run on sample:
 ## Training
 
 Russian fasttext vectors training: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1QeyhqsHy5MO3yzvsn446LsqK_PqOjIVb)
+Russian fasttext category classifier training: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1U7Wxm5eDnrBRWE_logCSJIq6DzTFV0Zo)
 
 FastText installation (for training):
 ```

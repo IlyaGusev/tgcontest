@@ -4,6 +4,8 @@
 #include <sstream>
 #include <cassert>
 
+#include <onmt/Tokenizer.h>
+
 TFastTextEmbedder::TFastTextEmbedder(
     fasttext::FastText& model
     , TFastTextEmbedder::AggregationMode mode

@@ -19,6 +19,9 @@ set(BUILD_TESTING 0)
 add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/tinyxml2)
 add_subdirectory(thirdparty/eigen EXCLUDE_FROM_ALL)
+set(LIB_ONLY True)
+add_subdirectory(thirdparty/onmt_tokenizer EXCLUDE_FROM_ALL)
+unset(LIB_ONLY)
 unset(BUILD_TESTING)
 
 find_package(Boost COMPONENTS program_options filesystem unit_test_framework REQUIRED)
@@ -60,12 +63,14 @@ set(LIB_LIST
     fasttext-static
     tinyxml2
     eigen
+    OpenNMTTokenizer
 )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fasttext/src")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/onmt_tokenizer/include")
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES} src/main.cpp ${HEADER_FILES})
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB_LIST})
 
 enable_testing()
@@ -74,7 +79,7 @@ file(GLOB TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
 add_definitions(-DTEST_PATH=${CMAKE_CURRENT_SOURCE_DIR}/test)
 foreach(testSrc ${TEST_SRCS})
     get_filename_component(testName ${testSrc} NAME_WE)
-    add_executable(${testName} ${SOURCE_FILES} ${testSrc} ${HEADER_FILES})
+    add_executable(${testName} ${SOURCE_FILES} ${testSrc})
     target_link_libraries(${testName} PRIVATE ${LIB_LIST})
     add_test(NAME ${testName} COMMAND ${testName})
 endforeach(testSrc)

@@ -44,6 +44,8 @@ Russian sentence embedder training: [![Open In Colab](https://colab.research.goo
 
 English fasttext vectors training: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1lbmgJ_iGBdwKdkU_1l1-WZuO7XbYZlWQ)
 
+English fasttext category classifier training: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ayg5dtA_KdhzVehN4-_EiyIcwRhBVSob)
+
 FastText installation (for training):
 ```
 $ git clone https://github.com/facebookresearch/fastText.git

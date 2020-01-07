@@ -35,13 +35,13 @@ int main(int argc, char** argv) {
             ("en_news_detect_model", po::value<std::string>()->default_value("models/en_news_detect.ftz"), "en_news_detect_model")
             ("ru_news_detect_model", po::value<std::string>()->default_value("models/ru_news_detect.ftz"), "ru_news_detect_model")
             ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_detect.ftz"), "en_cat_detect_model")
-            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_detect.ftz"), "ru_cat_detect_model")
+            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat.ftz"), "ru_cat_detect_model")
             ("en_vector_model", po::value<std::string>()->default_value("models/en_tg_bbc_nc_vector_model.bin"), "en_vector_model")
-            ("ru_vector_model", po::value<std::string>()->default_value("models/ru_tg_lenta_vector_model.bin"), "ru_vector_model")
+            ("ru_vector_model", po::value<std::string>()->default_value("models/ru_vectors_v2.bin"), "ru_vector_model")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
             ("en_clustering_distance_threshold", po::value<float>()->default_value(0.045f), "en_clustering_distance_threshold")
             ("en_clustering_max_words", po::value<size_t>()->default_value(100), "en_clustering_max_words")
-            ("ru_clustering_distance_threshold", po::value<float>()->default_value(0.045f), "ru_clustering_distance_threshold")
+            ("ru_clustering_distance_threshold", po::value<float>()->default_value(0.02f), "ru_clustering_distance_threshold")
             ("ru_clustering_max_words", po::value<size_t>()->default_value(100), "ru_clustering_max_words")
             ("en_sentence_embedder_matrix", po::value<std::string>()->default_value("models/en_sentence_embedder/matrix.txt"), "ru_sentence_embedder_matrix")
             ("en_sentence_embedder_bias", po::value<std::string>()->default_value("models/en_sentence_embedder/bias.txt"), "ru_sentence_embedder_bias")
@@ -291,6 +291,7 @@ int main(int argc, char** argv) {
                 }
             }
             std::cout << outputJson.dump(4) << std::endl;
+            return 0;
         } else if (mode != "top") {
             assert(false);
         }

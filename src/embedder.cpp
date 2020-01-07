@@ -63,7 +63,8 @@ size_t TFastTextEmbedder::GetEmbeddingSize() const {
 }
 
 fasttext::Vector TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc) const {
-    std::istringstream ss(doc.Title + " " + doc.Text);
+    assert(doc.PreprocessedTitle && doc.PreprocessedText);
+    std::istringstream ss(doc.PreprocessedTitle.get() + " " + doc.PreprocessedText.get());
     fasttext::Vector wordVector(GetEmbeddingSize());
     fasttext::Vector avgVector(GetEmbeddingSize());
     fasttext::Vector maxVector(GetEmbeddingSize());

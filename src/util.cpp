@@ -28,10 +28,15 @@ std::string GetHost(const std::string& url) {
     // if u know better way to do it - it would be nice if u rewrite it
     std::string output = "";
     // https://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
-    std::regex ex("(http|https)://(?:www\\.)?([^/ :]+):?([^/ ]*)(/?[^ #?]*)\\x3f?([^ #]*)#?([^ ]*)");
-    std::smatch what;
-    if (std::regex_match(url, what, ex) && what.size() >= 3) {
-        output = std::string(what[2].first, what[2].second);
+    try {
+        std::regex ex("(http|https)://(?:www\\.)?([^/ :]+):?([^/ ]*)(/?[^ #?]*)\\x3f?([^ #]*)#?([^ ]*)");
+        std::smatch what;
+        if (std::regex_match(url, what, ex) && what.size() >= 3) {
+            output = std::string(what[2].first, what[2].second);
+        }
+    } catch (...) {
+        LOG_DEBUG("Can't parse host from url: " << url);
+        return output;
     }
     return output;
 }

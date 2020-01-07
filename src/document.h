@@ -6,6 +6,7 @@
 
 #include <boost/optional.hpp>
 #include <nlohmann_json/json.hpp>
+#include <onmt/Tokenizer.h>
 
 enum ENewsCategory {
     NC_NOT_NEWS = -2,
@@ -52,6 +53,8 @@ public:
     std::vector<std::string> OutLinks;
 
     // Calculated fields
+    boost::optional<std::string> PreprocessedTitle;
+    boost::optional<std::string> PreprocessedText;
     boost::optional<std::string> Language;
     ENewsCategory Category = NC_UNDEFINED;
 
@@ -60,9 +63,7 @@ public:
     TDocument(const char* fileName);
 
     nlohmann::json ToJson() const;
-    void FromJson(
-        const char* fileName
-    );
+    void FromJson(const char* fileName);
     void FromHtml(
         const char* fileName,
         bool parseLinks=false,
@@ -72,4 +73,5 @@ public:
     bool IsRussian() const { return Language && Language.get() == "ru"; }
     bool IsEnglish() const { return Language && Language.get() == "en"; }
     bool IsNews() const { return Category != NC_NOT_NEWS && Category != NC_UNDEFINED; }
+    void PreprocessTextFields(const onmt::Tokenizer& tokenizer);
 };

@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# Models
+*.bin
+*.vec
+*.ftz
+*.tar.gz

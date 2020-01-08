@@ -13,5 +13,5 @@ mkdir -p models
 cd models
 for url in ${models_list[@]}; do
     echo $url
-    wget $url
+    wget -nc -q $url
 done

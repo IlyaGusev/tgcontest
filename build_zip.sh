@@ -2,7 +2,6 @@ mkdir temp
 cd temp
 cp -R ../src src
 cp -R ../models models
-cp -R ../ratings ratings
 cp -R ../scripts scripts
 cp -R ../thirdparty thirdparty
 rm -rf thirdparty/fasttext/.git
@@ -21,7 +20,7 @@ cd ..
 mv build/tgnews tgnews
 chmod +x tgnews
 cp tgnews ../tgnews
-zip -r submission.zip src scripts models ratings thirdparty LICENSE NOTICE README.md CMakeLists.txt deb-packages.txt tgnews build_zip.sh
+zip -r submission.zip src scripts models thirdparty LICENSE NOTICE README.md CMakeLists.txt deb-packages.txt tgnews build_zip.sh
 mv submission.zip ../submission.zip
 cd ..
 rm -rf temp

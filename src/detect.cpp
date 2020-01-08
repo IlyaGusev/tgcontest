@@ -39,17 +39,11 @@ boost::optional<std::string> DetectLanguage(const fasttext::FastText& model, con
     return label;
 }
 
-bool DetectIsNews(const fasttext::FastText& model, const TDocument& document) {
-    std::string sample(document.Title + " " + document.Text);
-    auto pair = RunFasttextClf(model, sample, 0.0);
-    if (!pair) {
-        return false;
-    }
-    return pair->first == "news";
-}
-
 ENewsCategory DetectCategory(const fasttext::FastText& model, const TDocument& document) {
-    std::string sample(document.Title + " " + document.Text);
+    if (!document.PreprocessedTitle || !document.PreprocessedText) {
+        return NC_UNDEFINED;
+    }
+    std::string sample(document.PreprocessedTitle.get() + " " + document.PreprocessedText.get());
     auto pair = RunFasttextClf(model, sample, 0.0);
     if (!pair) {
         return NC_UNDEFINED;

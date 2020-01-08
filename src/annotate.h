@@ -16,4 +16,5 @@ void Annotate(
     const TModelStorage& models,
     const std::set<std::string>& languages,
     std::vector<TDocument>& docs,
-    size_t minTextLength = 20);
+    size_t minTextLength = 20,
+    bool parseLinks = false);

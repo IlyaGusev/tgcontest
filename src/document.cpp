@@ -2,6 +2,7 @@
 #include "util.h"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
 #include <tinyxml2/tinyxml2.h>
 
@@ -88,7 +89,12 @@ void ParseLinksFromText(const tinyxml2::XMLElement* element, std::vector<std::st
     }
 }
 
-void TDocument::FromHtml(const char* fileName, bool parseLinks, bool shrinkText, size_t maxWords) {
+void TDocument::FromHtml(
+    const char* fileName,
+    bool parseLinks,
+    bool shrinkText,
+    size_t maxWords)
+{
     if (!boost::filesystem::exists(fileName)) {
         throw std::runtime_error("No HTML file");
     }
@@ -174,3 +180,13 @@ void TDocument::FromHtml(const char* fileName, bool parseLinks, bool shrinkText,
     }
 }
 
+std::string Preprocess(const std::string& text, const onmt::Tokenizer& tokenizer) {
+    std::vector<std::string> tokens;
+    tokenizer.tokenize(text, tokens);
+    return boost::join(tokens, " ");
+}
+
+void TDocument::PreprocessTextFields(const onmt::Tokenizer& tokenizer) {
+    PreprocessedTitle = Preprocess(Title, tokenizer);
+    PreprocessedText = Preprocess(Text, tokenizer);
+}

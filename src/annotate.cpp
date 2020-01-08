@@ -9,7 +9,8 @@ void Annotate(
     const TModelStorage& models,
     const std::set<std::string>& languages,
     std::vector<TDocument>& docs,
-    size_t minTextLength)
+    size_t minTextLength,
+    bool parseLinks)
 {
     LOG_DEBUG("Annotating " << fileNames.size() << " files...");
     TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> timer;
@@ -17,10 +18,11 @@ void Annotate(
     docs.reserve(fileNames.size() / 2);
     TThreadPool threadPool;
     const auto& langDetectModel = *models.at("lang_detect_model");
+    onmt::Tokenizer tokenizer(onmt::Tokenizer::Mode::Conservative, onmt::Tokenizer::Flags::CaseFeature);
     auto annotateDocument = [&](const std::string& path) -> boost::optional<TDocument> {
         TDocument doc;
         try {
-            doc.FromHtml(path.c_str());
+            doc.FromHtml(path.c_str(), parseLinks);
         } catch (...) {
             LOG_DEBUG("Bad html: " << path);
             return boost::none;
@@ -32,8 +34,8 @@ void Annotate(
         if (!doc.Language || languages.find(doc.Language.get()) == languages.end()) {
             return boost::none;
         }
-        bool isNews = DetectIsNews(*models.at(*doc.Language + "_news_detect_model"), doc);
-        doc.Category = isNews ? DetectCategory(*models.at(*doc.Language + "_cat_detect_model"), doc) : NC_NOT_NEWS;
+        doc.PreprocessTextFields(tokenizer);
+        doc.Category = DetectCategory(*models.at(*doc.Language + "_cat_detect_model"), doc);
         return doc;
     };
 

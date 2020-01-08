@@ -40,7 +40,7 @@ std::vector<std::vector<TWeightedNewsCluster>> Rank(
         weightedClusters.emplace_back(cluster, clusterCategory, title, weight);
     }
 
-    std::sort(weightedClusters.begin(), weightedClusters.end(),
+    std::stable_sort(weightedClusters.begin(), weightedClusters.end(),
         [](const TWeightedNewsCluster& a, const TWeightedNewsCluster& b) {
             return a.Weight > b.Weight;
         }

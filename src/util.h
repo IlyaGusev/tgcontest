@@ -17,7 +17,7 @@ void ReadFileNames(const std::string& directory, std::vector<std::string>& fileN
 std::string GetHost(const std::string& url);
 
 // Get name of the file without a path to it
-std::string GetCleanFileName(const std::string& fileName);
+std::string CleanFileName(const std::string& fileName);
 
 // Stable sigmoids
 float Sigmoid(float x);

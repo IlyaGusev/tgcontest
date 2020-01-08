@@ -41,7 +41,7 @@ std::string GetHost(const std::string& url) {
     return output;
 }
 
-std::string GetCleanFileName(const std::string& fileName) {
+std::string CleanFileName(const std::string& fileName) {
     return fileName.substr(fileName.find_last_of("/") + 1);
 }
 

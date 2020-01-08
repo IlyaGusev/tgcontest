@@ -19,8 +19,6 @@ BOOST_AUTO_TEST_CASE( parser )
     const char* testJsonFile = STR(TEST_PATH)"/data/example1.json";
     TDocument jsonDocument(testJsonFile);
 
-    //std::cerr << document.ToJson() << std::endl;
-    //BOOST_CHECK(document.Title == "Израиль приостановил процедуру экстрадиции гражданина РФ в США");
     BOOST_REQUIRE_EQUAL(htmlDocument.Title, jsonDocument.Title);
     BOOST_REQUIRE_EQUAL(htmlDocument.Url, jsonDocument.Url);
     BOOST_REQUIRE_EQUAL(htmlDocument.Description, jsonDocument.Description);

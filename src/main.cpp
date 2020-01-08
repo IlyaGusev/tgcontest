@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
         po::options_description desc("options");
         desc.add_options()
             ("mode", po::value<std::string>()->required(), "mode")
-            ("source_dir", po::value<std::string>()->required(), "source_dir")
+            ("input", po::value<std::string>()->required(), "input")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
             ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_v2.ftz"), "en_cat_detect_model")
             ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_v2.ftz"), "ru_cat_detect_model")
@@ -49,13 +49,14 @@ int main(int argc, char** argv) {
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("min_text_length", po::value<size_t>()->default_value(20), "min_text_length")
             ("parse_links", po::bool_switch()->default_value(false), "parse_links")
+            ("from_json", po::bool_switch()->default_value(false), "from_json")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ("iter_timestamp_percentile", po::value<double>()->default_value(0.99), "iter_timestamp_percentile")
             ;
 
         po::positional_options_description p;
         p.add("mode", 1);
-        p.add("source_dir", 1);
+        p.add("input", 1);
 
         po::command_line_parser parser{argc, argv};
         parser.options(desc).positional(p);
@@ -65,7 +66,7 @@ int main(int argc, char** argv) {
         po::notify(vm);
 
         // Args check
-        if (!vm.count("mode") || !vm.count("source_dir")) {
+        if (!vm.count("mode") || !vm.count("input")) {
             std::cerr << "Not enough arguments" << std::endl;
             return -1;
         }
@@ -111,11 +112,18 @@ int main(int argc, char** argv) {
 
         // Read file names
         LOG_DEBUG("Reading file names...");
-        std::string sourceDir = vm["source_dir"].as<std::string>();
         int nDocs = vm["ndocs"].as<int>();
+        bool fromJson = vm["from_json"].as<bool>();
         std::vector<std::string> fileNames;
-        ReadFileNames(sourceDir, fileNames, nDocs);
-        LOG_DEBUG("Files count: " << fileNames.size());
+        if (!fromJson) {
+            std::string sourceDir = vm["input"].as<std::string>();
+            ReadFileNames(sourceDir, fileNames, nDocs);
+            LOG_DEBUG("Files count: " << fileNames.size());
+        } else {
+            std::string fileName = vm["input"].as<std::string>();
+            fileNames.push_back(fileName);
+            LOG_DEBUG("JSON file as input");
+        }
 
         // Parse files and annotate with classifiers
         std::vector<std::string> l = vm["languages"].as<std::vector<std::string>>();
@@ -129,14 +137,15 @@ int main(int argc, char** argv) {
             languages,
             docs,
             /* minTextLength = */ minTextLength,
-            /* parseLinks */ parseLinks);
+            /* parseLinks */ parseLinks,
+            /* fromJson */ fromJson);
 
         // Output
         if (mode == "languages") {
             nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> langToFiles;
             for (const TDocument& doc : docs) {
-                langToFiles[doc.Language.get()].push_back(GetCleanFileName(doc.FileName));
+                langToFiles[doc.Language.get()].push_back(CleanFileName(doc.FileName));
             }
             for (const auto& pair : langToFiles) {
                 const std::string& language = pair.first;
@@ -176,7 +185,7 @@ int main(int argc, char** argv) {
         } else if (mode == "news") {
             nlohmann::json articles = nlohmann::json::array();
             for (const TDocument& doc : docs) {
-                articles.push_back(GetCleanFileName(doc.FileName));
+                articles.push_back(CleanFileName(doc.FileName));
             }
             nlohmann::json outputJson = nlohmann::json::object();
             outputJson["articles"] = articles;
@@ -190,7 +199,7 @@ int main(int argc, char** argv) {
                 if (category == NC_UNDEFINED || category == NC_NOT_NEWS) {
                     continue;
                 }
-                catToFiles[static_cast<size_t>(category)].push_back(GetCleanFileName(doc.FileName));
+                catToFiles[static_cast<size_t>(category)].push_back(CleanFileName(doc.FileName));
                 LOG_DEBUG(category << "\t" << doc.Title);
             }
             for (size_t i = 0; i < NC_COUNT; i++) {
@@ -281,7 +290,7 @@ int main(int argc, char** argv) {
             for (const auto& cluster : clusters) {
                 nlohmann::json files = nlohmann::json::array();
                 for (const TDocument& doc : cluster.GetDocuments()) {
-                    files.push_back(GetCleanFileName(doc.FileName));
+                    files.push_back(CleanFileName(doc.FileName));
                 }
                 nlohmann::json object = {
                     {"title", cluster.GetTitle()},
@@ -318,7 +327,7 @@ int main(int argc, char** argv) {
                     {"articles", nlohmann::json::array()}
                 };
                 for (const TDocument& doc : cluster.Cluster.get().GetDocuments()) {
-                    object["articles"].push_back(GetCleanFileName(doc.FileName));
+                    object["articles"].push_back(CleanFileName(doc.FileName));
                 }
                 rubricTop["threads"].push_back(object);
             }

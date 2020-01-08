@@ -17,4 +17,5 @@ void Annotate(
     const std::set<std::string>& languages,
     std::vector<TDocument>& docs,
     size_t minTextLength = 20,
-    bool parseLinks = false);
+    bool parseLinks = false,
+    bool fromJson = false);

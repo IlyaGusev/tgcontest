@@ -1,0 +1,2 @@
+test/data/canonical_input.json filter=lfs diff=lfs merge=lfs -text
+test/data/canonical_output.json filter=lfs diff=lfs merge=lfs -text

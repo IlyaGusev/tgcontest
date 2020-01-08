@@ -61,9 +61,11 @@ public:
 public:
     TDocument() = default;
     TDocument(const char* fileName);
+    TDocument(const nlohmann::json& json);
 
     nlohmann::json ToJson() const;
     void FromJson(const char* fileName);
+    void FromJson(const nlohmann::json& json);
     void FromHtml(
         const char* fileName,
         bool parseLinks=false,

@@ -77,10 +77,10 @@ fasttext::Vector TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc) c
         }
         Model.getWordVector(wordVector, word);
         float norm = wordVector.norm();
-        if (norm < 0.0001) {
+        if (norm < 0.0001f) {
             continue;
         }
-        wordVector.mul(1.0 / norm);
+        wordVector.mul(1.0f / norm);
 
         avgVector.addVector(wordVector);
         if (count == 0) {
@@ -95,7 +95,7 @@ fasttext::Vector TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc) c
         count += 1;
     }
     if (count > 0) {
-        avgVector.mul(1.0 / count);
+        avgVector.mul(1.0f / static_cast<float>(count));
     }
     if (Mode == AM_Avg) {
         return avgVector;

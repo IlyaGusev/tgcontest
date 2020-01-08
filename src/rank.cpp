@@ -16,7 +16,7 @@ double ComputeClusterWeight(
     }
 
     // ~1 for freshest ts, 0.5 for 12 hour old ts, ~0 for 24 hour old ts
-    double clusterTimestampRemapped = (cluster.GetTimestamp() - iterTimestamp) / 3600.0 + 12;
+    double clusterTimestampRemapped = static_cast<double>(cluster.GetTimestamp() - iterTimestamp) / 3600.0 + 12.0;
     double timeMultiplier = Sigmoid(clusterTimestampRemapped);
 
     // Pessimize only clusters with size < 5

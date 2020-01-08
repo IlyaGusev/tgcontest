@@ -7,4 +7,11 @@ testAnnotate() {
     assertEquals $ret 0
 }
 
+testTop() {
+    ./build/tgnews top test/data/canonical_input.json --from_json > canonical_top.json
+    diff test/data/canonical_top.json canonical_top.json
+    ret=$?
+    assertEquals $ret 0
+}
+
 . shunit2-2.1.6/src/shunit2

@@ -27,7 +27,7 @@ void Summarize(
         for (size_t i = 0; i < cluster.GetSize(); ++i) {
             const TDocument& doc = cluster.GetDocuments()[i];
             double docRelevance = docsCosine.row(i).mean();
-            double timeMultiplier = Sigmoid((doc.FetchTime - freshestTimestamp) / 3600.0 + 12);
+            double timeMultiplier = Sigmoid(static_cast<double>(doc.FetchTime - freshestTimestamp) / 3600.0 + 12.0);
             double agencyScore = agencyRating.ScoreUrl(doc.Url);
             double weight = (agencyScore + docRelevance) * timeMultiplier;
             weights.push_back(weight);

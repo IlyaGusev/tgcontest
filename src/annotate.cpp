@@ -9,7 +9,8 @@ void Annotate(
     const TModelStorage& models,
     const std::set<std::string>& languages,
     std::vector<TDocument>& docs,
-    size_t minTextLength)
+    size_t minTextLength,
+    bool parseLinks)
 {
     LOG_DEBUG("Annotating " << fileNames.size() << " files...");
     TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> timer;
@@ -21,7 +22,7 @@ void Annotate(
     auto annotateDocument = [&](const std::string& path) -> boost::optional<TDocument> {
         TDocument doc;
         try {
-            doc.FromHtml(path.c_str());
+            doc.FromHtml(path.c_str(), parseLinks);
         } catch (...) {
             LOG_DEBUG("Bad html: " << path);
             return boost::none;

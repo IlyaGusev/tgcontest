@@ -22,6 +22,7 @@ void ReadFileNames(const std::string& directory, std::vector<std::string>& fileN
             break;
         }
     }
+    std::stable_sort(fileNames.begin(), fileNames.end());
 }
 
 std::string GetHost(const std::string& url) {

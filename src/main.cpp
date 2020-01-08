@@ -32,23 +32,23 @@ int main(int argc, char** argv) {
             ("mode", po::value<std::string>()->required(), "mode")
             ("source_dir", po::value<std::string>()->required(), "source_dir")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
-            ("en_news_detect_model", po::value<std::string>()->default_value("models/en_news_detect.ftz"), "en_news_detect_model")
-            ("ru_news_detect_model", po::value<std::string>()->default_value("models/ru_news_detect.ftz"), "ru_news_detect_model")
-            ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_detect.ftz"), "en_cat_detect_model")
-            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat.ftz"), "ru_cat_detect_model")
-            ("en_vector_model", po::value<std::string>()->default_value("models/en_tg_bbc_nc_vector_model.bin"), "en_vector_model")
+            ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_v2.ftz"), "en_cat_detect_model")
+            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_v2.ftz"), "ru_cat_detect_model")
+            ("en_vector_model", po::value<std::string>()->default_value("models/en_vectors_v2.bin"), "en_vector_model")
             ("ru_vector_model", po::value<std::string>()->default_value("models/ru_vectors_v2.bin"), "ru_vector_model")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
-            ("en_clustering_distance_threshold", po::value<float>()->default_value(0.045f), "en_clustering_distance_threshold")
-            ("en_clustering_max_words", po::value<size_t>()->default_value(100), "en_clustering_max_words")
+            ("en_clustering_distance_threshold", po::value<float>()->default_value(0.02f), "en_clustering_distance_threshold")
+            ("en_clustering_max_words", po::value<size_t>()->default_value(250), "en_clustering_max_words")
             ("ru_clustering_distance_threshold", po::value<float>()->default_value(0.02f), "ru_clustering_distance_threshold")
-            ("ru_clustering_max_words", po::value<size_t>()->default_value(100), "ru_clustering_max_words")
+            ("ru_clustering_max_words", po::value<size_t>()->default_value(150), "ru_clustering_max_words")
             ("en_sentence_embedder_matrix", po::value<std::string>()->default_value("models/en_sentence_embedder/matrix.txt"), "ru_sentence_embedder_matrix")
             ("en_sentence_embedder_bias", po::value<std::string>()->default_value("models/en_sentence_embedder/bias.txt"), "ru_sentence_embedder_bias")
             ("ru_sentence_embedder_matrix", po::value<std::string>()->default_value("models/ru_sentence_embedder/matrix.txt"), "ru_sentence_embedder_matrix")
             ("ru_sentence_embedder_bias", po::value<std::string>()->default_value("models/ru_sentence_embedder/bias.txt"), "ru_sentence_embedder_bias")
             ("rating", po::value<std::string>()->default_value("models/pagerank_rating.txt"), "rating")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
+            ("min_text_length", po::value<size_t>()->default_value(20), "min_text_length")
+            ("parse_links", po::bool_switch()->default_value(false), "parse_links")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ("iter_timestamp_percentile", po::value<double>()->default_value(0.99), "iter_timestamp_percentile")
             ;
@@ -89,8 +89,6 @@ int main(int argc, char** argv) {
         LOG_DEBUG("Loading models...");
         std::vector<std::string> modelsOptions = {
             "lang_detect_model",
-            "en_news_detect_model",
-            "ru_news_detect_model",
             "en_cat_detect_model",
             "ru_cat_detect_model",
             "en_vector_model",
@@ -122,8 +120,16 @@ int main(int argc, char** argv) {
         // Parse files and annotate with classifiers
         std::vector<std::string> l = vm["languages"].as<std::vector<std::string>>();
         std::set<std::string> languages(l.begin(), l.end());
+        size_t minTextLength = vm["min_text_length"].as<size_t>();
+        bool parseLinks = vm["parse_links"].as<bool>();
         std::vector<TDocument> docs;
-        Annotate(fileNames, models, languages, docs);
+        Annotate(
+            fileNames,
+            models,
+            languages,
+            docs,
+            /* minTextLength = */ minTextLength,
+            /* parseLinks */ parseLinks);
 
         // Output
         if (mode == "languages") {

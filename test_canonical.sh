@@ -1,8 +1,8 @@
 #!/bin/bash
 
-testCanonical() {
-    ./build/tgnews top test/data/canonical_input.json --from_json > canonical_output.json
-    diff test/data/canonical_output.json canonical_output.json
+testAnnotate() {
+    ./build/tgnews json test/data/canonical_input.json --from_json > canonical_annotation.json
+    diff test/data/canonical_annotation.json canonical_annotation.json
     ret=$?
     assertEquals $ret 0
 }

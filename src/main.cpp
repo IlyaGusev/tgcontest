@@ -225,7 +225,15 @@ int main(int argc, char** argv) {
             }
         }
         std::stable_sort(docs.begin(), docs.end(),
-            [](const TDocument& d1, const TDocument& d2) { return d1.FetchTime < d2.FetchTime; }
+            [](const TDocument& d1, const TDocument& d2) {
+                if (d1.FetchTime == d2.FetchTime) {
+                    if (d1.FileName.empty() && d2.FileName.empty()) {
+                        return d1.Title < d2.Title
+                    }
+                    return d1.FileName < d2.FileName;
+                }
+                return d1.FetchTime < d2.FetchTime;
+            }
         );
         const double iterTimestampPercentile = vm["iter_timestamp_percentile"].as<double>();
         uint64_t iterTimestamp = GetIterTimestamp(docs, iterTimestampPercentile);

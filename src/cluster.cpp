@@ -54,6 +54,9 @@ void TNewsCluster::SortByWeights(const std::vector<double>& weights) {
         weightedDocs.emplace_back(Documents[i], weights[i]);
     }
     std::stable_sort(weightedDocs.begin(), weightedDocs.end(), [](const TWeightedDoc& a, const TWeightedDoc& b) {
+        if (a.Weight == b.Weight) {
+            return a.Title.length() < b.Title.length();
+        }
         return a.Weight > b.Weight;
     });
     Documents.clear();

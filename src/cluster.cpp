@@ -3,6 +3,7 @@
 #include <boost/range/algorithm/nth_element.hpp>
 
 #include <cassert>
+#include <cmath>
 #include <set>
 #include <vector>
 
@@ -54,7 +55,7 @@ void TNewsCluster::SortByWeights(const std::vector<double>& weights) {
         weightedDocs.emplace_back(Documents[i], weights[i]);
     }
     std::stable_sort(weightedDocs.begin(), weightedDocs.end(), [](const TWeightedDoc& a, const TWeightedDoc& b) {
-        if (a.Weight == b.Weight) {
+        if (std::abs(a.Weight - b.Weight) < 0.00000001) {
             return a.Doc.get().Title.length() < b.Doc.get().Title.length();
         }
         return a.Weight > b.Weight;

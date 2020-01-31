@@ -82,3 +82,13 @@ Run on sample:
 * Russian not_news additional markup: [ru_not_news.txt](https://www.dropbox.com/s/wwptzqhgxvtjhbd/ru_not_news.txt)
 * English categories train markup: [en_cat_train_raw_markup.tsv](https://www.dropbox.com/s/7qpfgf8bz77h2ss/en_cat_train_raw_markup.tsv)
 * English categories test markup: [en_cat_test_raw_markup.tsv](https://www.dropbox.com/s/bszwshgwbrt328k/en_cat_test_raw_markup.tsv)
+
+## TODO:
+* Toloka project settings and an annotator's manual in repo
+* Tops viewer
+* Triplet loss in similarity training
+* Framework for complex NN
+* Proper clustering markup
+* Error analysis for categories classifiers
+* Alternatives for PageRank
+* "Ugly" titles

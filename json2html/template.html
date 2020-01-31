@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://contest.com/css/contest-zoo.css?6">
+    <style>.brand-photo{display:inline-block;width:40px;height:40px;margin:-.3125rem 0;text-align:center;vertical-align:top;overflow:hidden;}.brand-name{font-size:18px;line-height:16px;font-weight:500;vertical-align:top;margin:.125rem .25rem 0 1rem!important;}.brand-name small{display:inline-block;font-size:13px;font-weight:400;margin-top:.25rem;}.card-cover{width:180px;background:no-repeat center;background-size:cover;border-radius:0 .25rem .25rem 0;display:none;}.text-secondary{color:#6f42c1!important;}.text-truncate-3,.text-truncate-4,.text-truncate-5{display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;}.text-truncate-3{-webkit-line-clamp:3;}.text-truncate-4{-webkit-line-clamp:4;}.text-truncate-5{-webkit-line-clamp:5;}.thread:not(:last-child){flex-grow:1;max-width:100%;}.thread.show{flex:0 0 100%;max-width:100%;}.thread.show .card-body{background-color:#f8f9fa!important;}.btn-outline-warning:hover{color:#fff;}.dropdown-toggle:after{margin-left:.5em;vertical-align:.15em;}</style>
+     <script>
+      $(document).on('show.bs.collapse', '.collapse', function () {
+        $(this).parents('.thread').addClass('show');
+      });
+      $(document).on('hidden.bs.collapse', '.collapse', function () {
+        $(this).parents('.thread').removeClass('show');
+      });
+    </script>
+</head>
+<body class="d-flex flex-column h-100">
+    <header class="bg-light fixed-top">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light px-0 px-sm-3">
+                <div class="dropdown flex-fill">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownDateButton" data-toggle="dropdown">09 Dec</button><div class="dropdown-menu">
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item disabled" href="/20191209/en/">December, 9</a>
+                        <a class="dropdown-item" href="/20191129/en/">November, 29</a>
+                    </div>
+                </div>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </nav>
+        </div>
+    </header>
+    <main class="flex-shrink-0 py-5">
+        <div class="container pt-2 pb-1">
+            <h5 class="mb-3">Main <small class="text-muted">6544</small></h5>
+            <div class="row row-cols-1 row-cols-lg-2">
+                {% for cluster in main_top %}
+                <div class="col mb-4 thread">
+                    <div class="card h-100 overflow-hidden shadow-sm">
+                        <div class="row no-gutters h-100">
+                            <div class="col d-flex flex-column">
+                                <div class="card-body rounded-top position-relative">
+                                    <strong class="d-inline-block mb-2
+                                        {% if cluster.category == 'society'%}
+                                            text-danger
+                                        {% elif cluster.category == 'sports' %}
+                                            text-info
+                                        {% elif cluster.category == 'technology' %}
+                                            text-success
+                                        {% elif cluster.category == 'economy' %}
+                                            text-primary
+                                        {% elif cluster.category == 'science' %}
+                                            text-secondary
+                                        {% elif cluster.category == 'other' %}
+                                            text-dark
+                                        {% elif cluster.category == 'entertainment' %}
+                                            text-warning
+                                        {% endif %}
+                                        ">{{cluster.category.capitalize()}}</strong>
+                                    <h5 class="card-title mb-1">{{cluster.title}}</h5>
+                                    <p class="card-text text-muted">{{cluster.date}}<small class="mx-1 align-text-top">&bull;</small> <a class="text-muted stretched-link" data-toggle="collapse" href="#collapse{{loop.index}}">{{cluster.size}} articles</a></p>
+                                </div>
+                                <div class="collapse border-top" id="collapse{{loop.index}}">
+                                    <div class="list-group list-group-flush">
+                                        {% for article in cluster.articles %}
+                                        <div href="" class="list-group-item position-relative overflow-hidden">
+                                            <h5 class="mb-1">{{article.title}}</h5>
+                                            <p class="mb-1 text-truncate-4">{{article.text}}</p>
+                                            <small class="text-muted text-muted">{{article.date}}<small class="mx-1 align-text-top">&bull;</small> site_name <small class="mx-1 align-text-top">&bull;</small> <a href="https://data-static.usercontent.dev/sampledata/20191209/17/140598092889232336.html" class="text-muted stretched-link">140598092889232336.html</a></small></small>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                   </div>
+               </div>
+               {% endfor %}
+            </div>
+        </div>
+    </main>
+</body>
+</html>

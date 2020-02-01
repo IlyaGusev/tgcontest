@@ -50,6 +50,7 @@ def convert(templates_dir, output_dir, documents_file, tops_file, languages, ver
                     version=version,
                     language=language
                 ))
+    shutil.copyfile(os.path.join(templates_dir, "index.html"), os.path.join(output_dir, "index.html"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

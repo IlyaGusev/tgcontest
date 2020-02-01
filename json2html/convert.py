@@ -15,11 +15,15 @@ def convert(templates_dir, output_dir, documents_file, tops_file, languages, ver
         documents = {doc["file_name"]: doc for doc in documents}
     with open(tops_file, "r") as r:
         tops = json.load(r)
-    icons_dir = os.path.join(output_dir, "icons")
-    os.makedirs(icons_dir, exist_ok=True)
-    templates_icons_dir = os.path.join(templates_dir, "icons")
-    for file_name in os.listdir(templates_icons_dir):
-        shutil.copyfile(os.path.join(templates_icons_dir, file_name), os.path.join(icons_dir, file_name))
+    static_dirs = ("icons", "css", "js")
+    for dir_name in static_dirs:
+        static_output_dir = os.path.join(output_dir, dir_name)
+        static_input_dir = os.path.join(templates_dir, dir_name)
+        os.makedirs(static_output_dir, exist_ok=True)
+        for file_name in os.listdir(static_input_dir):
+            from_file = os.path.join(static_input_dir, file_name)
+            to_file = os.path.join(static_output_dir, file_name)
+            shutil.copyfile(from_file, to_file)
     languages = languages.split(",")
     assert languages
     for language in languages:
@@ -46,13 +50,6 @@ def convert(templates_dir, output_dir, documents_file, tops_file, languages, ver
                     version=version,
                     language=language
                 ))
-    index_file = os.path.join(output_dir, "index.html")
-    with open(index_file, "w", encoding="utf-8") as w:
-        base_template = env.get_template("index.html")
-        w.write(base_template.render(
-            version=version,
-            language="en"
-        ))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

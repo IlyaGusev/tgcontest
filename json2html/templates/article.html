@@ -3,9 +3,9 @@
     <p class="mb-1 text-truncate-4">{{article.text}}</p>
     <small class="text-muted text-muted">{{article.date}}
         <small class="mx-1 align-text-top">&bull;</small>
-        site_name
+        {{article.site_name}}
         <small class="mx-1 align-text-top">&bull;</small>
-        <a href="" class="text-muted stretched-link">140598092889232336.html</a>
+        <a href="{{article.url}}" target="_blank" class="text-muted stretched-link">{{article.url}}</a>
     </small>
 </div>
 

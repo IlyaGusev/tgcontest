@@ -8,6 +8,7 @@ addons:
     packages:
       - cmake
       - libboost-all-dev
+      - python3-pip
 
 compiler:
   - clang

@@ -9,6 +9,8 @@ addons:
       - cmake
       - libboost-all-dev
       - python3-pip
+      - linux-tools-common
+      - linux-tools-generic
 
 compiler:
   - clang
@@ -27,6 +29,7 @@ before_script:
   - wget https://www.dropbox.com/s/k31nutuzrtp2d9v/docs_20191209.tar.gz
   - tar -xzvf docs_20191209.tar.gz
   - python3 -m pip install -r json2html/requirements.txt
+  - git clone https://github.com/brendangregg/FlameGraph
 
 script:
   - mkdir build
@@ -36,8 +39,10 @@ script:
   - make test
   - cd ..
   - bash test_canonical.sh
-  - ./build/tgnews top docs_20191209.json --from_json > top_20191209.json
+  - sudo perf record -F 99 -g ./build/tgnews top docs_20191209.json --from_json > top_20191209.json
+  - sudo perf script > out.perf
   - python3 json2html/convert.py --documents-file docs_20191209.json --tops-file top_20191209.json --templates-dir json2html/templates --output-dir output
+  - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/$TRAVIS_COMPILER_$BUILD_TYPE_flamegraph.svg
 
 deploy:
   provider: pages

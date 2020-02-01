@@ -51,4 +51,4 @@ deploy:
   local_dir: output
   on:
     branch: master
-    condition: env(BUILD_TYPE) = Release AND env(TRAVIS_COMPILER) = clang
+    condition: $TRAVIS_COMPILER = clang

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Mindful Squirrel &dash; {{version}} &dash; Data Clustering Contest</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://contest.com/css/contest-zoo.css?6">
+    <style>.brand-photo{display:inline-block;width:40px;height:40px;margin:-.3125rem 0;text-align:center;vertical-align:top;overflow:hidden;}.brand-name{font-size:18px;line-height:16px;font-weight:500;vertical-align:top;margin:.125rem .25rem 0 1rem!important;}.brand-name small{display:inline-block;font-size:13px;font-weight:400;margin-top:.25rem;}.card-cover{width:180px;background:no-repeat center;background-size:cover;border-radius:0 .25rem .25rem 0;display:none;}.text-secondary{color:#6f42c1!important;}.text-truncate-3,.text-truncate-4,.text-truncate-5{display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;}.text-truncate-3{-webkit-line-clamp:3;}.text-truncate-4{-webkit-line-clamp:4;}.text-truncate-5{-webkit-line-clamp:5;}.thread:not(:last-child){flex-grow:1;max-width:100%;}.thread.show{flex:0 0 100%;max-width:100%;}.thread.show .card-body{background-color:#f8f9fa!important;}.btn-outline-warning:hover{color:#fff;}.dropdown-toggle:after{margin-left:.5em;vertical-align:.15em;}</style>
+     <script>
+      $(document).on('show.bs.collapse', '.collapse', function () {
+        $(this).parents('.thread').addClass('show');
+      });
+      $(document).on('hidden.bs.collapse', '.collapse', function () {
+        $(this).parents('.thread').removeClass('show');
+      });
+    </script>
+</head>
+<body class="d-flex flex-column h-100">
+    <header class="bg-light fixed-top">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light px-0 px-sm-3">
+                <a class="navbar-brand py-0" href="">
+                    <span class="brand-photo rounded-circle"><i class="animal-photo squirrel bc4"></i></span><span class="brand-name d-none d-sm-inline-block"><div><span dir="auto" class="tc4">Mindful Squirrel<span class="d-none d-md-inline"> News</span></span></div><small class="text-muted">v{{version}}</small></span>
+                </a>
+                <div class="dropdown flex-fill">
+                </div>
+                <div class="btn-group btn-group-sm mx-2 mx-sm-3 mx-md-4">
+                    <a class="btn {% if language == 'ru' %} btn-outline-secondary {% else %} btn-secondary {% endif %}" href="en/main.html">EN</a>
+                    <a class="btn {% if language == 'en' %} btn-outline-secondary {% else %} btn-secondary {% endif %}" href="ru/main.html">RU</a>
+                </div>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse flex-grow-0" id="navbarSupportedContent">
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item active">
+                            <a class="nav-link" href="">Top</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+    <body>
+    </body>
+</html>

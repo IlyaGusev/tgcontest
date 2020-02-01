@@ -32,3 +32,13 @@ script:
   - make test
   - cd ..
   - bash test_canonical.sh
+  - python3 json2html/convert.py --documents-file test/data/canonical_input.json --tops-file canonical_top.json --templates-dir json2html/templates --output-dir output
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GH_GITHUB_TOKEN
+  keep_history: true
+  local_dir: output
+  on:
+    branch: master

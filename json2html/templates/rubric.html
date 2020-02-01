@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+            <div class="mt-3 mb-4">
+                <nav class="nav nav-tabs">
+                    <a class="ml-3 mr-1 nav-item nav-link {% if top.category == "main" %}active{% endif %}" href="main.html">Main</a>
+                    <a class="ml-1 mr-1 nav-item nav-link {% if top.category == "society" %}active{% endif %}" href="society.html">Society</a>
+                    <a class="ml-1 mr-1 nav-item nav-link {% if top.category == "economy" %}active{% endif %}" href="economy.html">Economy</a>
+                    <a class="ml-1 mr-1 nav-item nav-link {% if top.category == "technology" %}active{% endif %}" href="technology.html">Technology</a>
+                    <a class="ml-1 mr-1 nav-item nav-link {% if top.category == "sports" %}active{% endif %}" href="sports.html">Sports</a>
+                    <a class="ml-1 mr-1 nav-item nav-link {% if top.category == "entertainment" %}active{% endif %}" href="entertainment.html">Entertainment</a>
+                    <a class="ml-1 mr-1 nav-item nav-link {% if top.category == "science" %}active{% endif %}" href="science.html">Science</a>
+                    <a class="ml-1 mr-3 nav-item nav-link {% if top.category == "other" %}active{% endif %}" href="other.html">Other</a>
+                </nav>
+            </div>
+
+<h5 class="mb-3">Main <small class="text-muted">{{top.clusters|length}}</small></h5>
+<div class="row row-cols-1 row-cols-lg-2">
+{% for cluster in top.clusters %}
+    {% with loop_index = loop.index %}
+    {% include "cluster.html" %}
+    {% endwith %}
+{% endfor %}
+</div>
+{% endblock %}

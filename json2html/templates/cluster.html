@@ -1,0 +1,41 @@
+<div class="col mb-4 thread">
+    <div class="card h-100 overflow-hidden shadow-sm">
+        <div class="row no-gutters h-100">
+            <div class="col d-flex flex-column">
+                <div class="card-body rounded-top position-relative">
+                    <strong class="d-inline-block mb-2
+                    {% if cluster.category == 'society'%}
+                        text-danger
+                    {% elif cluster.category == 'sports' %}
+                        text-info
+                    {% elif cluster.category == 'technology' %}
+                        text-success
+                    {% elif cluster.category == 'economy' %}
+                        text-primary
+                    {% elif cluster.category == 'science' %}
+                        text-secondary
+                    {% elif cluster.category == 'other' %}
+                        text-dark
+                    {% elif cluster.category == 'entertainment' %}
+                        text-warning
+                    {% endif %}
+                        ">{{cluster.category.capitalize()}}</strong>
+                    <h5 class="card-title mb-1">{{cluster.title}}</h5>
+                    <p class="card-text text-muted">
+                        {{cluster.date}}
+                        <small class="mx-1 align-text-top">&bull;</small>
+                        <a class="text-muted stretched-link" data-toggle="collapse" href="#collapse{{loop_index}}">{{cluster.size}} articles</a>
+                    </p>
+                    </div>
+                    <div class="collapse border-top" id="collapse{{loop_index}}">
+                        <div class="list-group list-group-flush">
+                        {% for article in cluster.articles %}
+                            {% include "article.html" %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

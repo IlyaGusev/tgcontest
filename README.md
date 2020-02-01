@@ -3,8 +3,8 @@
 [![Build Status](https://travis-ci.com/IlyaGusev/tgcontest.svg?token=9pgxYSDpb2YAVSfz53Nq&branch=master)](https://travis-ci.com/IlyaGusev/tgcontest)
 
 ## Demo
-* [Russian: https://ilyagusev.github.io/tgcontest/ru/main.html](https://ilyagusev.github.io/tgcontest/ru/main.html)
-* [English: https://ilyagusev.github.io/tgcontest/en/main.html](https://ilyagusev.github.io/tgcontest/en/main.html)
+* Russian: [https://ilyagusev.github.io/tgcontest/ru/main.html](https://ilyagusev.github.io/tgcontest/ru/main.html)
+* English: [https://ilyagusev.github.io/tgcontest/en/main.html](https://ilyagusev.github.io/tgcontest/en/main.html)
 
 ## Install
 Prerequisites: CMake, Boost
@@ -86,6 +86,9 @@ Run on sample:
 * Russian not_news additional markup: [ru_not_news.txt](https://www.dropbox.com/s/wwptzqhgxvtjhbd/ru_not_news.txt)
 * English categories train markup: [en_cat_train_raw_markup.tsv](https://www.dropbox.com/s/7qpfgf8bz77h2ss/en_cat_train_raw_markup.tsv)
 * English categories test markup: [en_cat_test_raw_markup.tsv](https://www.dropbox.com/s/bszwshgwbrt328k/en_cat_test_raw_markup.tsv)
+
+## Misc
+* Flamegraph: https://ilyagusev.github.io/tgcontest/flamegraph.svg
 
 ## TODO:
 * Toloka project settings and an annotator's manual in repo

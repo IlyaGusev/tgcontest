@@ -23,6 +23,8 @@ before_script:
   - git submodule update
   - bash download_models.sh
   - curl -L "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/shunit2/shunit2-2.1.6.tgz" | tar zx
+  - wget https://www.dropbox.com/s/k31nutuzrtp2d9v/docs_20191209.tar.gz
+  - tar -xzvf docs_20191209.tar.gz
   - python3 -m pip install -r json2html/requirements.txt
 
 script:
@@ -33,7 +35,8 @@ script:
   - make test
   - cd ..
   - bash test_canonical.sh
-  - python3 json2html/convert.py --documents-file test/data/canonical_input.json --tops-file canonical_top.json --templates-dir json2html/templates --output-dir output
+  - ./build/tgnews top docs_20191209.json --from_json > top_20191209.json
+  - python3 json2html/convert.py --documents-file docs_20191209.json --tops-file top_20191209.json --templates-dir json2html/templates --output-dir output
 
 deploy:
   provider: pages

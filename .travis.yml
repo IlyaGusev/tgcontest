@@ -41,7 +41,7 @@ script:
   - sudo perf record -F 99 -g ./build/tgnews top docs_20191209.json --from_json > top_20191209.json
   - sudo perf script > out.perf
   - python3 json2html/convert.py --documents-file docs_20191209.json --tops-file top_20191209.json --templates-dir json2html/templates --output-dir output
-  - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > "output/${TRAVIS_COMPILER}_${BUILD_TYPE}_flamegraph.svg"
+  - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/flamegraph.svg
 
 deploy:
   provider: pages
@@ -51,4 +51,4 @@ deploy:
   local_dir: output
   on:
     branch: master
-    condition: $BUILD_TYPE = Release AND $TRAVIS_COMPILER = clang
+    condition: env(BUILD_TYPE) = Release AND env(TRAVIS_COMPILER) = clang

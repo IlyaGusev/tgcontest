@@ -59,10 +59,14 @@ Run on sample:
 * English sentence embedder training:
 [SimilarityEn.ipynb](https://github.com/IlyaGusev/tgcontest/blob/master/scripts/SimilarityEn.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1QDescCBI2I7bCJr4EplTyxCOp7eD9qBS)
-
 * PageRank rating calculation:
 [PageRankRating.ipynb](https://github.com/IlyaGusev/tgcontest/blob/master/scripts/PageRankRating.ipynb)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1bd35S0rl_Uysiuz_7fmkYRArzNcP-wZB)
+
+* Russian **ELMo-based** sentence embedder training:
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Q0S5OvramxxqQZnaSIH8xWfmOsWeKhIz)
+* Russian sentence embedder with **triplet loss** training:
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1G-1GWGsfL5ariy_87FhadMUPDi9OkX_B)
 
 ## Models
 * Language detection model: [lang_detect.ftz](https://www.dropbox.com/s/qq970kin8zagql7/lang_detect.ftz)

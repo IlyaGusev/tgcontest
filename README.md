@@ -96,8 +96,6 @@ Run on sample:
 
 ## TODO:
 * Toloka project settings and an annotator's manual in repo
-* Tops viewer
-* Triplet loss in similarity training
 * Framework for complex NN
 * Proper clustering markup
 * Error analysis for categories classifiers

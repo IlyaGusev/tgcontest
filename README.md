@@ -95,7 +95,6 @@ Run on sample:
 * Flamegraph: https://ilyagusev.github.io/tgcontest/flamegraph.svg
 
 ## TODO:
-* Toloka project settings and an annotator's manual in repo
 * Framework for complex NN
 * Proper clustering markup
 * Error analysis for categories classifiers

@@ -94,6 +94,9 @@ Run on sample:
 ## Misc
 * Flamegraph: https://ilyagusev.github.io/tgcontest/flamegraph.svg
 
+## Links
+* Description in Russian: https://habr.com/ru/post/487324/
+
 ## TODO:
 * Framework for complex NN
 * Proper clustering markup

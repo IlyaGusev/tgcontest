@@ -9,7 +9,7 @@ addons:
       - cmake
       - libboost-all-dev
       - python3-pip
-      - linux-tools-5.0.0-1026-gcp
+      - linux-tools-5.0.0-1031-gcp
 
 compiler:
   - clang

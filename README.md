@@ -2,6 +2,10 @@
 
 [![Build Status](https://travis-ci.com/IlyaGusev/tgcontest.svg?token=9pgxYSDpb2YAVSfz53Nq&branch=master)](https://travis-ci.com/IlyaGusev/tgcontest)
 
+## Links
+* Description in English: https://medium.com/@phoenixilya/news-aggregator-in-2-weeks-5b38783b95e3
+* Description in Russian: https://habr.com/ru/post/487324/
+
 ## Demo
 * Russian: [https://ilyagusev.github.io/tgcontest/ru/main.html](https://ilyagusev.github.io/tgcontest/ru/main.html)
 * English: [https://ilyagusev.github.io/tgcontest/en/main.html](https://ilyagusev.github.io/tgcontest/en/main.html)
@@ -93,9 +97,6 @@ Run on sample:
 
 ## Misc
 * Flamegraph: https://ilyagusev.github.io/tgcontest/flamegraph.svg
-
-## Links
-* Description in Russian: https://habr.com/ru/post/487324/
 
 ## TODO:
 * Framework for complex NN

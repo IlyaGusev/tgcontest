@@ -1,5 +1,5 @@
+os: linux
 dist: bionic
-sudo: required
 language: cpp
 
 addons:
@@ -49,6 +49,7 @@ deploy:
   github_token: $GH_GITHUB_TOKEN
   keep_history: false
   local_dir: output
+  verbose: true
   on:
     branch: master
     condition: $TRAVIS_COMPILER = clang

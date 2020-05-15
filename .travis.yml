@@ -31,7 +31,7 @@ before_script:
   - tar -xzvf docs_20191209.tar.gz
   - python3 -m pip install -r json2html/requirements.txt
   - git clone https://github.com/brendangregg/FlameGraph
-  - export LD_LIBRARY_PATH=$(if [[ $TRAVIS_COMPILER == "clang" ]]; then echo -n /usr/local/clang/lib:$LD_LIBRARY_PATH'; fi)
+  - export LD_LIBRARY_PATH=$(if [[ $TRAVIS_COMPILER == "clang" ]]; then echo -n /usr/local/clang/lib:$LD_LIBRARY_PATH; fi)
 
 script:
   - mkdir build

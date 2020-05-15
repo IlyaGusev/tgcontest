@@ -26,7 +26,7 @@ $ git submodule init
 $ git submodule update
 $ bash download_models.sh
 $ wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
-$ unzip libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
+$ unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
 ```
 
 To build binary (in "tgcontest" dir):

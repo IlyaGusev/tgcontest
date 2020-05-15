@@ -18,6 +18,7 @@ TFastTextEmbedder::TFastTextEmbedder(
     , TorchModelPath(modelPath)
 {
     assert(!modelPath.empty());
+    TorchModel = torch::jit::load(TorchModelPath);
 }
 
 size_t TFastTextEmbedder::GetEmbeddingSize() const {
@@ -68,17 +69,17 @@ fasttext::Vector TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc) c
     }
     assert(Mode == AM_Matrix);
 
-    auto concatTensor = torch::zeros({1, GetEmbeddingSize() * 3});
+    int concatTensorDim = static_cast<int>(GetEmbeddingSize() * 3);
+    auto concatTensor = torch::zeros({1, concatTensorDim});
     for (size_t i = 0; i < GetEmbeddingSize(); i++) {
         concatTensor[0][i] = avgVector[i];
         concatTensor[0][GetEmbeddingSize() + i] = maxVector[i];
         concatTensor[0][2 * GetEmbeddingSize() + i] = minVector[i];
     }
 
-    auto torchModel = torch::jit::load(TorchModelPath);
     std::vector<torch::jit::IValue> inputs;
     inputs.push_back(concatTensor);
-    at::Tensor output = torchModel.forward(inputs).toTensor()[0];
+    at::Tensor output = TorchModel.forward(inputs).toTensor()[0];
 
     fasttext::Vector resultVector(GetEmbeddingSize());
     for (size_t i = 0; i < GetEmbeddingSize(); i++) {

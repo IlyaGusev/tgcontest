@@ -31,5 +31,6 @@ private:
     size_t MaxWords;
     Eigen::MatrixXf Matrix;
     Eigen::VectorXf Bias;
+    mutable torch::jit::script::Module TorchModel;
     std::string TorchModelPath;
 };

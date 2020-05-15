@@ -2,6 +2,7 @@
 
 #include <fasttext.h>
 #include <Eigen/Core>
+#include <torch/script.h>
 
 struct TDocument;
 
@@ -18,8 +19,7 @@ public:
         fasttext::FastText& model,
         AggregationMode mode = AM_Avg,
         size_t maxWords = 100,
-        const std::string& matrixPath = "",
-        const std::string& biasPath = "");
+        const std::string& modelPath = "");
     virtual ~TFastTextEmbedder() = default;
 
     size_t GetEmbeddingSize() const;
@@ -31,4 +31,5 @@ private:
     size_t MaxWords;
     Eigen::MatrixXf Matrix;
     Eigen::VectorXf Bias;
+    std::string TorchModelPath;
 };

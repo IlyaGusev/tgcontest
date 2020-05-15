@@ -35,7 +35,7 @@ before_script:
 script:
   - mkdir build
   - cd build
-  - Torch_LIB="../libtorch" cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+  - Torch_DIR="../libtorch" cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
   - make
   - make test
   - cd ..

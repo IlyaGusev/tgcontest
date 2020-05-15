@@ -106,7 +106,7 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
     Eigen::MatrixXf points(docSize, embSize);
     std::vector<TDocument>::const_iterator docsIt = begin;
     for (size_t i = 0; i < docSize; ++i) {
-        fasttext::Vector embedding = Embedder.GetSentenceEmbedding(*docsIt);
+        auto embedding = Embedder.GetSentenceEmbedding(*docsIt);
         Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
         points.row(i) = eigenVector / eigenVector.norm();
         docsIt++;

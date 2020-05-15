@@ -15,7 +15,7 @@ void Summarize(
         Eigen::MatrixXf points(cluster.GetSize(), embedder.GetEmbeddingSize());
         for (size_t i = 0; i < cluster.GetSize(); i++) {
             const TDocument& doc = cluster.GetDocuments()[i];
-            fasttext::Vector embedding = embedder.GetSentenceEmbedding(doc);
+            auto embedding = embedder.GetSentenceEmbedding(doc);
             Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
             points.row(i) = eigenVector / eigenVector.norm();
         }

@@ -7,8 +7,8 @@
 * Description in Russian: https://habr.com/ru/post/487324/
 
 ## Demo
-* Russian: [https://ilyagusev.github.io/tgcontest/ru/main.html](https://ilyagusev.github.io/tgcontest/ru/main.html)
-* English: [https://ilyagusev.github.io/tgcontest/en/main.html](https://ilyagusev.github.io/tgcontest/en/main.html)
+* Russian: [https://ilyagusev.github.io/tgcontest2/ru/main.html](https://ilyagusev.github.io/tgcontest2/ru/main.html)
+* English: [https://ilyagusev.github.io/tgcontest2/en/main.html](https://ilyagusev.github.io/tgcontest2/en/main.html)
 
 ## Install
 Prerequisites: CMake, Boost

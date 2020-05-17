@@ -43,6 +43,7 @@ unset(WITH_BENCHMARK_TOOLS)
 set(LIB_ONLY True)
 add_subdirectory(thirdparty/onmt_tokenizer EXCLUDE_FROM_ALL)
 unset(LIB_ONLY)
+
 unset(BUILD_TESTING)
 
 find_package(Boost COMPONENTS program_options filesystem unit_test_framework REQUIRED)

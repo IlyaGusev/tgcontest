@@ -29,6 +29,8 @@ $ wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-
 $ unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
 ```
 
+For MacOS use https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.5.0.zip
+
 To build binary (in "tgcontest" dir):
 ```
 $ mkdir build && cd build && Torch_DIR="../libtorch" cmake -DCMAKE_BUILD_TYPE=Release .. && make

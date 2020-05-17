@@ -7,8 +7,8 @@
 * Description in Russian: https://habr.com/ru/post/487324/
 
 ## Demo
-* Russian: [https://ilyagusev.github.io/tgcontest/ru/main.html](https://ilyagusev.github.io/tgcontest/ru/main.html)
-* English: [https://ilyagusev.github.io/tgcontest/en/main.html](https://ilyagusev.github.io/tgcontest/en/main.html)
+* Russian: [https://ilyagusev.github.io/tgcontest2/ru/main.html](https://ilyagusev.github.io/tgcontest2/ru/main.html)
+* English: [https://ilyagusev.github.io/tgcontest2/en/main.html](https://ilyagusev.github.io/tgcontest2/en/main.html)
 
 ## Install
 Prerequisites: CMake, Boost
@@ -25,12 +25,13 @@ $ cd tgcontest
 $ git submodule init
 $ git submodule update
 $ bash download_models.sh
+$ wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
+$ unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
 ```
 
 To build binary (in "tgcontest" dir):
 ```
-$ mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
-$ make
+$ mkdir build && cd build && Torch_DIR="../libtorch" cmake -DCMAKE_BUILD_TYPE=Release .. && make
 ```
 
 To download datasets:

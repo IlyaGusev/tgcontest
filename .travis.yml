@@ -24,6 +24,8 @@ before_script:
   - git submodule init
   - git submodule update
   - bash download_models.sh
+  - wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
+  - unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
   - curl -L "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/shunit2/shunit2-2.1.6.tgz" | tar zx
   - wget https://www.dropbox.com/s/k31nutuzrtp2d9v/docs_20191209.tar.gz
   - tar -xzvf docs_20191209.tar.gz
@@ -34,13 +36,13 @@ before_script:
 script:
   - mkdir build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+  - Torch_DIR="../libtorch" cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
   - make
   - make test
   - cd ..
   - bash test_canonical.sh
-  - sudo perf record -F 99 -g ./build/tgnews top docs_20191209.json --from_json > top_20191209.json
-  - sudo perf script > out.perf
+  - perf record -F 99 -g ./build/tgnews top docs_20191209.json --from_json > top_20191209.json
+  - perf script > out.perf
   - python3 json2html/convert.py --documents-file docs_20191209.json --tops-file top_20191209.json --templates-dir json2html/templates --output-dir output
   - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/flamegraph.svg
 

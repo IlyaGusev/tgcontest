@@ -12,4 +12,4 @@ set(SOURCE_FILES
     tinyxml2.cpp
 )
 
-add_library(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
+add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES} ${HEADER_FILES})

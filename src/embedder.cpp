@@ -10,52 +10,15 @@ TFastTextEmbedder::TFastTextEmbedder(
     fasttext::FastText& model
     , TFastTextEmbedder::AggregationMode mode
     , size_t maxWords
-    , const std::string& matrixPath
-    , const std::string& biasPath
+    , const std::string& modelPath
 )
     : Model(model)
     , Mode(mode)
     , MaxWords(maxWords)
-    , Matrix(model.getDimension() * 3, 50)
-    , Bias(50)
+    , TorchModelPath(modelPath)
 {
-    if (matrixPath.empty()) {
-        return;
-    }
-    std::ifstream matrixIn(matrixPath);
-    std::string line;
-    int row = 0;
-    int col = 0;
-    while (std::getline(matrixIn, line)) {
-        std::string num;
-        for (char ch : line) {
-            if (ch == ' ') {
-                continue;
-            }
-            if (ch != ',' && ch != '\n') {
-                num += ch;
-                continue;
-            }
-            Matrix(col++, row) = std::stof(num);
-            num = "";
-        }
-        if (!num.empty()) {
-            Matrix(col, row) = std::stof(num);
-            num = "";
-        }
-        col = 0;
-        row++;
-    }
-    matrixIn.close();
-    assert(row != 0);
-    assert(row == 50);
-
-    std::ifstream biasIn(biasPath);
-    row = 0;
-    while (std::getline(biasIn, line)) {
-        Bias(row++) = std::stof(line);
-    }
-    biasIn.close();
+    assert(!modelPath.empty());
+    TorchModel = torch::jit::load(TorchModelPath);
 }
 
 size_t TFastTextEmbedder::GetEmbeddingSize() const {
@@ -105,16 +68,21 @@ fasttext::Vector TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc) c
         return maxVector;
     }
     assert(Mode == AM_Matrix);
+
+    int dim = static_cast<int>(GetEmbeddingSize());
+    auto tensor = torch::zeros({dim * 3}, torch::requires_grad(false));
+    tensor.slice(0, 0, dim) = torch::from_blob(avgVector.data(), {dim});
+    tensor.slice(0, dim, 2 * dim) = torch::from_blob(maxVector.data(), {dim});
+    tensor.slice(0, 2 * dim, 3 * dim) = torch::from_blob(minVector.data(), {dim});
+
+    std::vector<torch::jit::IValue> inputs;
+    inputs.emplace_back(tensor.unsqueeze(0));
+
+    at::Tensor outputTensor = TorchModel.forward(inputs).toTensor().squeeze(0).contiguous();
+    float* outputTensorPtr = outputTensor.data_ptr<float>();
     fasttext::Vector resultVector(GetEmbeddingSize());
-    Eigen::VectorXf concatVector(GetEmbeddingSize() * 3);
     for (size_t i = 0; i < GetEmbeddingSize(); i++) {
-        concatVector[i] = avgVector[i];
-        concatVector[GetEmbeddingSize() + i] = maxVector[i];
-        concatVector[2 * GetEmbeddingSize() + i] = minVector[i];
-    }
-    auto eigenResult = ((Matrix.transpose() * concatVector) + Bias).transpose();
-    for (size_t i = 0; i < GetEmbeddingSize(); i++) {
-        resultVector[i] = eigenResult(0, i);
+        resultVector[i] = outputTensorPtr[i];
     }
     return resultVector;
 }

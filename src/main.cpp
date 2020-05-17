@@ -41,10 +41,8 @@ int main(int argc, char** argv) {
             ("en_clustering_max_words", po::value<size_t>()->default_value(250), "en_clustering_max_words")
             ("ru_clustering_distance_threshold", po::value<float>()->default_value(0.013f), "ru_clustering_distance_threshold")
             ("ru_clustering_max_words", po::value<size_t>()->default_value(150), "ru_clustering_max_words")
-            ("en_sentence_embedder_matrix", po::value<std::string>()->default_value("models/en_sentence_embedder/matrix.txt"), "ru_sentence_embedder_matrix")
-            ("en_sentence_embedder_bias", po::value<std::string>()->default_value("models/en_sentence_embedder/bias.txt"), "ru_sentence_embedder_bias")
-            ("ru_sentence_embedder_matrix", po::value<std::string>()->default_value("models/ru_sentence_embedder/matrix.txt"), "ru_sentence_embedder_matrix")
-            ("ru_sentence_embedder_bias", po::value<std::string>()->default_value("models/ru_sentence_embedder/bias.txt"), "ru_sentence_embedder_bias")
+            ("en_sentence_embedder", po::value<std::string>()->default_value("models/en_sentence_embedder.pt"), "en_sentence_embedder")
+            ("ru_sentence_embedder", po::value<std::string>()->default_value("models/ru_sentence_embedder.pt"), "ru_sentence_embedder")
             ("rating", po::value<std::string>()->default_value("models/pagerank_rating.txt"), "rating")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("min_text_length", po::value<size_t>()->default_value(20), "min_text_length")
@@ -244,16 +242,14 @@ int main(int argc, char** argv) {
         std::map<std::string, std::unique_ptr<TClustering>> clusterings;
         std::map<std::string, std::unique_ptr<TFastTextEmbedder>> embedders;
         for (const std::string& language : clusteringLanguages) {
-            const std::string matrixPath = vm[language + "_sentence_embedder_matrix"].as<std::string>();
-            const std::string biasPath = vm[language + "_sentence_embedder_bias"].as<std::string>();
+            const std::string modelPath = vm[language + "_sentence_embedder"].as<std::string>();
             const size_t maxWords = vm[language + "_clustering_max_words"].as<size_t>();
 
             std::unique_ptr<TFastTextEmbedder> embedder(new TFastTextEmbedder(
                 *models.at(language + "_vector_model"),
                 TFastTextEmbedder::AM_Matrix,
                 maxWords,
-                matrixPath,
-                biasPath
+                modelPath
             ));
             embedders[language] = std::move(embedder);
             const float distanceThreshold = vm[language+"_clustering_distance_threshold"].as<float>();

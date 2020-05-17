@@ -6,4 +6,4 @@
 	url = https://github.com/eigenteam/eigen-git-mirror
 [submodule "thirdparty/onmt_tokenizer"]
 	path = thirdparty/onmt_tokenizer
-	url = https://github.com/OpenNMT/Tokenizer
+	url = https://github.com/IlyaGusev/Tokenizer

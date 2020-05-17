@@ -19,6 +19,27 @@ set(BUILD_TESTING 0)
 add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/tinyxml2)
 add_subdirectory(thirdparty/eigen EXCLUDE_FROM_ALL)
+
+set(BUILD_DROGON_SHARED 0)
+set(BUILD_CTL 0)
+set(BUILD_EXAMPLES 0)
+set(BUILD_ORM 0)
+set(COZ_PROFILING 0)
+add_subdirectory(thirdparty/drogon EXCLUDE_FROM_ALL)
+unset(COZ_PROFILIN)
+unset(BUILD_ORM)
+unset(BUILD_EXAMPLES)
+unset(BUILD_CTL)
+
+set(ROCKSDB_BUILD_SHARED 0)
+set(WITH_BENCHMARK_TOOLS 0)
+set(WITH_CORE_TOOLS 0)
+set(WITH_TOOLS 0)
+add_subdirectory(thirdparty/rocksdb EXCLUDE_FROM_ALL)
+unset(WITH_TOOLS)
+unset(WITH_CORE_TOOLS)
+unset(WITH_BENCHMARK_TOOLS)
+
 set(LIB_ONLY True)
 add_subdirectory(thirdparty/onmt_tokenizer EXCLUDE_FROM_ALL)
 unset(LIB_ONLY)
@@ -67,6 +88,8 @@ set(LIB_LIST
     tinyxml2
     eigen
     OpenNMTTokenizer
+    rocksdb
+    drogon
     ${TORCH_LIBRARIES}
 )
 

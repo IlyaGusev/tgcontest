@@ -79,15 +79,26 @@ def main(answers_file_name, original_json, honey_output_file_name, ft_output_fil
         results[r["url"]].append(r["res"])
 
     data = {r["url"]: r for r in records}
+    votes_count = Counter()
+    print("Bad examples: ")
     for url, res in results.items():
         res_count = Counter(res)
-        if res_count.most_common(1)[0][1] < min_votes:
+        votes_for_win = res_count.most_common(1)[0][1]
+        votes_count[votes_for_win] += 1
+        if votes_for_win < min_votes:
+            print("URL:", url)
+            print("Answers:", ", ".join(res))
             data.pop(url)
+    print("Votes for majority: ")
+    for votes, sample_count in votes_count.items():
+        print("{}: {}".format(votes, sample_count))
 
     rub_cnt = Counter()
     for _, d in data.items():
         rub_cnt[d["res"]] += 1
-    print(rub_cnt.most_common())
+    print("Rubrics: ")
+    for rub, cnt in rub_cnt.most_common():
+        print("{}: {}".format(rub, cnt))
 
     if honey_output_file_name:
         with open(honey_output_file_name, "w") as w:

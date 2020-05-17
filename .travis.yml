@@ -9,6 +9,9 @@ addons:
       - cmake
       - libboost-all-dev
       - python3-pip
+      - libgflags-dev
+      - libjsoncpp-dev
+      - uuid-dev
       - linux-tools-5.0.0-1031-gcp
 
 compiler:

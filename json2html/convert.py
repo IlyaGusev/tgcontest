@@ -45,12 +45,14 @@ def convert(templates_dir, output_dir, documents_file, tops_file, languages, ver
             if nclusters:
                 top["clusters"] = top["clusters"][:nclusters]
             top["category"] = category
-            output_file_name = os.path.join(lang_dir, category + ".html")
+            current_page = category + ".html"
+            output_file_name = os.path.join(lang_dir, current_page)
             with open(output_file_name, "w", encoding="utf-8") as w:
                 w.write(rubric_template.render(
                     top=top,
                     version=version,
-                    language=language
+                    language=language,
+                    current_page=current_page
                 ))
     shutil.copyfile(os.path.join(templates_dir, "index.html"), os.path.join(output_dir, "index.html"))
 

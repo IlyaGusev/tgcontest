@@ -31,8 +31,8 @@
                     <button class="btn btn-sm btn-outline-secondary" type="button" id="dropdownDateButton">09 Dec</button>
                 </div>
                 <div class="btn-group btn-group-sm mx-2 mx-sm-3 mx-md-4">
-                    <a class="btn {% if language == 'ru' %} btn-outline-secondary {% else %} btn-secondary {% endif %}" href="../en/main.html">EN</a>
-                    <a class="btn {% if language == 'en' %} btn-outline-secondary {% else %} btn-secondary {% endif %}" href="../ru/main.html">RU</a>
+                    <a class="btn {% if language == 'ru' %} btn-outline-secondary {% else %} btn-secondary {% endif %}" href="../en/{{current_page}}">EN</a>
+                    <a class="btn {% if language == 'en' %} btn-outline-secondary {% else %} btn-secondary {% endif %}" href="../ru/{{current_page}}">RU</a>
                 </div>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
                     <span class="navbar-toggler-icon"></span>
@@ -40,7 +40,10 @@
                 <div class="collapse navbar-collapse flex-grow-0" id="navbarSupportedContent">
                     <ul class="navbar-nav ml-auto">
                         <li class="nav-item active">
-                            <a class="nav-link" href="">Top</a>
+                            <a class="nav-link" href="../{{language}}/main.html">Top</a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="../{{language}}/metrics.html">Metrics</a>
                         </li>
                     </ul>
                 </div>

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Categories</h2>
+<div>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Category</th>
+      <th scope="col">Precision</th>
+      <th scope="col">Recall</th>
+      <th scope="col">F-1 score</th>
+      <th scope="col">Support</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for category, metrics in cat_metrics.categories %}
+    <tr>
+      <th scope="row">{{category}}</th>
+      <td>{{metrics.precision|round(3)}}</td>
+      <td>{{metrics.recall|round(3)}}</td>
+      <td>{{metrics["f1-score"]|round(3)}}</td>
+      <td>{{metrics.support|round(3)}}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <th scope="row"> Macro avg </th>
+      <td>{{cat_metrics["macro avg"].precision|round(3)}}</td>
+      <td>{{cat_metrics["macro avg"].recall|round(3)}}</td>
+      <td>{{cat_metrics["macro avg"]["f1-score"]|round(3)}}</td>
+      <td>{{cat_metrics["macro avg"].support|round(3)}}</td>
+    </tr>
+    <tr>
+      <th scope="row"> Accuracy </th>
+      <td></td>
+      <td></td>
+      <td>{{cat_metrics.accuracy|round(3)}}</td>
+      <td>{{cat_metrics["macro avg"].support|round(3)}}</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+{% endblock %}

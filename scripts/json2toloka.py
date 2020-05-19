@@ -48,7 +48,7 @@ def main(original_json_path, output_dir, honey_path, honey_size, pool_size, skip
             current_pool = clean_pool + honey[:honey_size]
             random.shuffle(current_pool)
 
-            pool_num = (i - 1) // 1000
+            pool_num = (i - 1) // pool_size
             pool_file_name = "pool_{}.tsv".format(pool_num)
             pool_file_name = os.path.join(output_dir, pool_file_name)
             write_pool(pool_file_name, current_pool)

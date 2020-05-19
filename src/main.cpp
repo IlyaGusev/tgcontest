@@ -3,6 +3,7 @@
 #include "clustering/slink.h"
 #include "document.h"
 #include "rank.h"
+#include "run_server.h"
 #include "summarize.h"
 #include "timer.h"
 #include "util.h"
@@ -77,11 +78,17 @@ int main(int argc, char** argv) {
             "json",
             "categories",
             "threads",
-            "top"
+            "top",
+            "server"
         };
         if (std::find(modes.begin(), modes.end(), mode) == modes.end()) {
             std::cerr << "Unknown or unsupported mode!" << std::endl;
             return -1;
+        }
+
+        std::cerr << mode << std::endl;
+        if (mode == "server") {
+            return RunServer();
         }
 
         // Load models

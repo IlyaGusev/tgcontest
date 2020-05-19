@@ -13,7 +13,7 @@
 ## Install
 Prerequisites: CMake, Boost
 ```
-$ sudo apt-get install cmake libboost-all-dev build-essential
+$ sudo apt-get install cmake libboost-all-dev build-essential libjsoncpp-dev uuid-dev
 ```
 
 If you got zip archive, just go to building binary
@@ -22,8 +22,7 @@ To download code and models:
 ```
 $ git clone https://github.com/IlyaGusev/tgcontest
 $ cd tgcontest
-$ git submodule init
-$ git submodule update
+$ git submodule update --init --recursive
 $ bash download_models.sh
 $ wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
 $ unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip

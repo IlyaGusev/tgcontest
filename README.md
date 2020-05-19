@@ -20,8 +20,8 @@ If you got zip archive, just go to building binary
 
 To download code and models:
 ```
-$ git clone https://github.com/IlyaGusev/tgcontest
-$ cd tgcontest
+$ git clone https://github.com/IlyaGusev/tgcontest2
+$ cd tgcontest2
 $ git submodule init
 $ git submodule update
 $ bash download_models.sh
@@ -31,7 +31,7 @@ $ unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
 
 For MacOS use https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.5.0.zip
 
-To build binary (in "tgcontest" dir):
+To build binary (in "tgcontest2" dir):
 ```
 $ mkdir build && cd build && Torch_DIR="../libtorch" cmake -DCMAKE_BUILD_TYPE=Release .. && make
 ```

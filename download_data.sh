@@ -7,10 +7,11 @@ data_train_list=(
     "https://data-static.usercontent.dev/DataClusteringSample2225.tar.gz"
     "https://data-static.usercontent.dev/DataClusteringDataset.tar.gz"
     "https://data-static.usercontent.dev/DataClusteringDataset1209.tar.gz"
+    "https://data-static.usercontent.dev/DataClusteringSample2703.tar.gz"
 )
 
 data_test_list=(
-    "https://data-static.usercontent.dev/DataClusteringSample2703.tar.gz""
+    "https://data-static.usercontent.dev/DataClusteringSample0410.tar.gz"
 )
 
 mkdir data

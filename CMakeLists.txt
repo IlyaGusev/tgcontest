@@ -19,10 +19,37 @@ set(BUILD_TESTING 0)
 add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
 add_subdirectory(thirdparty/tinyxml2)
 add_subdirectory(thirdparty/eigen EXCLUDE_FROM_ALL)
+
+set(BUILD_DROGON_SHARED OFF CACHE BOOL "" FORCE)
+set(BUILD_CTL OFF CACHE BOOL "" FORCE)
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_ORM OFF CACHE BOOL "" FORCE)
+set(COZ_PROFILING OFF CACHE BOOL "" FORCE)
+add_subdirectory(thirdparty/drogon EXCLUDE_FROM_ALL)
+unset(COZ_PROFILIN)
+unset(BUILD_ORM)
+unset(BUILD_EXAMPLES)
+unset(BUILD_CTL)
+
+set(ROCKSDB_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(WITH_BENCHMARK_TOOLS OFF CACHE BOOL "" FORCE)
+set(WITH_CORE_TOOLS OFF CACHE BOOL "" FORCE)
+set(WITH_TOOLS OFF CACHE BOOL "" FORCE)
+set(WITH_TESTS OFF CACHE BOOL "" FORCE)
+set(WITH_GFLAGS OFF CACHE BOOL "" FORCE)
+add_subdirectory(thirdparty/rocksdb EXCLUDE_FROM_ALL)
+unset(WITH_GFLAGS)
+unset(WITH_TESTS)
+unset(WITH_TOOLS)
+unset(WITH_CORE_TOOLS)
+unset(WITH_BENCHMARK_TOOLS)
+
 set(LIB_ONLY True)
 add_subdirectory(thirdparty/onmt_tokenizer EXCLUDE_FROM_ALL)
 unset(LIB_ONLY)
+
 unset(BUILD_TESTING)
+
 
 find_package(Boost COMPONENTS program_options filesystem unit_test_framework REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
@@ -72,6 +99,8 @@ set(LIB_LIST
     tinyxml2
     eigen
     OpenNMTTokenizer
+    rocksdb
+    drogon
     ${TORCH_LIBRARIES}
 )
 

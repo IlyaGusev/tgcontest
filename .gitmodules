@@ -7,3 +7,9 @@
 [submodule "thirdparty/onmt_tokenizer"]
 	path = thirdparty/onmt_tokenizer
 	url = https://github.com/IlyaGusev/Tokenizer
+[submodule "thirdparty/drogon"]
+	path = thirdparty/drogon
+	url = https://github.com/an-tao/drogon.git
+[submodule "thirdparty/rocksdb"]
+	path = thirdparty/rocksdb
+	url = https://github.com/facebook/rocksdb.git

@@ -8,7 +8,7 @@ def clean_text(text):
     return text.replace("\t", " ").replace("\n", " ").replace('"', '')
 
 
-def main(answers_file_name, original_json, honey_output_file_name, ft_output_file_name, min_votes):
+def main(answers_file_name, original_json, honey_output_file_name, ft_output_file_name, min_votes, target_file_name):
     with open(answers_file_name, "r") as r:
         header = tuple(next(r).strip().split("\t"))
         records = []
@@ -111,6 +111,11 @@ def main(answers_file_name, original_json, honey_output_file_name, ft_output_fil
             for d in data.values():
                 w.write("__label__{} {} {}\n".format(d["res"], d["title"], d["text"]))
 
+    if target_file_name:
+        with open(target_file_name, "w") as w:
+            records = [{"url": d["url"], "category": d["res"]} for d in data.values()]
+            json.dump(records, w, ensure_ascii=False)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -118,6 +123,7 @@ if __name__ == "__main__":
     parser.add_argument("--original-json", type=str, default=None)
     parser.add_argument("--honey-output-file-name", type=str, default=None)
     parser.add_argument("--ft-output-file-name", type=str, default=None)
+    parser.add_argument("--target-file-name", type=str, default=None)
     parser.add_argument("--min-votes", type=int, default=3)
     args = parser.parse_args()
     main(**vars(args))

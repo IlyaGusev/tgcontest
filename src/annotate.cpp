@@ -11,7 +11,8 @@ void Annotate(
     std::vector<TDocument>& docs,
     size_t minTextLength,
     bool parseLinks,
-    bool fromJson)
+    bool fromJson,
+    bool saveNotNews)
 {
     LOG_DEBUG("Annotating " << fileNames.size() << " files...");
     TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> timer;
@@ -77,9 +78,11 @@ void Annotate(
         boost::optional<TDocument> doc = futureDoc.get();
         if (!doc
             || !doc->Language
-            || doc->Category == NC_UNDEFINED
-            || doc->Category == NC_NOT_NEWS)
+            || doc->Category == NC_UNDEFINED)
         {
+            continue;
+        }
+        if (doc->Category == NC_NOT_NEWS && !saveNotNews) {
             continue;
         }
         docs.push_back(std::move(doc.get()));

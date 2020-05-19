@@ -18,4 +18,5 @@ void Annotate(
     std::vector<TDocument>& docs,
     size_t minTextLength = 20,
     bool parseLinks = false,
-    bool fromJson = false);
+    bool fromJson = false,
+    bool saveNotNews = false);

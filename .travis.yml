@@ -33,9 +33,13 @@ before_script:
   - wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
   - unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
   - curl -L "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/shunit2/shunit2-2.1.6.tgz" | tar zx
-  - wget https://www.dropbox.com/s/dhedo9ixfbjsa27/en_ru_2703.json.tar.gz
+  - wget https://www.dropbox.com/s/y3j9mxzpad8rkku/en_ru_0502_0503.json.tar.gz
+  - wget https://www.dropbox.com/s/sx9lk1ds0rf8y25/ru_cat_2703_data.json
   - wget https://www.dropbox.com/s/tzdoq25p5rx30n2/ru_2703_cat_target.json
-  - tar -xzvf en_ru_2703.json.tar.gz
+  - tar -xzvf en_ru_0502_0503.json.tar.gz
+  - mv en_ru_0502_0503.json demo_data.json
+  - mv ru_cat_2703_data.json metrics_data.json
+  - mv ru_2703_cat_target.json ru_cat_target.json
   - python3 -m pip install -r json2html/requirements.txt
   - git clone https://github.com/brendangregg/FlameGraph
   - export LD_LIBRARY_PATH=$(if [[ $TRAVIS_COMPILER == "clang" ]]; then echo -n /usr/local/clang/lib:$LD_LIBRARY_PATH; fi)
@@ -48,12 +52,12 @@ script:
   - make test
   - cd ..
   - bash test_canonical.sh
-  - perf record -F 99 -g ./build/tgnews top en_ru_2703.json --from_json > top_2703.json
+  - perf record -F 99 -g ./build/tgnews top demo_data.json --from_json > demo_top.json
   - perf script > out.perf
-  - python3 json2html/convert.py --documents-file en_ru_2703.json --tops-file top_2703.json --templates-dir json2html/templates --output-dir output
+  - python3 json2html/convert.py --documents-file demo_data.json --tops-file demo_top.json --templates-dir json2html/templates --output-dir output
   - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/flamegraph.svg
-  - ./build/tgnews categories en_ru_2703.json --languages ru --from_json > ru_2703_cat.json
-  - python3 json2html/calc_metrics.py --templates-dir json2html/templates --output-dir output/ru --documents-file en_ru_2703.json --cat-gold ru_2703_cat_target.json --cat-output ru_2703_cat.json --language ru
+  - ./build/tgnews categories metrics_data.json --languages ru --from_json > ru_cat.json
+  - python3 json2html/calc_metrics.py --templates-dir json2html/templates --output-dir output/ru --documents-file metrics_data.json --cat-gold ru_cat_target.json --cat-output ru_cat.json --language ru
 
 deploy:
   provider: pages

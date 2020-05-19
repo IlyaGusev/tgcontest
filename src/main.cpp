@@ -333,6 +333,10 @@ int main(int argc, char** argv) {
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<ENewsCategory>(std::distance(tops.begin(), it));
+            if (!saveNotNews && category == NC_NOT_NEWS) {
+                continue;
+            }
+
             nlohmann::json rubricTop = {
                 {"category", category},
                 {"threads", nlohmann::json::array()}

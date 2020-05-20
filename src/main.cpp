@@ -32,6 +32,7 @@ int main(int argc, char** argv) {
         desc.add_options()
             ("mode", po::value<std::string>()->required(), "mode")
             ("input", po::value<std::string>()->required(), "input")
+            ("config", po::value<std::string>()->default_value("configs/server.pbtxt"), "config")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
             ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_v2.ftz"), "en_cat_detect_model")
             ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_v3.ftz"), "ru_cat_detect_model")
@@ -88,7 +89,8 @@ int main(int argc, char** argv) {
         }
 
         if (mode == "server") {
-            return RunServer();
+            const std::string config = vm["config"].as<std::string>();
+            return RunServer(config);
         }
 
         // Load models

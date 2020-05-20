@@ -103,6 +103,7 @@ set(HEADER_FILES
 
 set(PROTO_FILES
     src/config.proto
+    src/document.proto
 )
 
 set(LIB_LIST
@@ -119,6 +120,7 @@ set(LIB_LIST
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fasttext/src")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/rocksdb/include")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/onmt_tokenizer/include")
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})

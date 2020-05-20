@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
             ("config", po::value<std::string>()->default_value("configs/server.pbtxt"), "config")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
             ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_v2.ftz"), "en_cat_detect_model")
-            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_v3.ftz"), "ru_cat_detect_model")
+            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_v3_1.ftz"), "ru_cat_detect_model")
             ("en_vector_model", po::value<std::string>()->default_value("models/en_vectors_v2.bin"), "en_vector_model")
             ("ru_vector_model", po::value<std::string>()->default_value("models/ru_vectors_v2.bin"), "ru_vector_model")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")

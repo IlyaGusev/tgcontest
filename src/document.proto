@@ -1,0 +1,14 @@
+syntax = "proto3";
+package tg;
+
+message TDocumentProto {
+    string FileName = 1;
+    uint32 Published = 2;
+    uint32 Ttl = 3;
+
+    string Title = 4;
+    uint32 Language = 5; // enum?
+    uint32 Category = 6;
+
+    repeated float Embedding = 7;
+}

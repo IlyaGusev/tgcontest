@@ -2,6 +2,7 @@
 
 #include "config.pb.h"
 #include "controller.h"
+#include "util.h"
 
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -36,10 +37,10 @@ namespace {
 int RunServer(const std::string& fname) {
     TContext context;
 
-    std::cerr << "Loading server config: " << fname << std::endl;
+    LOG_DEBUG("Loading server config");
     const auto config = ParseConfig(fname);
 
-    std::cerr << "Creating database" << std::endl;
+    LOG_DEBUG("Creating database");
     rocksdb::Options options;
     options.IncreaseParallelism();
     options.OptimizeLevelStyleCompaction();
@@ -52,7 +53,7 @@ int RunServer(const std::string& fname) {
     }
     context.Db = std::unique_ptr<rocksdb::DB>(db);
 
-    std::cerr << "Launching server" << std::endl;
+    LOG_DEBUG("Launching server");
     app()
         .setLogLevel(trantor::Logger::kTrace)
         .addListener("0.0.0.0", config.port())

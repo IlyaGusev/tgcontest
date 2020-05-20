@@ -101,10 +101,7 @@ set(HEADER_FILES
     src/util.h
 )
 
-set(PROTO_FILES
-    src/config.proto
-    src/document.proto
-)
+file(GLOB PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/proto/*.proto")
 
 set(LIB_LIST
     ${Boost_LIBRARIES}

@@ -16,6 +16,12 @@ Prerequisites: CMake, Boost
 $ sudo apt-get install cmake libboost-all-dev build-essential libjsoncpp-dev uuid-dev protobuf-compiler
 ```
 
+For MacOS
+```
+$ brew install boost jsoncpp ossp-uuid protobuf
+```
+
+
 If you got zip archive, just go to building binary
 
 To download code and models:

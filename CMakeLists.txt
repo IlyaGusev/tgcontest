@@ -75,6 +75,7 @@ set(SOURCE_FILES
     src/controller.cpp
     src/detect.cpp
     src/document.cpp
+    src/document_ranking/weighted_document.cpp
     src/embedder.cpp
     src/rank.cpp
     src/run_server.cpp
@@ -92,6 +93,7 @@ set(HEADER_FILES
     src/controller.h
     src/detect.h
     src/document.h
+    src/document_ranking/weighted_document.h
     src/embedder.h
     src/rank.h
     src/run_server.h

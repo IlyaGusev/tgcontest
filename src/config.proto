@@ -4,4 +4,7 @@ package tg;
 message TServerConfig {
     uint32 Port = 1;
     uint32 Threads = 2;
+
+    string DbPath = 3;
+    bool DbFailIfMissing = 4;
 }

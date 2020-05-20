@@ -1,11 +1,20 @@
 import argparse
 import json
+import pyonmttok
 from collections import Counter
 from collections import defaultdict
 from sklearn.metrics import cohen_kappa_score
 
+
 def clean_text(text):
     return text.replace("\t", " ").replace("\n", " ").replace('"', '')
+
+
+def preprocess(text, tokenizer):
+    text = str(text).strip().replace("\n", " ").replace("\xa0", " ").lower()
+    tokens, _ = tokenizer.tokenize(text)
+    text = " ".join(tokens)
+    return text
 
 
 def main(answers_file_name, original_json, honey_output_file_name, ft_output_file_name, min_votes, target_file_name):
@@ -107,14 +116,22 @@ def main(answers_file_name, original_json, honey_output_file_name, ft_output_fil
                 w.write("{}\t{}\t{}\t{}\n".format(d["url"], d["title"], d["text"], d["res"]))
 
     if ft_output_file_name:
+        tokenizer = pyonmttok.Tokenizer("conservative")
         with open(ft_output_file_name, "w") as w:
             for d in data.values():
-                w.write("__label__{} {} {}\n".format(d["res"], d["title"], d["text"]))
+                text = preprocess(d["text"], tokenizer)
+                title = preprocess(d["title"], tokenizer)
+                w.write("__label__{} {} {}\n".format(d["res"], title, text))
 
     if target_file_name:
         with open(target_file_name, "w") as w:
-            records = [{"url": d["url"], "category": d["res"]} for d in data.values()]
-            json.dump(records, w, ensure_ascii=False)
+            records = [{
+                "url": d["url"],
+                "title": d["title"],
+                "text": d["text"],
+                "category": d["res"]
+            } for d in data.values()]
+            json.dump(records, w, ensure_ascii=False, indent=4, sort_keys=True)
 
 
 if __name__ == "__main__":

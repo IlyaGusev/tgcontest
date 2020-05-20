@@ -9,7 +9,6 @@
 #include <onmt/Tokenizer.h>
 
 enum ENewsCategory {
-    NC_NOT_NEWS = -2,
     NC_UNDEFINED = -1,
     NC_ANY = 0,
     NC_SOCIETY,
@@ -19,6 +18,7 @@ enum ENewsCategory {
     NC_ENTERTAINMENT,
     NC_SCIENCE,
     NC_OTHER,
+    NC_NOT_NEWS,
 
     NC_COUNT
 };

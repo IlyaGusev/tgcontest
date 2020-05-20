@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
             ("config", po::value<std::string>()->default_value("configs/server.pbtxt"), "config")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
             ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_v2.ftz"), "en_cat_detect_model")
-            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_v2.ftz"), "ru_cat_detect_model")
+            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_v3.ftz"), "ru_cat_detect_model")
             ("en_vector_model", po::value<std::string>()->default_value("models/en_vectors_v2.bin"), "en_vector_model")
             ("ru_vector_model", po::value<std::string>()->default_value("models/ru_vectors_v2.bin"), "ru_vector_model")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
@@ -50,6 +50,7 @@ int main(int argc, char** argv) {
             ("min_text_length", po::value<size_t>()->default_value(20), "min_text_length")
             ("parse_links", po::bool_switch()->default_value(false), "parse_links")
             ("from_json", po::bool_switch()->default_value(false), "from_json")
+            ("save_not_news", po::bool_switch()->default_value(false), "save_not_news")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ("iter_timestamp_percentile", po::value<double>()->default_value(0.99), "iter_timestamp_percentile")
             ;
@@ -87,7 +88,6 @@ int main(int argc, char** argv) {
             return -1;
         }
 
-        std::cerr << mode << std::endl;
         if (mode == "server") {
             const std::string config = vm["config"].as<std::string>();
             return RunServer(config);
@@ -137,6 +137,7 @@ int main(int argc, char** argv) {
         std::set<std::string> languages(l.begin(), l.end());
         size_t minTextLength = vm["min_text_length"].as<size_t>();
         bool parseLinks = vm["parse_links"].as<bool>();
+        bool saveNotNews = vm["save_not_news"].as<bool>();
         std::vector<TDocument> docs;
         Annotate(
             fileNames,
@@ -145,7 +146,8 @@ int main(int argc, char** argv) {
             docs,
             /* minTextLength = */ minTextLength,
             /* parseLinks */ parseLinks,
-            /* fromJson */ fromJson);
+            /* fromJson */ fromJson,
+            /* saveNotNews */ saveNotNews);
 
         // Output
         if (mode == "languages") {
@@ -203,7 +205,7 @@ int main(int argc, char** argv) {
             std::vector<std::vector<std::string>> catToFiles(NC_COUNT);
             for (const TDocument& doc : docs) {
                 ENewsCategory category = doc.Category;
-                if (category == NC_UNDEFINED || category == NC_NOT_NEWS) {
+                if (category == NC_UNDEFINED || category == NC_NOT_NEWS && !saveNotNews) {
                     continue;
                 }
                 catToFiles[static_cast<size_t>(category)].push_back(CleanFileName(doc.FileName));
@@ -211,6 +213,9 @@ int main(int argc, char** argv) {
             }
             for (size_t i = 0; i < NC_COUNT; i++) {
                 ENewsCategory category = static_cast<ENewsCategory>(i);
+                if (!saveNotNews && category == NC_NOT_NEWS) {
+                    continue;
+                }
                 const std::vector<std::string>& files = catToFiles[i];
                 nlohmann::json object = {
                     {"category", category},
@@ -329,6 +334,10 @@ int main(int argc, char** argv) {
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<ENewsCategory>(std::distance(tops.begin(), it));
+            if (!saveNotNews && category == NC_NOT_NEWS) {
+                continue;
+            }
+
             nlohmann::json rubricTop = {
                 {"category", category},
                 {"threads", nlohmann::json::array()}

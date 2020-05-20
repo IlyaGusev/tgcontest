@@ -55,9 +55,11 @@ find_package(Boost COMPONENTS program_options filesystem unit_test_framework REQ
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
 
-find_package(OpenMP)
-if (OPENMP_FOUND OR OPENMP_CXX_FOUND)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+if (NOT APPLE)
+    find_package(OpenMP)
+    if (OPENMP_FOUND OR OPENMP_CXX_FOUND)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    endif()
 endif()
 
 find_package(Torch REQUIRED)

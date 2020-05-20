@@ -1,0 +1,7 @@
+syntax = "proto3";
+package tg;
+
+message TServerConfig {
+    uint32 Port = 1;
+    uint32 Threads = 2;
+}

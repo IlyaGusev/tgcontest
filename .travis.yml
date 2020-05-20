@@ -16,6 +16,7 @@ addons:
       - python3-pip
       - libjsoncpp-dev
       - uuid-dev
+      - protobuf-compiler
       - linux-tools-5.0.0-1031-gcp
 
 compiler:

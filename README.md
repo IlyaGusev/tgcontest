@@ -13,7 +13,7 @@
 ## Install
 Prerequisites: CMake, Boost
 ```
-$ sudo apt-get install cmake libboost-all-dev build-essential libjsoncpp-dev uuid-dev
+$ sudo apt-get install cmake libboost-all-dev build-essential libjsoncpp-dev uuid-dev protobuf-compiler
 ```
 
 If you got zip archive, just go to building binary

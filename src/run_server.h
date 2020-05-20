@@ -1,3 +1,5 @@
 #pragma once
 
-int RunServer();
+#include <string>
+
+int RunServer(const std::string& fname);

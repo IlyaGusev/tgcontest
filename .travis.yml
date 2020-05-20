@@ -17,6 +17,7 @@ addons:
       - libjsoncpp-dev
       - uuid-dev
       - protobuf-compiler
+      - libprotobuf-dev
       - linux-tools-5.0.0-1031-gcp
 
 compiler:

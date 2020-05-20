@@ -18,16 +18,13 @@ namespace {
 
     tg::TServerConfig ParseConfig(const std::string& fname) {
         const int fileDesc = open(fname.c_str(), O_RDONLY);
-        if (fileDesc < 0) {
-            throw std::runtime_error("Could not open config file");
-        }
+        ENSURE(fileDesc >= 0, "Could not open config file");
 
         google::protobuf::io::FileInputStream fileInput(fileDesc);
 
         tg::TServerConfig config;
-        if (!google::protobuf::TextFormat::Parse(&fileInput, &config)) {
-            throw std::runtime_error("Invalid prototxt file");
-        }
+        const bool succes = google::protobuf::TextFormat::Parse(&fileInput, &config);
+        ENSURE(succes, "Invalid prototxt file");
 
         return config;
     }
@@ -48,9 +45,8 @@ int RunServer(const std::string& fname) {
 
     rocksdb::DB* db;
     rocksdb::Status s = rocksdb::DB::Open(options, config.dbpath(), &db);
-    if (!s.ok()) {
-        throw std::runtime_error("Failed to create database");
-    }
+    ENSURE(s.ok(), "Failed to create database");
+
     context.Db = std::unique_ptr<rocksdb::DB>(db);
 
     LOG_DEBUG("Launching server");

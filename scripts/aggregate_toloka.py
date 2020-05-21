@@ -98,6 +98,8 @@ def main(answers_file_name, original_json, honey_output_file_name, ft_output_fil
             print("URL:", url)
             print("Answers:", ", ".join(res))
             data.pop(url)
+        else:
+            data[url]["res"] = res_count.most_common(1)[0][0]
     print("Votes for majority: ")
     for votes, sample_count in votes_count.items():
         print("{}: {}".format(votes, sample_count))

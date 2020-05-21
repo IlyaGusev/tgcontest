@@ -1,14 +1,45 @@
 syntax = "proto3";
 package tg;
 
+enum ELanguage {
+    LN_UNDEFINED = 0;
+    LN_RU = 1;
+    LN_EN = 2;
+}
+
+enum ECategory {
+    NC_UNDEFINED = 0;
+    NC_ANY = 1;
+    NC_SOCIETY = 2;
+    NC_ECONOMY = 3;
+    NC_TECHNOLOGY = 4;
+    NC_SPORTS = 5;
+    NC_ENTERTAINMENT = 6;
+    NC_SCIENCE = 7;
+    NC_OTHER = 8;
+
+    NC_NOT_NEWS = 9;
+}
+
+enum EEmbeddingKey {
+    EK_UNDEFINED = 0;
+    EK_CLUSTERING = 1;
+}
+
+message TEmbeddingProto {
+    EEmbeddingKey Key = 1;
+    repeated float Value = 2;
+}
+
 message TDocumentProto {
     string FileName = 1;
-    uint32 Published = 2;
+    uint32 PubTime = 2;
     uint32 Ttl = 3;
 
     string Title = 4;
-    uint32 Language = 5; // enum?
-    uint32 Category = 6;
 
-    repeated float Embedding = 7;
+    ELanguage Language = 5;
+    ECategory Category = 6;
+
+    repeated TEmbeddingProto Embeddings = 7;
 }

@@ -73,6 +73,7 @@ set(SOURCE_FILES
     src/cluster.cpp
     src/clustering/slink.cpp
     src/controller.cpp
+    src/db_document.cpp
     src/detect.cpp
     src/document.cpp
     src/embedder.cpp
@@ -90,6 +91,7 @@ set(HEADER_FILES
     src/clustering/clustering.h
     src/clustering/slink.h
     src/controller.h
+    src/db_document.h
     src/detect.h
     src/document.h
     src/embedder.h

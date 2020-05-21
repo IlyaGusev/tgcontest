@@ -12,7 +12,7 @@ public:
         ADD_METHOD_TO(TController::Get,"/{fname}", drogon::Get); // debug only
     METHOD_LIST_END
 
-    explicit TController(const TContext* context);
+    void Init(const TContext* context);
 
     void Put(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const;
     void Delete(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const;
@@ -20,5 +20,9 @@ public:
     void Get(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const;
 
 private:
+    bool IsNotReady(std::function<void(const drogon::HttpResponsePtr&)> &&callback) const;
+
+private:
+    std::atomic<bool> Initialized {false};
     const TContext* Context;
 };

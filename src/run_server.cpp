@@ -60,8 +60,11 @@ int RunServer(const std::string& fname) {
         .addListener("0.0.0.0", config.port())
         .setThreadNum(config.threads());
 
-    auto controllerPtr = std::make_shared<TController>(&context);
+    auto controllerPtr = std::make_shared<TController>();
     app().registerController(controllerPtr);
+
+    // call this once clustering is ready
+    DrClassMap::getSingleInstance<TController>()->Init(&context);
 
     app().run();
 

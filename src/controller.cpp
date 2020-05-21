@@ -21,12 +21,27 @@ namespace {
     }
 }
 
-TController::TController(const TContext* context)
-    : Context(context)
-{
+void TController::Init(const TContext* context) {
+    Context = context;
+    Initialized.store(true, std::memory_order_release);
+}
+
+bool TController::IsNotReady(std::function<void(const drogon::HttpResponsePtr&)> &&callback) const {
+    if (Initialized.load(std::memory_order_acquire)) {
+        return false;
+    }
+
+    auto resp = drogon::HttpResponse::newHttpResponse();
+    resp->setStatusCode(drogon::k503ServiceUnavailable);
+    callback(resp);
+    return true;
 }
 
 void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const {
+    if (IsNotReady(std::move(callback))) {
+        return;
+    }
+
     const std::string& ttlString = req->getHeader("Cache-Control");
     if (ttlString.empty()) {
         throw std::runtime_error("Header Cache-Control is not set");
@@ -62,6 +77,10 @@ void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(cons
 }
 
 void TController::Delete(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const {
+    if (IsNotReady(std::move(callback))) {
+        return;
+    }
+
     Json::Value ret;
     ret["result"] = "delete";
     ret["fname"] = fname;
@@ -71,6 +90,10 @@ void TController::Delete(const drogon::HttpRequestPtr &req, std::function<void(c
 }
 
 void TController::Get(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const {
+    if (IsNotReady(std::move(callback))) {
+        return;
+    }
+
     std::string serializedDoc;
     rocksdb::Status s = Context->Db->Get(rocksdb::ReadOptions(), fname, &serializedDoc);
 

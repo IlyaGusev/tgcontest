@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Categories</h2>
+<h1>Categories</h1>
 <div>
 <table class="table">
   <thead>
@@ -40,4 +40,25 @@
   </tbody>
 </table>
 </div>
+<details>
+<summary>Errors</summary>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Title</th>
+      <th scope="col">Prediction</th>
+      <th scope="col">Gold</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for error in cat_errors %}
+    <tr>
+      <td>{{error.title}}</td>
+      <td>{{error.prediction}}</td>
+      <td>{{error.target}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</details>
 {% endblock %}

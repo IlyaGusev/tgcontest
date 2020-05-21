@@ -3,7 +3,6 @@
 #include <string>
 #include <locale>
 #include <codecvt>
-#include <uchar.h>
 
 bool ComputeDocumentNasty(const TDocument& doc) {
     std::u16string utf16 = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(doc.Title.data());

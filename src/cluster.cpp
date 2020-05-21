@@ -1,4 +1,5 @@
 #include "cluster.h"
+#include "document_ranking/weighted_document.h"
 
 #include <boost/range/algorithm/nth_element.hpp>
 
@@ -38,15 +39,6 @@ ENewsCategory TNewsCluster::GetCategory() const {
     auto it = std::max_element(categoryCount.begin(), categoryCount.end());
     return static_cast<ENewsCategory>(std::distance(categoryCount.begin(), it));
 }
-
-struct TWeightedDoc {
-    std::reference_wrapper<const TDocument> Doc;
-    double Weight = 0.0;
-    TWeightedDoc(const TDocument& doc, double weight)
-        : Doc(doc)
-        , Weight(weight)
-    {}
-};
 
 void TNewsCluster::SortByWeights(const std::vector<double>& weights) {
     std::vector<TWeightedDoc> weightedDocs;

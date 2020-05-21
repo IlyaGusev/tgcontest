@@ -32,9 +32,10 @@ int main(int argc, char** argv) {
         desc.add_options()
             ("mode", po::value<std::string>()->required(), "mode")
             ("input", po::value<std::string>()->required(), "input")
+            ("config", po::value<std::string>()->default_value("configs/server.pbtxt"), "config")
             ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
             ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_v2.ftz"), "en_cat_detect_model")
-            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_v2.ftz"), "ru_cat_detect_model")
+            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_v3_1.ftz"), "ru_cat_detect_model")
             ("en_vector_model", po::value<std::string>()->default_value("models/en_vectors_v2.bin"), "en_vector_model")
             ("ru_vector_model", po::value<std::string>()->default_value("models/ru_vectors_v2.bin"), "ru_vector_model")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
@@ -87,9 +88,9 @@ int main(int argc, char** argv) {
             return -1;
         }
 
-        std::cerr << mode << std::endl;
         if (mode == "server") {
-            return RunServer();
+            const std::string config = vm["config"].as<std::string>();
+            return RunServer(config);
         }
 
         // Load models
@@ -204,7 +205,7 @@ int main(int argc, char** argv) {
             std::vector<std::vector<std::string>> catToFiles(NC_COUNT);
             for (const TDocument& doc : docs) {
                 ENewsCategory category = doc.Category;
-                if (category == NC_UNDEFINED || category == NC_NOT_NEWS && !saveNotNews) {
+                if (category == NC_UNDEFINED || (category == NC_NOT_NEWS && !saveNotNews)) {
                     continue;
                 }
                 catToFiles[static_cast<size_t>(category)].push_back(CleanFileName(doc.FileName));

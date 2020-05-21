@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.8.2)
 
 project(tgnews)
 
@@ -55,13 +55,17 @@ find_package(Boost COMPONENTS program_options filesystem unit_test_framework REQ
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
 
-find_package(OpenMP)
-if (OPENMP_FOUND OR OPENMP_CXX_FOUND)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+if (NOT APPLE)
+    find_package(OpenMP)
+    if (OPENMP_FOUND OR OPENMP_CXX_FOUND)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    endif()
 endif()
 
 find_package(Torch REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
+find_package(Protobuf REQUIRED)
 
 set(SOURCE_FILES
     src/agency_rating.cpp
@@ -71,6 +75,7 @@ set(SOURCE_FILES
     src/controller.cpp
     src/detect.cpp
     src/document.cpp
+    src/document_ranking/weighted_document.cpp
     src/embedder.cpp
     src/rank.cpp
     src/run_server.cpp
@@ -88,6 +93,7 @@ set(HEADER_FILES
     src/controller.h
     src/detect.h
     src/document.h
+    src/document_ranking/weighted_document.h
     src/embedder.h
     src/rank.h
     src/run_server.h
@@ -95,6 +101,10 @@ set(HEADER_FILES
     src/thread_pool.h
     src/timer.h
     src/util.h
+)
+
+set(PROTO_FILES
+    src/config.proto
 )
 
 set(LIB_LIST
@@ -105,6 +115,7 @@ set(LIB_LIST
     OpenNMTTokenizer
     rocksdb
     drogon
+    ${Protobuf_LIBRARIES}
     ${TORCH_LIBRARIES}
 )
 
@@ -112,7 +123,10 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fasttext/src")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/onmt_tokenizer/include")
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES} src/main.cpp)
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
+include_directories(${CMAKE_BINARY_DIR})
+
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${PROTO_SRCS} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB_LIST})
 
 enable_testing()
@@ -121,7 +135,7 @@ file(GLOB TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
 add_definitions(-DTEST_PATH=${CMAKE_CURRENT_SOURCE_DIR}/test)
 foreach(testSrc ${TEST_SRCS})
     get_filename_component(testName ${testSrc} NAME_WE)
-    add_executable(${testName} ${SOURCE_FILES} ${testSrc})
+    add_executable(${testName} ${SOURCE_FILES} ${PROTO_SRCS} ${testSrc})
     target_link_libraries(${testName} PRIVATE ${LIB_LIST})
     add_test(NAME ${testName} COMMAND ${testName})
 endforeach(testSrc)

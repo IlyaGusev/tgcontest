@@ -4,7 +4,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
-#include <tinyxml2/tinyxml2.h>
 
 #include <sstream>
 #include <fstream>
@@ -19,6 +18,13 @@ TDocument::TDocument(const char* fileName) {
 
 TDocument::TDocument(const nlohmann::json& json) {
     FromJson(json);
+}
+
+TDocument::TDocument(
+    const tinyxml2::XMLDocument& html,
+    const std::string& fileName
+) {
+    FromHtml(html, fileName);
 }
 
 nlohmann::json TDocument::ToJson() const {
@@ -110,9 +116,21 @@ void TDocument::FromHtml(
     if (!boost::filesystem::exists(fileName)) {
         throw std::runtime_error("No HTML file");
     }
-    FileName = fileName;
     tinyxml2::XMLDocument originalDoc;
     originalDoc.LoadFile(fileName);
+
+    FromHtml(originalDoc, fileName, parseLinks, shrinkText, maxWords);
+}
+
+void TDocument::FromHtml(
+    const tinyxml2::XMLDocument& originalDoc,
+    const std::string& fileName,
+    bool parseLinks,
+    bool shrinkText,
+    size_t maxWords)
+{
+    FileName = fileName;
+
     const tinyxml2::XMLElement* htmlElement = originalDoc.FirstChildElement("html");
     if (!htmlElement) {
         throw std::runtime_error("Parser error: no html tag");

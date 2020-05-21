@@ -2,7 +2,7 @@
 
 models_list=(
     "https://www.dropbox.com/s/qq970kin8zagql7/lang_detect.ftz"
-    "https://www.dropbox.com/s/55vonqnblz6ng28/ru_cat_v2.ftz"
+    "https://www.dropbox.com/s/8xhppw5qbvokpwb/ru_cat_v3_1.ftz"
     "https://www.dropbox.com/s/z5szjputp35a6yu/en_cat_v2.ftz"
     "https://www.dropbox.com/s/2nx97d8nzbzusee/ru_vectors_v2.bin"
     "https://www.dropbox.com/s/no7x1n8acl5ykif/en_vectors_v2.bin"

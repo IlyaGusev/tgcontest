@@ -7,6 +7,7 @@
 #include <boost/optional.hpp>
 #include <nlohmann_json/json.hpp>
 #include <onmt/Tokenizer.h>
+#include <tinyxml2/tinyxml2.h>
 
 enum ENewsCategory {
     NC_UNDEFINED = -1,
@@ -62,6 +63,7 @@ public:
     TDocument() = default;
     TDocument(const char* fileName);
     TDocument(const nlohmann::json& json);
+    TDocument(const tinyxml2::XMLDocument& html, const std::string& fileName);
 
     nlohmann::json ToJson() const;
     void FromJson(const char* fileName);
@@ -72,6 +74,14 @@ public:
         bool shrinkText=false,
         size_t maxWords=200
     );
+    void FromHtml(
+        const tinyxml2::XMLDocument& html,
+        const std::string& fileName,
+        bool parseLinks=false,
+        bool shrinkText=false,
+        size_t maxWords=200
+    );
+
     bool IsRussian() const { return Language && Language.get() == "ru"; }
     bool IsEnglish() const { return Language && Language.get() == "en"; }
     bool IsNews() const { return Category != NC_NOT_NEWS && Category != NC_UNDEFINED; }

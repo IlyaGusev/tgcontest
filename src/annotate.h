@@ -7,7 +7,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include <fasttext.h>
+namespace fasttext {
+    class FastText;
+}
 
 using TModelStorage = std::unordered_map<std::string, std::unique_ptr<fasttext::FastText>>;
 

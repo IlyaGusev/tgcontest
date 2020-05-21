@@ -10,9 +10,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall -Wextra -Wno-sign-compare -fno-omit-frame-pointer")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O2 -fsanitize=address")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -funroll-loops -Ofast -march=native")
+set(TGNEWS_CXX_FLAGS "-pthread;-Wall;-Wextra;-Wno-sign-compare;-fno-omit-frame-pointer")
+set(TGNEWS_CXX_DEBUG_FLAGS "-g;-O2;-fsanitize=address")
+set(TGNEWS_CXX_RELEASE_FLAGS "-funroll-loops;-Ofast;-march=native")
 set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer")
 
 set(BUILD_TESTING 0)
@@ -119,15 +119,18 @@ set(LIB_LIST
     ${TORCH_LIBRARIES}
 )
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fasttext/src")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/onmt_tokenizer/include")
+target_include_directories(fasttext-static SYSTEM PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fasttext/src")
+target_include_directories(OpenNMTTokenizer SYSTEM PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/onmt_tokenizer/include")
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 include_directories(${CMAKE_BINARY_DIR})
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${PROTO_SRCS} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB_LIST})
+target_compile_options(${PROJECT_NAME} PUBLIC "${TGNEWS_CXX_FLAGS}")
+target_compile_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Debug>:${TGNEWS_CXX_DEBUG_FLAGS}>")
+target_compile_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Release>:${TGNEWS_CXX_RELEASE_FLAGS}>")
 
 enable_testing()
 

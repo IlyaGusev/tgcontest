@@ -9,6 +9,7 @@
 #include "util.h"
 
 #include <boost/program_options.hpp>
+#include <fasttext.h>
 
 namespace po = boost::program_options;
 

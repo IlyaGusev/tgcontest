@@ -1,6 +1,7 @@
 #include "run_server.h"
 
 #include "config.pb.h"
+#include "context.h"
 #include "controller.h"
 #include "util.h"
 
@@ -29,25 +30,29 @@ namespace {
         return config;
     }
 
+    std::unique_ptr<rocksdb::DB> CreateDatabase(const tg::TServerConfig& config) {
+        rocksdb::Options options;
+        options.IncreaseParallelism();
+        options.OptimizeLevelStyleCompaction();
+        options.create_if_missing = !config.dbfailifmissing();
+
+        rocksdb::DB* db;
+        rocksdb::Status s = rocksdb::DB::Open(options, config.dbpath(), &db);
+        ENSURE(s.ok(), "Failed to create database");
+
+        return std::unique_ptr<rocksdb::DB>(db);
+    }
+
 }
 
 int RunServer(const std::string& fname) {
-    TContext context;
-
     LOG_DEBUG("Loading server config");
     const auto config = ParseConfig(fname);
 
     LOG_DEBUG("Creating database");
-    rocksdb::Options options;
-    options.IncreaseParallelism();
-    options.OptimizeLevelStyleCompaction();
-    options.create_if_missing = !config.dbfailifmissing();
-
-    rocksdb::DB* db;
-    rocksdb::Status s = rocksdb::DB::Open(options, config.dbpath(), &db);
-    ENSURE(s.ok(), "Failed to create database");
-
-    context.Db = std::unique_ptr<rocksdb::DB>(db);
+    TContext context {
+        .Db = CreateDatabase(config)
+    };
 
     LOG_DEBUG("Launching server");
     app()
@@ -55,7 +60,7 @@ int RunServer(const std::string& fname) {
         .addListener("0.0.0.0", config.port())
         .setThreadNum(config.threads());
 
-    auto controllerPtr = std::make_shared<TController>(std::move(context));
+    auto controllerPtr = std::make_shared<TController>(&context);
     app().registerController(controllerPtr);
 
     app().run();

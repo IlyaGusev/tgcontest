@@ -21,8 +21,8 @@ namespace {
     }
 }
 
-TController::TController(TContext&& context)
-    : Context(std::move(context))
+TController::TController(const TContext* context)
+    : Context(context)
 {
 }
 
@@ -45,7 +45,7 @@ void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(cons
     std::string serializedDoc;
     ToProto(doc, ttl).SerializeToString(&serializedDoc);
 
-    rocksdb::Status s = Context.Db->Put(rocksdb::WriteOptions(), fname, serializedDoc);
+    rocksdb::Status s = Context->Db->Put(rocksdb::WriteOptions(), fname, serializedDoc);
     if (!s.ok()) {
         throw std::runtime_error("Write failed");
     }
@@ -72,7 +72,7 @@ void TController::Delete(const drogon::HttpRequestPtr &req, std::function<void(c
 
 void TController::Get(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const {
     std::string serializedDoc;
-    rocksdb::Status s = Context.Db->Get(rocksdb::ReadOptions(), fname, &serializedDoc);
+    rocksdb::Status s = Context->Db->Get(rocksdb::ReadOptions(), fname, &serializedDoc);
 
     Json::Value ret;
     ret["result"] = "get";

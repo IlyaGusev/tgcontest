@@ -1,13 +1,8 @@
 #pragma once
 
+#include "context.h"
+
 #include <drogon/HttpController.h>
-#include <rocksdb/db.h>
-
-#include <memory>
-
-struct TContext {
-    std::unique_ptr<rocksdb::DB> Db;
-};
 
 class TController : public drogon::HttpController<TController, /* AutoCreation */ false> {
 public:
@@ -17,7 +12,7 @@ public:
         ADD_METHOD_TO(TController::Get,"/{fname}", drogon::Get); // debug only
     METHOD_LIST_END
 
-    TController(TContext&& context);
+    explicit TController(const TContext* context);
 
     void Put(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const;
     void Delete(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const;
@@ -25,5 +20,5 @@ public:
     void Get(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const;
 
 private:
-    const TContext Context;
+    const TContext* Context;
 };

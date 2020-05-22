@@ -41,10 +41,24 @@ int main(int argc, char** argv) {
             ("en_vector_model", po::value<std::string>()->default_value("models/en_vectors_v2.bin"), "en_vector_model")
             ("ru_vector_model", po::value<std::string>()->default_value("models/ru_vectors_v2.bin"), "ru_vector_model")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
-            ("en_clustering_distance_threshold", po::value<float>()->default_value(0.02f), "en_clustering_distance_threshold")
+            ("en_small_clustering_distance_threshold", po::value<float>()->default_value(0.015f), "en_clustering_distance_threshold")
+            ("en_small_cluster_size", po::value<size_t>()->default_value(15), "en_small_cluster_size")
+            ("en_medium_clustering_distance_threshold", po::value<float>()->default_value(0.01f), "en_medium_clustering_distance_threshold")
+            ("en_medium_cluster_size", po::value<size_t>()->default_value(50), "en_medium_cluster_size")
+            ("en_large_clustering_distance_threshold", po::value<float>()->default_value(0.005f), "en_large_clustering_distance_threshold")
+            ("en_large_cluster_size", po::value<size_t>()->default_value(100), "en_large_cluster_size")
             ("en_clustering_max_words", po::value<size_t>()->default_value(250), "en_clustering_max_words")
-            ("ru_clustering_distance_threshold", po::value<float>()->default_value(0.013f), "ru_clustering_distance_threshold")
+            ("ru_small_clustering_distance_threshold", po::value<float>()->default_value(0.015f), "ru_clustering_distance_threshold")
+            ("ru_small_cluster_size", po::value<size_t>()->default_value(15), "ru_small_cluster_size")
+            ("ru_medium_clustering_distance_threshold", po::value<float>()->default_value(0.01f), "ru_medium_clustering_distance_threshold")
+            ("ru_medium_cluster_size", po::value<size_t>()->default_value(50), "ru_medium_cluster_size")
+            ("ru_large_clustering_distance_threshold", po::value<float>()->default_value(0.005f), "ru_large_clustering_distance_threshold")
+            ("ru_large_cluster_size", po::value<size_t>()->default_value(100), "ru_large_cluster_size")
             ("ru_clustering_max_words", po::value<size_t>()->default_value(150), "ru_clustering_max_words")
+            ("clustering_batch_size", po::value<size_t>()->default_value(10000), "clustering_batch_size")
+            ("clustering_batch_intersection_size", po::value<size_t>()->default_value(2000), "clustering_batch_intersection_size")
+            ("clustering_use_timestamp_moving", po::value<bool>()->default_value(false), "clustering_use_timestamp_moving")
+            ("clustering_ban_threads_from_same_site", po::value<bool>()->default_value(true), "clustering_ban_threads_from_same_site")
             ("en_sentence_embedder", po::value<std::string>()->default_value("models/en_sentence_embedder.pt"), "en_sentence_embedder")
             ("ru_sentence_embedder", po::value<std::string>()->default_value("models/ru_sentence_embedder.pt"), "ru_sentence_embedder")
             ("rating", po::value<std::string>()->default_value("models/pagerank_rating.txt"), "rating")
@@ -210,8 +224,21 @@ int main(int argc, char** argv) {
 
         std::map<std::string, std::unique_ptr<TClustering>> clusterings;
         for (const std::string& language : clusteringLanguages) {
-            const float distanceThreshold = vm[language+"_clustering_distance_threshold"].as<float>();
-            clusterings[language] = std::make_unique<TSlinkClustering>(distanceThreshold);
+            TSlinkClustering::TConfig slinkConfig;
+            slinkConfig.SmallClusterThreshold = vm[language + "_small_clustering_distance_threshold"].as<float>();
+            slinkConfig.SmallClusterSize = vm[language + "_small_cluster_size"].as<size_t>();
+            slinkConfig.MediumClusterThreshold = vm[language + "_medium_clustering_distance_threshold"].as<float>();
+            slinkConfig.MediumClusterSize = vm[language + "_medium_cluster_size"].as<size_t>();
+            slinkConfig.LargeClusterThreshold = vm[language + "_large_clustering_distance_threshold"].as<float>();
+            slinkConfig.LargeClusterSize = vm[language + "_large_cluster_size"].as<size_t>();
+
+            slinkConfig.BatchSize = vm["clustering_batch_size"].as<size_t>();
+            slinkConfig.BatchIntersectionSize = vm["clustering_batch_intersection_size"].as<size_t>();
+
+            slinkConfig.UseTimestampMoving = vm["clustering_use_timestamp_moving"].as<bool>();
+            slinkConfig.BanThreadsFromSameSite = vm["clustering_ban_threads_from_same_site"].as<bool>();
+
+            clusterings[language] = std::make_unique<TSlinkClustering>(slinkConfig);
         }
 
         std::map<std::string, std::vector<TDbDocument>> lang2Docs;

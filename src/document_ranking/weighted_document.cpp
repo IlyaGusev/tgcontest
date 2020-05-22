@@ -4,12 +4,12 @@
 #include <locale>
 #include <codecvt>
 
-bool ComputeDocumentNasty(const TDocument& doc) {
+bool ComputeDocumentNasty(const TDbDocument& doc) {
     std::u16string utf16 = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(doc.Title.data());
- 
+
     if (utf16.length() < 16) {
         return true;
-    }    
+    }
 
     const char16_t lastSymb = utf16.back();
     if (lastSymb == 0x21 || lastSymb == 0x3f || lastSymb == 0x2e || lastSymb == 0x20) {

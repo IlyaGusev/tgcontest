@@ -1,5 +1,4 @@
 #include "embedder.h"
-#include "document.h"
 
 #include <sstream>
 #include <cassert>
@@ -26,9 +25,8 @@ size_t TFastTextEmbedder::GetEmbeddingSize() const {
     return Model.getDimension();
 }
 
-std::vector<float> TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc) const {
-    assert(doc.PreprocessedTitle && doc.PreprocessedText);
-    std::istringstream ss(doc.PreprocessedTitle.get() + " " + doc.PreprocessedText.get());
+std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& title, const std::string& text) const {
+    std::istringstream ss(title + " " + text);
     fasttext::Vector wordVector(GetEmbeddingSize());
     fasttext::Vector avgVector(GetEmbeddingSize());
     fasttext::Vector maxVector(GetEmbeddingSize());

@@ -17,7 +17,8 @@ TSlinkClustering::TSlinkClustering(
 {}
 
 TClusters TSlinkClustering::Cluster(
-    const std::vector<TDbDocument>& docs
+    const std::vector<TDbDocument>& docs,
+    tg::EEmbeddingKey embeddingKey
 ) {
     const size_t docSize = docs.size();
     std::vector<size_t> labels;
@@ -33,7 +34,7 @@ TClusters TSlinkClustering::Cluster(
         size_t batchSize = std::min(remainingDocsCount, BatchSize);
         std::vector<TDbDocument>::const_iterator end = begin + batchSize;
 
-        std::vector<size_t> newLabels = ClusterBatch(begin, end);
+        std::vector<size_t> newLabels = ClusterBatch(begin, end, embeddingKey);
         size_t newMaxLabel = maxLabel;
         for (auto& label : newLabels) {
             label += maxLabel;
@@ -45,7 +46,7 @@ TClusters TSlinkClustering::Cluster(
         for (size_t i = batchStart; i < batchStart + BatchIntersectionSize && i < labels.size(); i++) {
             size_t oldLabel = labels[i];
             int j = i - batchStart;
-            assert(j >= 0 && j < newLabels.size());
+            assert(j >= 0 && static_cast<size_t>(j) < newLabels.size());
             size_t newLabel = newLabels[j];
             oldLabelsToNew[oldLabel] = newLabel;
         }
@@ -96,15 +97,17 @@ TClusters TSlinkClustering::Cluster(
 // SLINK: https://sites.cs.ucsb.edu/~veronika/MAE/summary_SLINK_Sibson72.pdf
 std::vector<size_t> TSlinkClustering::ClusterBatch(
     const std::vector<TDbDocument>::const_iterator begin,
-    const std::vector<TDbDocument>::const_iterator end
+    const std::vector<TDbDocument>::const_iterator end,
+    tg::EEmbeddingKey embeddingKey
 ) {
     const size_t docSize = std::distance(begin, end);
-    const size_t embSize = 50; // TODO: VERY BAD
+    assert(docSize != 0);
+    const size_t embSize = begin->Embeddings.at(embeddingKey).size();
 
     Eigen::MatrixXf points(docSize, embSize);
     std::vector<TDbDocument>::const_iterator docsIt = begin;
     for (size_t i = 0; i < docSize; ++i) {
-        std::vector<float> embedding = docsIt->Embeddings.at(tg::EK_CLUSTERING);
+        std::vector<float> embedding = docsIt->Embeddings.at(embeddingKey);
         Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
         points.row(i) = eigenVector / eigenVector.norm();
         docsIt++;

@@ -7,5 +7,8 @@ class TClustering {
 public:
     TClustering() = default;
     virtual ~TClustering() = default;
-    virtual TClusters Cluster(const std::vector<TDbDocument>& docs) = 0;
+    virtual TClusters Cluster(
+        const std::vector<TDbDocument>& docs,
+        tg::EEmbeddingKey embeddingKey = tg::EK_CLUSTERING
+    ) = 0;
 };

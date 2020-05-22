@@ -9,7 +9,8 @@ void Summarize(
     const TAgencyRating& agencyRating
 ) {
     for (auto& cluster : clusters) {
-        const size_t embeddingSize = 50; // TODO: BAD
+        assert(cluster.GetSize() != 0);
+        const size_t embeddingSize = cluster.GetDocuments().back().get().Embeddings.at(tg::EK_CLUSTERING).size();
         Eigen::MatrixXf points(cluster.GetSize(), embeddingSize);
         for (size_t i = 0; i < cluster.GetSize(); i++) {
             const TDbDocument& doc = cluster.GetDocuments()[i];

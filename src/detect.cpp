@@ -1,10 +1,10 @@
 #include "detect.h"
 #include "document.h"
-#include "document.pb.h"
 
 #include <algorithm>
 #include <sstream>
 
+#include <boost/optional.hpp>
 #include <fasttext.h>
 
 boost::optional<std::pair<std::string, double>> RunFasttextClf(
@@ -42,15 +42,11 @@ tg::ELanguage DetectLanguage(const fasttext::FastText& model, const TDocument& d
     return tg::LN_OTHER;
 }
 
-tg::ECategory DetectCategory(const fasttext::FastText& model, const TDocument& document) {
-    if (!document.PreprocessedTitle || !document.PreprocessedText) {
-        return tg::NC_UNDEFINED;
-    }
-    std::string sample(document.PreprocessedTitle.get() + " " + document.PreprocessedText.get());
+tg::ECategory DetectCategory(const fasttext::FastText& model, const std::string& title, const std::string& text) {
+    std::string sample(title + " " + text);
     auto pair = RunFasttextClf(model, sample, 0.0);
     if (!pair) {
         return tg::NC_UNDEFINED;
     }
-    nlohmann::json category = pair->first;
-    return category;
+    return nlohmann::json(pair->first);
 }

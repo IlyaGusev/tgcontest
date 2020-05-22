@@ -1,13 +1,14 @@
 #pragma once
 
+#include <nlohmann_json/json.hpp>
+
 #include <string>
 #include <vector>
 #include <cstdint>
 
-#include <boost/optional.hpp>
-#include <nlohmann_json/json.hpp>
-#include <onmt/Tokenizer.h>
-#include <tinyxml2/tinyxml2.h>
+namespace tinyxml2 {
+    class XMLDocument;
+}
 
 // Original fields only
 struct TDocument {
@@ -24,10 +25,6 @@ public:
     uint64_t FetchTime = 0;
 
     std::vector<std::string> OutLinks;
-
-    // Calculated fields
-    boost::optional<std::string> PreprocessedTitle;
-    boost::optional<std::string> PreprocessedText;
 
 public:
     TDocument() = default;

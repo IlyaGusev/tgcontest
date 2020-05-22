@@ -8,6 +8,7 @@
 #include "timer.h"
 #include "util.h"
 
+#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
@@ -92,24 +93,6 @@ int main(int argc, char** argv) {
             return RunServer(config);
         }
 
-        // Load models
-        LOG_DEBUG("Loading models...");
-        std::vector<std::string> modelsOptions = {
-            "lang_detect_model",
-            "en_cat_detect_model",
-            "ru_cat_detect_model",
-            "en_vector_model",
-            "ru_vector_model"
-        };
-        TModelStorage models;
-        for (const auto& optionName : modelsOptions) {
-            const std::string modelPath = vm[optionName].as<std::string>();
-            std::unique_ptr<fasttext::FastText> model(new fasttext::FastText());
-            models.emplace(optionName, std::move(model));
-            models.at(optionName)->loadModel(modelPath);
-            LOG_DEBUG("FastText " << optionName << " loaded");
-        }
-
         // Load agency ratings
         LOG_DEBUG("Loading agency ratings...");
         const std::string ratingPath = vm["rating"].as<std::string>();
@@ -132,37 +115,11 @@ int main(int argc, char** argv) {
         }
 
         // Parse files and annotate with classifiers
-        std::vector<std::string> l = vm["languages"].as<std::vector<std::string>>();
-        std::set<std::string> languages(l.begin(), l.end());
-        size_t minTextLength = vm["min_text_length"].as<size_t>();
-        bool parseLinks = vm["parse_links"].as<bool>();
         bool saveNotNews = vm["save_not_news"].as<bool>();
-        const std::string ruEmbedderModelPath = vm["ru_sentence_embedder"].as<std::string>();
-        const std::string enEmbedderModelPath = vm["en_sentence_embedder"].as<std::string>();
-        const std::unordered_map<tg::ELanguage, std::string> embedders = {
-            {tg::LN_RU, ruEmbedderModelPath},
-            {tg::LN_EN, enEmbedderModelPath}
-        };
-        TAnnotator annotator(
-            std::move(models),
-            languages,
-            embedders,
-            minTextLength,
-            parseLinks,
-            saveNotNews
-        );
-        std::vector<TDbDocument> docs;
-        docs.reserve(fileNames.size());
-        if (!fromJson) {
-            for (const auto& fileName : fileNames) {
-                boost::optional<TDbDocument> doc = annotator.AnnotateHtml(fileName);
-                if (doc) {
-                    docs.push_back(*doc);
-                }
-            }
-        } else {
-            docs = annotator.AnnotateJson(fileNames[0]);
-        }
+        TAnnotator annotator(vm, saveNotNews);
+        TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> annotationTimer;
+        std::vector<TDbDocument> docs = annotator.AnnotateAll(fileNames, fromJson);
+        LOG_DEBUG("Annotation: " << annotationTimer.Elapsed() << " ms (" << docs.size() << " documents)");
 
         // Output
         if (mode == "languages") {
@@ -183,13 +140,11 @@ int main(int argc, char** argv) {
             std::cout << outputJson.dump(4) << std::endl;
             return 0;
         } else if (mode == "json") {
-            /*nlohmann::json outputJson = nlohmann::json::array();
+            nlohmann::json outputJson = nlohmann::json::array();
             for (const TDbDocument& doc : docs) {
                 outputJson.push_back(doc.ToJson());
             }
             std::cout << outputJson.dump(4) << std::endl;
-            */
-            // TODO: VERY BAD
             return 0;
         } else if (mode == "news") {
             nlohmann::json articles = nlohmann::json::array();
@@ -205,7 +160,7 @@ int main(int argc, char** argv) {
             std::vector<std::vector<std::string>> catToFiles(tg::ECategory_ARRAYSIZE);
             for (const TDbDocument& doc : docs) {
                 tg::ECategory category = doc.Category;
-                if (category == tg::NC_UNDEFINED || category == tg::NC_NOT_NEWS && !saveNotNews) {
+                if (category == tg::NC_UNDEFINED || (category == tg::NC_NOT_NEWS && !saveNotNews)) {
                     continue;
                 }
                 catToFiles[static_cast<size_t>(category)].push_back(CleanFileName(doc.FileName));
@@ -213,6 +168,9 @@ int main(int argc, char** argv) {
             }
             for (size_t i = 0; i < tg::ECategory_ARRAYSIZE; i++) {
                 tg::ECategory category = static_cast<tg::ECategory>(i);
+                if (category == tg::NC_UNDEFINED || category == tg::NC_ANY) {
+                    continue;
+                }
                 if (!saveNotNews && category == tg::NC_NOT_NEWS) {
                     continue;
                 }
@@ -231,11 +189,6 @@ int main(int argc, char** argv) {
 
         // Clustering
         const std::set<std::string> clusteringLanguages = {"ru", "en"};
-        for (const auto& language : languages) {
-            if (clusteringLanguages.find(language) == clusteringLanguages.end()) {
-                LOG_DEBUG("Language '" << language << "' is not supported for clustering!");
-            }
-        }
         std::stable_sort(docs.begin(), docs.end(),
             [](const TDbDocument& d1, const TDbDocument& d2) {
                 if (d1.FetchTime == d2.FetchTime) {
@@ -255,7 +208,6 @@ int main(int argc, char** argv) {
 
         std::map<std::string, std::unique_ptr<TClustering>> clusterings;
         for (const std::string& language : clusteringLanguages) {
-            const size_t maxWords = vm[language + "_clustering_max_words"].as<size_t>();
             const float distanceThreshold = vm[language+"_clustering_distance_threshold"].as<float>();
             std::unique_ptr<TClustering> clustering(
                 new TSlinkClustering(distanceThreshold)
@@ -324,6 +276,9 @@ int main(int argc, char** argv) {
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<tg::ECategory>(std::distance(tops.begin(), it));
+            if (category == tg::NC_UNDEFINED) {
+                continue;
+            }
             if (!saveNotNews && category == tg::NC_NOT_NEWS) {
                 continue;
             }

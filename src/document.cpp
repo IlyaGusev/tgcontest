@@ -2,8 +2,8 @@
 #include "util.h"
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
+#include <tinyxml2/tinyxml2.h>
 
 #include <sstream>
 #include <fstream>

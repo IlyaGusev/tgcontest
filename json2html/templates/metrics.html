@@ -53,7 +53,7 @@
   <tbody>
     {% for error in cat_errors %}
     <tr>
-      <td>{{error.title}}</td>
+      <td><a href={{error.url}}>{{error.title}}</a></td>
       <td>{{error.prediction}}</td>
       <td>{{error.target}}</td>
     </tr>

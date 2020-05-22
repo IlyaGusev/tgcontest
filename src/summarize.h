@@ -6,6 +6,5 @@
 
 void Summarize(
     TClusters& clusters,
-    const TAgencyRating& agencyRating,
-    const std::map<std::string, std::unique_ptr<TFastTextEmbedder>>& embedders
+    const TAgencyRating& agencyRating
 );

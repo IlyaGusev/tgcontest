@@ -22,6 +22,7 @@ def calc_metrics(
         assert first_record.get("file_name")
         assert first_record.get("url")
         orig_records = {r["file_name"]: r for r in orig_records}
+        url_to_record = {r["url"]: r for _, r in orig_records.items()}
     with open(cat_gold, "r") as r:
         cat_gold_records = json.load(r)
         assert cat_gold_records
@@ -45,7 +46,8 @@ def calc_metrics(
                 if rec["url"] in cat_gold_records:
                     cat_output_records[rec["url"]] = category
         assert len(cat_output_records) == len(cat_gold_records)
-    predicted_cats = [v for k, v in sorted(cat_output_records.items())]
+    cat_output_records = list(sorted(cat_output_records.items()))
+    predicted_cats = [v for k, v in cat_output_records]
     target_cats = [v for k, v in sorted(cat_gold_records.items())]
     cat2label = {cat: i for i, cat in enumerate(list(set(predicted_cats).union(set(target_cats))))}
     label2cat = {label: cat for cat, label in cat2label.items()}
@@ -56,12 +58,21 @@ def calc_metrics(
     cat_metrics["categories"] = []
     for label, cat in sorted(label2cat.items(), key=lambda x: -cat_metrics[str(x[0])]["support"]):
         cat_metrics["categories"].append((label2cat[int(label)], cat_metrics.pop(str(label))))
+
+    cat_errors = []
+    for i, (pred, target) in enumerate(zip(predicted_labels, target_labels)):
+        if pred == target:
+            continue
+        record = url_to_record[cat_output_records[i][0]]
+        cat_errors.append({"title": record["title"], "prediction": label2cat[pred], "target": label2cat[target]})
+
     file_loader = FileSystemLoader(templates_dir)
     env = Environment(loader=file_loader)
     metrics_template = env.get_template("metrics.html")
     with open(os.path.join(output_dir, "metrics.html"), "w", encoding="utf-8") as w:
          w.write(metrics_template.render(
             cat_metrics=cat_metrics,
+            cat_errors=cat_errors,
             language=language,
             current_page="metrics.html"
          ))
@@ -77,7 +88,5 @@ if __name__ == "__main__":
     parser.add_argument("--threads-gold", type=str, default=None)
     parser.add_argument("--threads-output", type=str, default=None)
     parser.add_argument("--language", type=str, required=True)
-    args = parser.parse_args()
-    calc_metrics(**vars(args))
     args = parser.parse_args()
     calc_metrics(**vars(args))

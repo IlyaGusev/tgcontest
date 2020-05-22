@@ -18,8 +18,7 @@ def write_pool(file_path, pool):
             writer.writerow(row)
         print("{} created!".format(file_path))
 
-
-def main(original_json_path, output_dir, honey_path, honey_size, pool_size, skip):
+def read_honey(honey_path):
     honey = []
     with open(honey_path, "r") as r:
         header = tuple(next(r).strip().split("\t"))
@@ -27,12 +26,17 @@ def main(original_json_path, output_dir, honey_path, honey_size, pool_size, skip
         for line in r:
             url, title, text, res = line.strip().split("\t")
             honey.append({"url": url, "title": title, "text": text, "res": res})
+    return honey
 
+def main(original_json_path, output_dir, honey_path, honey_size, pool_size, skip):
     records = []
     with open(original_json_path, "r") as r:
         records = json.load(r)
-
     random.shuffle(records)
+
+
+    honey = read_honey(honey_path)
+
     current_pool = []
     i = 0
     for record in records[skip:]:

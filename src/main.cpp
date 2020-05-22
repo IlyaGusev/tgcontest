@@ -9,6 +9,7 @@
 #include "util.h"
 
 #include <boost/program_options.hpp>
+#include <fasttext.h>
 
 namespace po = boost::program_options;
 
@@ -205,7 +206,7 @@ int main(int argc, char** argv) {
             std::vector<std::vector<std::string>> catToFiles(NC_COUNT);
             for (const TDocument& doc : docs) {
                 ENewsCategory category = doc.Category;
-                if (category == NC_UNDEFINED || category == NC_NOT_NEWS && !saveNotNews) {
+                if (category == NC_UNDEFINED || (category == NC_NOT_NEWS && !saveNotNews)) {
                     continue;
                 }
                 catToFiles[static_cast<size_t>(category)].push_back(CleanFileName(doc.FileName));

@@ -4,6 +4,8 @@
 #include "timer.h"
 #include "util.h"
 
+#include <fasttext.h>
+
 void Annotate(
     const std::vector<std::string>& fileNames,
     const TModelStorage& models,

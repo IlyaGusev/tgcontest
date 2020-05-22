@@ -3,7 +3,6 @@
 #include "../cluster.h"
 #include "../embedder.h"
 
-#include <fasttext.h>
 #include <Eigen/Core>
 
 class TClustering {

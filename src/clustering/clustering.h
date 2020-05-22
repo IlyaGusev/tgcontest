@@ -1,18 +1,11 @@
 #pragma once
 
 #include "../cluster.h"
-#include "../embedder.h"
-
-#include <fasttext.h>
-#include <Eigen/Core>
+#include "../db_document.h"
 
 class TClustering {
 public:
-    TClustering(TFastTextEmbedder& embedder) : Embedder(embedder) {}
+    TClustering() = default;
     virtual ~TClustering() = default;
-
-    virtual TClusters Cluster(const std::vector<TDocument>& docs) = 0;
-
-protected:
-    TFastTextEmbedder& Embedder;
+    virtual TClusters Cluster(const std::vector<TDbDocument>& docs) = 0;
 };

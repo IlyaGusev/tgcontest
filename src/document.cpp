@@ -40,12 +40,6 @@ nlohmann::json TDocument::ToJson() const {
     if (!OutLinks.empty()) {
         json["out_links"] = OutLinks;
     }
-    if (Language) {
-        json["language"] = Language.get();
-    }
-    if (Category != NC_UNDEFINED) {
-        json["category"] = Category;
-    }
     return json;
 }
 
@@ -68,12 +62,6 @@ void TDocument::FromJson(const nlohmann::json& json) {
     }
     if (json.contains("out_links")) {
         json.at("out_links").get_to(OutLinks);
-    }
-    if (json.contains("language")) {
-        Language = json.at("language");
-    }
-    if (json.contains("category")) {
-        json.at("category").get_to(Category);
     }
 }
 
@@ -210,13 +198,3 @@ void TDocument::FromHtml(
     }
 }
 
-std::string Preprocess(const std::string& text, const onmt::Tokenizer& tokenizer) {
-    std::vector<std::string> tokens;
-    tokenizer.tokenize(text, tokens);
-    return boost::join(tokens, " ");
-}
-
-void TDocument::PreprocessTextFields(const onmt::Tokenizer& tokenizer) {
-    PreprocessedTitle = Preprocess(Title, tokenizer);
-    PreprocessedText = Preprocess(Text, tokenizer);
-}

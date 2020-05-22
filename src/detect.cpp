@@ -1,5 +1,6 @@
 #include "detect.h"
 #include "document.h"
+#include "document.pb.h"
 
 #include <algorithm>
 #include <sstream>
@@ -25,28 +26,30 @@ boost::optional<std::pair<std::string, double>> RunFasttextClf(
     return std::make_pair(label, probability);
 }
 
-boost::optional<std::string> DetectLanguage(const fasttext::FastText& model, const TDocument& document) {
+tg::ELanguage DetectLanguage(const fasttext::FastText& model, const TDocument& document) {
     std::string sample(document.Title + " " + document.Description + " " + document.Text.substr(0, 100));
     auto pair = RunFasttextClf(model, sample, 0.4);
     if (!pair) {
-        return boost::none;
+        return tg::LN_UNDEFINED;
     }
     const std::string& label = pair->first;
     double probability = pair->second;
-    if ((label == "ru") && probability < 0.6) {
-        return std::string("tg");
+    if (label == "ru" && probability >= 0.6) {
+        return tg::LN_RU;
+    } else if (label == "en") {
+        return tg::LN_EN;
     }
-    return label;
+    return tg::LN_OTHER;
 }
 
-ENewsCategory DetectCategory(const fasttext::FastText& model, const TDocument& document) {
+tg::ECategory DetectCategory(const fasttext::FastText& model, const TDocument& document) {
     if (!document.PreprocessedTitle || !document.PreprocessedText) {
-        return NC_UNDEFINED;
+        return tg::NC_UNDEFINED;
     }
     std::string sample(document.PreprocessedTitle.get() + " " + document.PreprocessedText.get());
     auto pair = RunFasttextClf(model, sample, 0.0);
     if (!pair) {
-        return NC_UNDEFINED;
+        return tg::NC_UNDEFINED;
     }
     nlohmann::json category = pair->first;
     return category;

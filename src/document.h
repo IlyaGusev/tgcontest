@@ -9,37 +9,9 @@
 #include <onmt/Tokenizer.h>
 #include <tinyxml2/tinyxml2.h>
 
-enum ENewsCategory {
-    NC_UNDEFINED = -1,
-    NC_ANY = 0,
-    NC_SOCIETY,
-    NC_ECONOMY,
-    NC_TECHNOLOGY,
-    NC_SPORTS,
-    NC_ENTERTAINMENT,
-    NC_SCIENCE,
-    NC_OTHER,
-    NC_NOT_NEWS,
-
-    NC_COUNT
-};
-
-NLOHMANN_JSON_SERIALIZE_ENUM(ENewsCategory, {
-    {NC_UNDEFINED, nullptr},
-    {NC_ANY, "any"},
-    {NC_SOCIETY, "society"},
-    {NC_ECONOMY, "economy"},
-    {NC_TECHNOLOGY, "technology"},
-    {NC_SPORTS, "sports"},
-    {NC_ENTERTAINMENT, "entertainment"},
-    {NC_SCIENCE, "science"},
-    {NC_OTHER, "other"},
-    {NC_NOT_NEWS, "not_news"},
-})
-
+// Original fields only
 struct TDocument {
 public:
-    // Original fields
     std::string Title;
     std::string Url;
     std::string SiteName;
@@ -56,8 +28,6 @@ public:
     // Calculated fields
     boost::optional<std::string> PreprocessedTitle;
     boost::optional<std::string> PreprocessedText;
-    boost::optional<std::string> Language;
-    ENewsCategory Category = NC_UNDEFINED;
 
 public:
     TDocument() = default;
@@ -81,9 +51,4 @@ public:
         bool shrinkText=false,
         size_t maxWords=200
     );
-
-    bool IsRussian() const { return Language && Language.get() == "ru"; }
-    bool IsEnglish() const { return Language && Language.get() == "en"; }
-    bool IsNews() const { return Category != NC_NOT_NEWS && Category != NC_UNDEFINED; }
-    void PreprocessTextFields(const onmt::Tokenizer& tokenizer);
 };

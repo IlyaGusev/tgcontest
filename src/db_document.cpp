@@ -5,7 +5,9 @@
 TDbDocument TDbDocument::FromProto(const tg::TDocumentProto& proto) {
     TDbDocument document;
     document.FileName = proto.filename();
+    document.Url = proto.url();
     document.PubTime = proto.pubtime();
+    document.FetchTime = proto.pubtime();
     document.Ttl = proto.ttl();
     document.Title = proto.title();
     document.Language = proto.language();
@@ -34,7 +36,9 @@ bool TDbDocument::FromProtoString(const std::string& value, TDbDocument* documen
 tg::TDocumentProto TDbDocument::ToProto() const {
     tg::TDocumentProto proto;
     proto.set_filename(FileName);
+    proto.set_url(Url);
     proto.set_pubtime(PubTime);
+    proto.set_fetchtime(FetchTime);
     proto.set_ttl(Ttl);
     proto.set_title(Title);
     proto.set_language(Language);

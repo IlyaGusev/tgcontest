@@ -35,13 +35,15 @@ message TEmbeddingProto {
 
 message TDocumentProto {
     string FileName = 1;
-    uint32 PubTime = 2;
-    uint32 Ttl = 3;
+    string Url = 2;
+    uint32 PubTime = 3;
+    uint32 Ttl = 4;
 
-    string Title = 4;
+    string Title = 5;
 
-    ELanguage Language = 5;
-    ECategory Category = 6;
+    ELanguage Language = 6;
+    ECategory Category = 7;
 
-    repeated TEmbeddingProto Embeddings = 7;
+    repeated TEmbeddingProto Embeddings = 8;
+    uint32 FetchTime = 9;
 }

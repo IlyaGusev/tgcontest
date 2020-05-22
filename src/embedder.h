@@ -23,7 +23,7 @@ public:
     virtual ~TFastTextEmbedder() = default;
 
     size_t GetEmbeddingSize() const;
-    fasttext::Vector GetSentenceEmbedding(const TDocument& doc) const;
+    std::vector<float> CalcEmbedding(const std::string& title, const std::string& text) const;
 
 private:
     fasttext::FastText& Model;

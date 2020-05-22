@@ -4,90 +4,86 @@
 #include "timer.h"
 #include "util.h"
 
-void Annotate(
-    const std::vector<std::string>& fileNames,
-    const TModelStorage& models,
+#include <boost/algorithm/string/join.hpp>
+
+TAnnotator::TAnnotator(
+    TModelStorage&& models,
     const std::set<std::string>& languages,
-    std::vector<TDocument>& docs,
-    size_t minTextLength,
-    bool parseLinks,
-    bool fromJson,
-    bool saveNotNews)
+    const std::unordered_map<tg::ELanguage, std::string>& embeddersPathes,
+    size_t minTextLength = 20,
+    bool parseLinks = false,
+    bool saveNotNews = false
+)
+    : FastTextModels{std::move(models)}
+    , Languages(languages)
+    , MinTextLength(minTextLength)
+    , ParseLinks(parseLinks)
+    , SaveNotNews(saveNotNews)
+    , Tokenizer(onmt::Tokenizer::Mode::Conservative, onmt::Tokenizer::Flags::CaseFeature)
 {
-    LOG_DEBUG("Annotating " << fileNames.size() << " files...");
-    TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> timer;
-    docs.clear();
-    docs.reserve(fileNames.size() / 2);
-    TThreadPool threadPool;
-    auto parseHtml = [&](const std::string& path) -> boost::optional<TDocument> {
-        TDocument doc;
-        try {
-            doc.FromHtml(path.c_str(), parseLinks);
-        } catch (...) {
-            LOG_DEBUG("Bad html: " << path);
-            return boost::none;
-        }
-        if (doc.Text.length() < minTextLength) {
-            return boost::none;
-        }
-        return doc;
-    };
-    std::vector<std::future<boost::optional<TDocument>>> futures;
-    if (!fromJson) {
-        futures.reserve(fileNames.size());
-        for (const std::string& path: fileNames) {
-            futures.push_back(threadPool.enqueue(parseHtml, path));
-        }
-        for (auto& futureDoc : futures) {
-            boost::optional<TDocument> doc = futureDoc.get();
-            if (!doc) {
-                continue;
-            }
-            docs.push_back(std::move(doc.get()));
-        }
-        futures.clear();
-    } else {
-        for (const std::string& path: fileNames) {
-            std::ifstream fileStream(path);
-            nlohmann::json json;
-            fileStream >> json;
-            for (const nlohmann::json& obj : json) {
-                TDocument doc(obj);
-                docs.push_back(std::move(doc));
-            }
-        }
+    for (const auto& language : Languages) {
+        FastTextEmbedders[nlohmann::json(language)] = std::make_unique<TFastTextEmbedder>(
+            *FastTextModels.at(language + "_vector_model"),
+            TFastTextEmbedder::AM_Matrix,
+            150, // TODO: BAD
+            embeddersPathes.at(nlohmann::json(language))
+        );
     }
+}
 
-    const auto& langDetectModel = *models.at("lang_detect_model");
-    onmt::Tokenizer tokenizer(onmt::Tokenizer::Mode::Conservative, onmt::Tokenizer::Flags::CaseFeature);
-    auto annotateDocument = [&](TDocument doc) -> boost::optional<TDocument> {
-        doc.Language = DetectLanguage(langDetectModel, doc);
-        if (!doc.Language || languages.find(doc.Language.get()) == languages.end()) {
-            return boost::none;
-        }
-        doc.PreprocessTextFields(tokenizer);
-        doc.Category = DetectCategory(*models.at(*doc.Language + "_cat_detect_model"), doc);
-        return doc;
-    };
-    for (const TDocument& doc: docs) {
-        futures.push_back(threadPool.enqueue(annotateDocument, std::move(doc)));
+boost::optional<TDbDocument> TAnnotator::AnnotateHtml(const std::string& path) const {
+    boost::optional<TDocument> parsedDoc = parseHtml(path);
+    if (!parsedDoc) {
+        return boost::none;
     }
-    docs.clear();
+    return annotateDocument(*parsedDoc);
+}
 
-    for (auto& futureDoc : futures) {
-        boost::optional<TDocument> doc = futureDoc.get();
-        if (!doc
-            || !doc->Language
-            || doc->Category == NC_UNDEFINED)
-        {
-            continue;
-        }
-        if (doc->Category == NC_NOT_NEWS && !saveNotNews) {
-            continue;
-        }
-        docs.push_back(std::move(doc.get()));
+std::vector<TDbDocument> TAnnotator::AnnotateJson(const std::string& path) const {
+    std::ifstream fileStream(path);
+    nlohmann::json json;
+    fileStream >> json;
+    std::vector<TDbDocument> docs;
+    for (const nlohmann::json& obj : json) {
+        TDocument doc(obj);
+        TDbDocument dbDoc = annotateDocument(doc);
+        docs.push_back(std::move(dbDoc));
     }
-    docs.shrink_to_fit();
-    LOG_DEBUG("Annotation: " << docs.size() << " documents saved, " << timer.Elapsed() << " ms");
+    return docs;
+}
+
+TDbDocument TAnnotator::annotateDocument(const TDocument& document) const {
+    TDbDocument dbDoc;
+    dbDoc.Language = DetectLanguage(*FastTextModels.at("lang_detect_model"), document);
+    dbDoc.Category = DetectCategory(*FastTextModels.at(nlohmann::json(dbDoc.Language) + "_cat_detect_model"), document);
+    std::string cleanTitle = preprocessText(document.Title);
+    std::string cleanText = preprocessText(document.Text);
+    TDbDocument::TEmbedding value = FastTextEmbedders.at(dbDoc.Language)->CalcEmbedding(cleanTitle, cleanText);
+    dbDoc.Embeddings.emplace(tg::EK_CLUSTERING, std::move(value));
+
+    dbDoc.Title = document.Title;
+    dbDoc.FetchTime = document.FetchTime;
+    dbDoc.PubTime = document.PubTime;
+    dbDoc.FileName = document.FileName;
+}
+
+std::string TAnnotator::preprocessText(const std::string& text) const {
+    std::vector<std::string> tokens;
+    Tokenizer.tokenize(text, tokens);
+    return boost::join(tokens, " ");
+}
+
+boost::optional<TDocument> TAnnotator::parseHtml(const std::string& path) const {
+    TDocument doc;
+    try {
+        doc.FromHtml(path.c_str(), ParseLinks);
+    } catch (...) {
+        LOG_DEBUG("Bad html: " << path);
+        return boost::none;
+    }
+    if (doc.Text.length() < MinTextLength) {
+        return boost::none;
+    }
+    return doc;
 }
 

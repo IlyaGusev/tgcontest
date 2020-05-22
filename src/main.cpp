@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 
         if (mode == "server") {
             const std::string config = vm["config"].as<std::string>();
-            return RunServer(config);
+            return RunServer(config, vm);
         }
 
         // Load agency ratings

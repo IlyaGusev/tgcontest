@@ -38,21 +38,16 @@ namespace {
 
         rocksdb::DB* db;
         rocksdb::Status s = rocksdb::DB::Open(options, config.dbpath(), &db);
-        ENSURE(s.ok(), "Failed to create database");
+        ENSURE(s.ok(), "Failed to create database: " << s.getState());
 
         return std::unique_ptr<rocksdb::DB>(db);
     }
 
 }
 
-int RunServer(const std::string& fname) {
+int RunServer(const std::string& fname, const boost::program_options::variables_map& vm) {
     LOG_DEBUG("Loading server config");
     const auto config = ParseConfig(fname);
-
-    LOG_DEBUG("Creating database");
-    TContext context {
-        .Db = CreateDatabase(config)
-    };
 
     LOG_DEBUG("Launching server");
     app()
@@ -63,8 +58,18 @@ int RunServer(const std::string& fname) {
     auto controllerPtr = std::make_shared<TController>();
     app().registerController(controllerPtr);
 
+    LOG_DEBUG("Creating database");
+    std::unique_ptr<rocksdb::DB> db = CreateDatabase(config);
+
+    LOG_DEBUG("Creating annotator");
+    std::unique_ptr<TAnnotator> annotator = std::make_unique<TAnnotator>(vm, /*saveNotNews*/ false);
+
+    TContext context {
+        .Db = std::move(db)
+    };
+
     // call this once clustering is ready
-    DrClassMap::getSingleInstance<TController>()->Init(&context);
+    DrClassMap::getSingleInstance<TController>()->Init(&context, std::move(annotator));
 
     app().run();
 

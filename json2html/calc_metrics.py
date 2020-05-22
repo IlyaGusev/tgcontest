@@ -64,7 +64,12 @@ def calc_metrics(
         if pred == target:
             continue
         record = url_to_record[cat_output_records[i][0]]
-        cat_errors.append({"title": record["title"], "prediction": label2cat[pred], "target": label2cat[target]})
+        cat_errors.append({
+            "title": record["title"],
+            "url": record["url"],
+            "prediction": label2cat[pred],
+            "target": label2cat[target]
+        })
 
     file_loader = FileSystemLoader(templates_dir)
     env = Environment(loader=file_loader)

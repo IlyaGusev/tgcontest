@@ -2,6 +2,8 @@
 
 #include <Eigen/Core>
 #include <torch/script.h>
+#include <unordered_map>
+#include <memory>
 
 struct TDocument;
 
@@ -9,7 +11,14 @@ namespace fasttext {
     class FastText;
 }
 
-class TFastTextEmbedder {
+class TEmbedder {
+public:
+    virtual ~TEmbedder() = default;
+    virtual size_t GetEmbeddingSize() const = 0;
+    virtual std::vector<float> GetSentenceEmbedding(const TDocument& doc) const = 0;
+};
+
+class TFastTextEmbedder : public TEmbedder {
 public:
     enum AggregationMode {
         AM_Avg = 0,
@@ -36,4 +45,20 @@ private:
     Eigen::VectorXf Bias;
     mutable torch::jit::script::Module TorchModel;
     std::string TorchModelPath;
+};
+
+class TDummyEmbedder : public TEmbedder {
+public:
+    explicit TDummyEmbedder(const std::string& modelPath);
+
+    size_t GetEmbeddingSize() const override {
+        return EmbeddingSize;
+    }
+
+    std::vector<float> GetSentenceEmbedding(const TDocument& doc) const override;
+
+private:
+    std::unordered_map<std::string, std::vector<float>> UrlToEmbedding;
+    std::vector<float> DefaultVector;
+    size_t EmbeddingSize = 0;
 };

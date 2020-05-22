@@ -36,3 +36,10 @@
 *.vec
 *.ftz
 *.tar.gz
+
+build/
+data
+data_test/
+.clangd/
+libtorch/
+*.json

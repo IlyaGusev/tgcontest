@@ -7,10 +7,10 @@
 void Summarize(
     TClusters& clusters,
     const TAgencyRating& agencyRating,
-    const std::map<std::string, std::unique_ptr<TFastTextEmbedder>>& embedders
+    const std::map<std::string, std::unique_ptr<TEmbedder>>& embedders
 ) {
     for (auto& cluster : clusters) {
-        const TFastTextEmbedder& embedder = *embedders.at(cluster.GetLanguage());
+        const TEmbedder& embedder = *embedders.at(cluster.GetLanguage());
 
         Eigen::MatrixXf points(cluster.GetSize(), embedder.GetEmbeddingSize());
         for (size_t i = 0; i < cluster.GetSize(); i++) {

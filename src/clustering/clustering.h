@@ -7,11 +7,11 @@
 
 class TClustering {
 public:
-    TClustering(TFastTextEmbedder& embedder) : Embedder(embedder) {}
+    TClustering(TEmbedder& embedder) : Embedder(embedder) {}
     virtual ~TClustering() = default;
 
     virtual TClusters Cluster(const std::vector<TDocument>& docs) = 0;
 
 protected:
-    TFastTextEmbedder& Embedder;
+    TEmbedder& Embedder;
 };

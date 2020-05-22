@@ -1,4 +1,4 @@
-#include "annotate.h"
+#include "annotator.h"
 #include "detect.h"
 #include "document.h"
 #include "embedder.h"
@@ -74,7 +74,7 @@ std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>&
         docs.reserve(parsedDocs.size());
         futures.reserve(parsedDocs.size());
         for (const TDocument& parsedDoc: parsedDocs) {
-            futures.push_back(threadPool.enqueue(&TAnnotator::annotateDocument, this, parsedDoc));
+            futures.push_back(threadPool.enqueue(&TAnnotator::AnnotateDocument, this, parsedDoc));
         }
     }
     for (auto& futureDoc : futures) {
@@ -90,21 +90,21 @@ std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>&
 }
 
 boost::optional<TDbDocument> TAnnotator::AnnotateHtml(const std::string& path) const {
-    boost::optional<TDocument> parsedDoc = parseHtml(path);
+    boost::optional<TDocument> parsedDoc = ParseHtml(path);
     if (!parsedDoc) {
         return boost::none;
     }
-    return annotateDocument(*parsedDoc);
+    return AnnotateDocument(*parsedDoc);
 }
 
-boost::optional<TDbDocument> TAnnotator::annotateDocument(const TDocument& document) const {
+boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& document) const {
     TDbDocument dbDoc;
     dbDoc.Language = DetectLanguage(LanguageDetector, document);
     if (Languages.find(dbDoc.Language) == Languages.end()) {
         return boost::none;
     }
-    std::string cleanTitle = preprocessText(document.Title);
-    std::string cleanText = preprocessText(document.Text);
+    std::string cleanTitle = PreprocessText(document.Title);
+    std::string cleanText = PreprocessText(document.Text);
     dbDoc.Category = DetectCategory(CategoryDetectors.at(dbDoc.Language), cleanTitle, cleanText);
     if (dbDoc.Category == tg::NC_UNDEFINED) {
         return boost::none;
@@ -130,7 +130,7 @@ boost::optional<TDbDocument> TAnnotator::annotateDocument(const TDocument& docum
     return dbDoc;
 }
 
-boost::optional<TDocument> TAnnotator::parseHtml(const std::string& path) const {
+boost::optional<TDocument> TAnnotator::ParseHtml(const std::string& path) const {
     TDocument doc;
     try {
         doc.FromHtml(path.c_str(), ParseLinks);
@@ -144,7 +144,7 @@ boost::optional<TDocument> TAnnotator::parseHtml(const std::string& path) const 
     return doc;
 }
 
-std::string TAnnotator::preprocessText(const std::string& text) const {
+std::string TAnnotator::PreprocessText(const std::string& text) const {
     std::vector<std::string> tokens;
     Tokenizer.tokenize(text, tokens);
     return boost::join(tokens, " ");

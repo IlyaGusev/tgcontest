@@ -24,9 +24,9 @@ public:
     boost::optional<TDbDocument> AnnotateHtml(const std::string& path) const;
 
 private:
-    boost::optional<TDbDocument> annotateDocument(const TDocument& document) const;
-    boost::optional<TDocument> parseHtml(const std::string& path) const;
-    std::string preprocessText(const std::string& text) const;
+    boost::optional<TDbDocument> AnnotateDocument(const TDocument& document) const;
+    boost::optional<TDocument> ParseHtml(const std::string& path) const;
+    std::string PreprocessText(const std::string& text) const;
 
 private:
     std::unordered_set<tg::ELanguage> Languages;

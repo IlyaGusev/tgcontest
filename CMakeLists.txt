@@ -69,7 +69,7 @@ find_package(Protobuf REQUIRED)
 
 set(SOURCE_FILES
     src/agency_rating.cpp
-    src/annotate.cpp
+    src/annotator.cpp
     src/cluster.cpp
     src/clustering/slink.cpp
     src/controller.cpp
@@ -87,7 +87,7 @@ set(SOURCE_FILES
 
 set(HEADER_FILES
     src/agency_rating.h
-    src/annotate.h
+    src/annotator.h
     src/cluster.h
     src/clustering/clustering.h
     src/clustering/slink.h

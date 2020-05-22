@@ -12,8 +12,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 set(TGNEWS_CXX_FLAGS "-pthread;-Wall;-Wextra;-Wno-sign-compare;-fno-omit-frame-pointer")
 set(TGNEWS_CXX_DEBUG_FLAGS "-g;-O2;-fsanitize=address")
+set(TGNEWS_LNK_DEBUG_FLAGS "-fsanitize=address")
 set(TGNEWS_CXX_RELEASE_FLAGS "-funroll-loops;-Ofast;-march=native")
-set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer")
 
 set(BUILD_TESTING 0)
 add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
@@ -73,6 +73,7 @@ set(SOURCE_FILES
     src/cluster.cpp
     src/clustering/slink.cpp
     src/controller.cpp
+    src/db_document.cpp
     src/detect.cpp
     src/document.cpp
     src/document_ranking/weighted_document.cpp
@@ -91,6 +92,7 @@ set(HEADER_FILES
     src/clustering/clustering.h
     src/clustering/slink.h
     src/controller.h
+    src/db_document.h
     src/detect.h
     src/document.h
     src/document_ranking/weighted_document.h
@@ -103,9 +105,7 @@ set(HEADER_FILES
     src/util.h
 )
 
-set(PROTO_FILES
-    src/config.proto
-)
+file(GLOB PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/proto/*.proto")
 
 set(LIB_LIST
     ${Boost_LIBRARIES}
@@ -120,6 +120,7 @@ set(LIB_LIST
 )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/rocksdb/include")
 target_include_directories(fasttext-static SYSTEM PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fasttext/src")
 target_include_directories(OpenNMTTokenizer SYSTEM PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/onmt_tokenizer/include")
 
@@ -130,6 +131,7 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${PROTO_SRCS} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB_LIST})
 target_compile_options(${PROJECT_NAME} PUBLIC "${TGNEWS_CXX_FLAGS}")
 target_compile_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Debug>:${TGNEWS_CXX_DEBUG_FLAGS}>")
+target_link_libraries(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Debug>:${TGNEWS_LNK_DEBUG_FLAGS}>")
 target_compile_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Release>:${TGNEWS_CXX_RELEASE_FLAGS}>")
 
 enable_testing()

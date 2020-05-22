@@ -1,8 +1,10 @@
 #include "run_server.h"
 
+#include "clustering/slink.h"
 #include "config.pb.h"
 #include "context.h"
 #include "controller.h"
+#include "db_document.h"
 #include "util.h"
 
 #include <google/protobuf/text_format.h>
@@ -62,6 +64,25 @@ int RunServer(const std::string& fname) {
 
     auto controllerPtr = std::make_shared<TController>();
     app().registerController(controllerPtr);
+
+    const rocksdb::Snapshot* snapshot = context.Db->GetSnapshot();
+    rocksdb::ReadOptions ropt(true, true);
+    ropt.snapshot = snapshot;
+    std::unique_ptr<rocksdb::Iterator> iter(context.Db->NewIterator(ropt));
+    std::vector<TDbDocument> docs;
+    for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
+        TDbDocument doc;
+        TDbDocument::FromProtoString(iter->value().ToString(), &doc);
+        docs.push_back(std::move(doc));
+    }
+    context.Db->ReleaseSnapshot(snapshot);
+
+    std::cerr << "Snapshot ok, docs: " << docs.size() << std::endl;
+    std::unique_ptr<TClustering> clustering = std::make_unique<TSlinkClustering>(0.02);
+    const TClusters clusters = clustering->Cluster(docs);
+    std::cerr << "Clusters: " << clusters.size() << std::endl;
+
+    LOG_DEBUG("Initial clustering ok");
 
     // call this once clustering is ready
     DrClassMap::getSingleInstance<TController>()->Init(&context);

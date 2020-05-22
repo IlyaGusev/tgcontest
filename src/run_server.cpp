@@ -45,6 +45,31 @@ namespace {
         return std::unique_ptr<rocksdb::DB>(db);
     }
 
+    TClustersIndex RunClustering(rocksdb::DB* db) {
+        const rocksdb::Snapshot* snapshot = db->GetSnapshot();
+        rocksdb::ReadOptions ropt(true, true);
+        ropt.snapshot = snapshot;
+        std::unique_ptr<rocksdb::Iterator> iter(db->NewIterator(ropt));
+        std::vector<TDbDocument> docs;
+        for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
+            TDbDocument doc;
+            bool ok = TDbDocument::FromProtoString(iter->value().ToString(), &doc);
+            if (!ok) {
+                LOG_DEBUG("Bad document in db!")
+            }
+            docs.push_back(std::move(doc));
+        }
+        db->ReleaseSnapshot(snapshot);
+
+        std::cerr << "Clustering input: " << docs.size() << " docs" << std::endl;
+        std::unique_ptr<TClustering> clustering = std::make_unique<TSlinkClustering>(0.02);
+        const TClusters clusters = clustering->Cluster(docs);
+        std::cerr << "Clustering output: " << clusters.size() << " clusters" << std::endl;
+        TClustersIndex index;
+        std::copy(clusters.begin(), clusters.end(), std::inserter(index, index.begin()));
+        return index;
+    }
+
 }
 
 int RunServer(const std::string& fname) {
@@ -65,23 +90,7 @@ int RunServer(const std::string& fname) {
     auto controllerPtr = std::make_shared<TController>();
     app().registerController(controllerPtr);
 
-    const rocksdb::Snapshot* snapshot = context.Db->GetSnapshot();
-    rocksdb::ReadOptions ropt(true, true);
-    ropt.snapshot = snapshot;
-    std::unique_ptr<rocksdb::Iterator> iter(context.Db->NewIterator(ropt));
-    std::vector<TDbDocument> docs;
-    for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
-        TDbDocument doc;
-        TDbDocument::FromProtoString(iter->value().ToString(), &doc);
-        docs.push_back(std::move(doc));
-    }
-    context.Db->ReleaseSnapshot(snapshot);
-
-    std::cerr << "Snapshot ok, docs: " << docs.size() << std::endl;
-    std::unique_ptr<TClustering> clustering = std::make_unique<TSlinkClustering>(0.02);
-    const TClusters clusters = clustering->Cluster(docs);
-    std::cerr << "Clusters: " << clusters.size() << std::endl;
-
+    RunClustering(context.Db.get());
     LOG_DEBUG("Initial clustering ok");
 
     // call this once clustering is ready

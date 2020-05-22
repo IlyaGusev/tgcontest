@@ -85,7 +85,7 @@ TClusters TSlinkClustering::Cluster(
         if (it == clusterLabels.end()) {
             size_t newLabel = clusters.size();
             clusterLabels[clusterId] = newLabel;
-            clusters.push_back(TNewsCluster());
+            clusters.emplace_back(newLabel);
             clusters[newLabel].AddDocument(docs[i]);
         } else {
             clusters[it->second].AddDocument(docs[i]);

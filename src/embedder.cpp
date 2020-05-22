@@ -3,8 +3,8 @@
 #include <sstream>
 #include <cassert>
 
-#include <fasttext.h>
 #include <onmt/Tokenizer.h>
+#include <fasttext.h>
 
 TFastTextEmbedder::TFastTextEmbedder(
     fasttext::FastText& model

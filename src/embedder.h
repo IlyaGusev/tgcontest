@@ -2,8 +2,6 @@
 
 #include <Eigen/Core>
 #include <torch/script.h>
-#include <unordered_map>
-#include <memory>
 
 struct TDocument;
 
@@ -25,6 +23,7 @@ public:
         AggregationMode mode = AM_Avg,
         size_t maxWords = 100,
         const std::string& modelPath = "");
+    virtual ~TFastTextEmbedder() = default;
 
     size_t GetEmbeddingSize() const;
     std::vector<float> CalcEmbedding(const std::string& title, const std::string& text) const;

@@ -1,5 +1,5 @@
 #include "agency_rating.h"
-#include "annotate.h"
+#include "annotator.h"
 #include "clustering/slink.h"
 #include "document.h"
 #include "rank.h"
@@ -211,10 +211,7 @@ int main(int argc, char** argv) {
         std::map<std::string, std::unique_ptr<TClustering>> clusterings;
         for (const std::string& language : clusteringLanguages) {
             const float distanceThreshold = vm[language+"_clustering_distance_threshold"].as<float>();
-            std::unique_ptr<TClustering> clustering(
-                new TSlinkClustering(distanceThreshold)
-            );
-            clusterings[language] = std::move(clustering);
+            clusterings[language] = std::make_unique<TSlinkClustering>(distanceThreshold);
         }
 
         std::map<std::string, std::vector<TDbDocument>> lang2Docs;

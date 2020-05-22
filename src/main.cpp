@@ -27,6 +27,7 @@ uint64_t GetIterTimestamp(const std::vector<TDocument>& documents, double percen
 }
 
 int main(int argc, char** argv) {
+    std::cerr << "main" << std::endl;
     try {
         po::options_description desc("options");
         desc.add_options()
@@ -330,7 +331,8 @@ int main(int argc, char** argv) {
         }
 
         // Ranking
-        const auto tops = Rank(clusters, agencyRating, iterTimestamp);
+        uint64_t window = 0.;
+        const auto tops = Rank(clusters, agencyRating, iterTimestamp, window);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<ENewsCategory>(std::distance(tops.begin(), it));
@@ -346,10 +348,15 @@ int main(int argc, char** argv) {
                 nlohmann::json object = {
                     {"title", cluster.Title},
                     {"category", cluster.Category},
-                    {"articles", nlohmann::json::array()}
+                    {"articles", nlohmann::json::array()},
+                    {"article_weights", nlohmann::json::array()},
+                    {"weight", cluster.Weight}
                 };
                 for (const TDocument& doc : cluster.Cluster.get().GetDocuments()) {
                     object["articles"].push_back(CleanFileName(doc.FileName));
+                }
+                for (const auto& weight : cluster.DocWeights) {
+                    object["article_weights"].push_back(weight);
                 }
                 rubricTop["threads"].push_back(object);
             }

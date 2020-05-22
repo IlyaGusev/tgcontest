@@ -12,7 +12,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 set(TGNEWS_CXX_FLAGS "-pthread;-Wall;-Wextra;-Wno-sign-compare;-fno-omit-frame-pointer")
 set(TGNEWS_CXX_DEBUG_FLAGS "-g;-O2;-fsanitize=address")
-set(TGNEWS_LNK_DEBUG_FLAGS "-fsanitize=address;-fno-omit-frame-pointer")
+set(TGNEWS_LNK_DEBUG_FLAGS "-fsanitize=address")
 set(TGNEWS_CXX_RELEASE_FLAGS "-funroll-loops;-Ofast;-march=native")
 
 set(BUILD_TESTING 0)

@@ -10,6 +10,13 @@
 #define LOG_DEBUG(x) std::cerr << x << std::endl;
 #endif
 
+#define ENSURE(CONDITION, MESSAGE)              \
+    do {                                        \
+        if (!(CONDITION)) {                     \
+            throw std::runtime_error(MESSAGE);  \
+        }                                       \
+    } while (false)
+
 // Read names of all files in directory
 void ReadFileNames(const std::string& directory, std::vector<std::string>& fileNames, int nDocs=-1);
 

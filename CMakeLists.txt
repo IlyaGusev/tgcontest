@@ -130,7 +130,7 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${PROTO_SRCS} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIB_LIST})
 target_compile_options(${PROJECT_NAME} PUBLIC "${TGNEWS_CXX_FLAGS}")
 target_compile_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Debug>:${TGNEWS_CXX_DEBUG_FLAGS}>")
-target_link_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Debug>:${TGNEWS_LNK_DEBUG_FLAGS}>")
+target_link_libraries(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Debug>:${TGNEWS_LNK_DEBUG_FLAGS}>")
 target_compile_options(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Release>:${TGNEWS_CXX_RELEASE_FLAGS}>")
 
 enable_testing()

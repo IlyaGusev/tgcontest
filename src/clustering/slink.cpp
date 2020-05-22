@@ -12,10 +12,11 @@ namespace {
 
 using TClusterSiteNames = std::unordered_set<std::string>;
 
+constexpr float INF_DISTANCE = 1.0f;
+
 void ApplyTimePenalty(
     const std::vector<TDbDocument>::const_iterator begin,
     size_t docSize,
-    float INF_DISTANCE,
     Eigen::MatrixXf& distances
 ) {
     std::vector<TDbDocument>::const_iterator iIt = begin;
@@ -167,10 +168,9 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
 
     Eigen::MatrixXf distances(points.rows(), points.rows());
     FillDistanceMatrix(points, distances);
-    const float INF_DISTANCE = 1.0f;
 
     if (Config.UseTimestampMoving) {
-        ApplyTimePenalty(begin, docSize, INF_DISTANCE, distances);
+        ApplyTimePenalty(begin, docSize, distances);
     }
 
     // Prepare 3 arrays

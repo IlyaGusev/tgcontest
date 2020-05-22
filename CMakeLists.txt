@@ -119,9 +119,6 @@ set(LIB_LIST
     ${TORCH_LIBRARIES}
 )
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fasttext/src")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/rocksdb/include")
 target_include_directories(fasttext-static SYSTEM PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fasttext/src")

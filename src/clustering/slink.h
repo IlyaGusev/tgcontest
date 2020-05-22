@@ -1,7 +1,6 @@
 #pragma once
 
 #include "clustering.h"
-#include "../embedder.h"
 
 #include <Eigen/Core>
 
@@ -22,17 +21,19 @@ public:
         bool BanThreadsFromSameSite = false;
     };
 
-    TSlinkClustering(TEmbedder& embedder, const TConfig& config);
+    TSlinkClustering(const TConfig& config);
 
     TClusters Cluster(
-        const std::vector<TDocument>& docs
+        const std::vector<TDbDocument>& docs,
+        tg::EEmbeddingKey embeddingKey = tg::EK_CLUSTERING
     ) override;
 
 private:
     void FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const;
     std::vector<size_t> ClusterBatch(
-        const std::vector<TDocument>::const_iterator begin,
-        const std::vector<TDocument>::const_iterator end
+        const std::vector<TDbDocument>::const_iterator begin,
+        const std::vector<TDbDocument>::const_iterator end,
+        tg::EEmbeddingKey embeddingKey = tg::EK_CLUSTERING
     );
 
 private:

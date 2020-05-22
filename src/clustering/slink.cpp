@@ -13,13 +13,13 @@ namespace {
 using TClusterSiteNames = std::unordered_set<std::string>;
 
 void ApplyTimePenalty(
-    const std::vector<TDocument>::const_iterator begin,
+    const std::vector<TDbDocument>::const_iterator begin,
     size_t docSize,
     float INF_DISTANCE,
     Eigen::MatrixXf& distances
 ) {
-    std::vector<TDocument>::const_iterator iIt = begin;
-    std::vector<TDocument>::const_iterator jIt = begin + 1;
+    std::vector<TDbDocument>::const_iterator iIt = begin;
+    std::vector<TDbDocument>::const_iterator jIt = begin + 1;
     for (size_t i = 0; i < docSize; ++i, ++iIt) {
         jIt = iIt + 1;
         for (size_t j = i + 1; j < docSize; ++j, ++jIt) {
@@ -63,20 +63,20 @@ bool HasSameSource(const TClusterSiteNames& firstSet, const TClusterSiteNames& s
 
 } // namespace
 
-TSlinkClustering::TSlinkClustering(TEmbedder& embedder, const TConfig& config)
-    : TClustering(embedder)
-    , Config(config)
+TSlinkClustering::TSlinkClustering(const TConfig& config)
+    : Config(config)
 {
 }
 
 TClusters TSlinkClustering::Cluster(
-    const std::vector<TDocument>& docs
+    const std::vector<TDbDocument>& docs,
+    tg::EEmbeddingKey embeddingKey
 ) {
     const size_t docSize = docs.size();
     std::vector<size_t> labels;
     labels.reserve(docSize);
 
-    std::vector<TDocument>::const_iterator begin = docs.cbegin();
+    std::vector<TDbDocument>::const_iterator begin = docs.cbegin();
     std::unordered_map<size_t, size_t> oldLabelsToNew;
     size_t batchStart = 0;
     size_t prevBatchEnd = batchStart;
@@ -84,9 +84,9 @@ TClusters TSlinkClustering::Cluster(
     while (prevBatchEnd < docs.size()) {
         size_t remainingDocsCount = docSize - batchStart;
         size_t batchSize = std::min(remainingDocsCount, Config.BatchSize);
-        std::vector<TDocument>::const_iterator end = begin + batchSize;
+        std::vector<TDbDocument>::const_iterator end = begin + batchSize;
 
-        std::vector<size_t> newLabels = ClusterBatch(begin, end);
+        std::vector<size_t> newLabels = ClusterBatch(begin, end, embeddingKey);
         size_t newMaxLabel = maxLabel;
         for (auto& label : newLabels) {
             label += maxLabel;
@@ -148,16 +148,18 @@ TClusters TSlinkClustering::Cluster(
 
 // SLINK: https://sites.cs.ucsb.edu/~veronika/MAE/summary_SLINK_Sibson72.pdf
 std::vector<size_t> TSlinkClustering::ClusterBatch(
-    const std::vector<TDocument>::const_iterator begin,
-    const std::vector<TDocument>::const_iterator end
+    const std::vector<TDbDocument>::const_iterator begin,
+    const std::vector<TDbDocument>::const_iterator end,
+    tg::EEmbeddingKey embeddingKey
 ) {
     const size_t docSize = std::distance(begin, end);
-    const size_t embSize = Embedder.GetEmbeddingSize();
+    assert(docSize != 0);
+    const size_t embSize = begin->Embeddings.at(embeddingKey).size();
 
     Eigen::MatrixXf points(docSize, embSize);
-    std::vector<TDocument>::const_iterator docsIt = begin;
+    std::vector<TDbDocument>::const_iterator docsIt = begin;
     for (size_t i = 0; i < docSize; ++i) {
-        auto embedding = Embedder.GetSentenceEmbedding(*docsIt);
+        std::vector<float> embedding = docsIt->Embeddings.at(embeddingKey);
         Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
         points.row(i) = eigenVector / eigenVector.norm();
         docsIt++;

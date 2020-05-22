@@ -38,8 +38,6 @@
 *.tar.gz
 
 build/
-data
+data/
 data_test/
-.clangd/
 libtorch/
-*.json

@@ -1,11 +1,9 @@
 #include "embedder.h"
-#include "document.h"
 
 #include <sstream>
 #include <cassert>
 
 #include <fasttext.h>
-#include <nlohmann_json/json.hpp>
 #include <onmt/Tokenizer.h>
 
 TFastTextEmbedder::TFastTextEmbedder(
@@ -27,9 +25,8 @@ size_t TFastTextEmbedder::GetEmbeddingSize() const {
     return Model.getDimension();
 }
 
-std::vector<float> TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc) const {
-    assert(doc.PreprocessedTitle && doc.PreprocessedText);
-    std::istringstream ss(doc.PreprocessedTitle.get() + " " + doc.PreprocessedText.get());
+std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& title, const std::string& text) const {
+    std::istringstream ss(title + " " + text);
     fasttext::Vector wordVector(GetEmbeddingSize());
     fasttext::Vector avgVector(GetEmbeddingSize());
     fasttext::Vector maxVector(GetEmbeddingSize());
@@ -87,36 +84,4 @@ std::vector<float> TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc)
         resultVector[i] = outputTensorPtr[i];
     }
     return resultVector;
-}
-
-TDummyEmbedder::TDummyEmbedder(const std::string& modelPath) {
-    std::ifstream precomputedEmbeddingsStream(modelPath);
-    nlohmann::json precomputedEmbeddingsJson;
-    precomputedEmbeddingsStream >> precomputedEmbeddingsJson;
-
-    for (auto&& item : precomputedEmbeddingsJson) {
-        const std::string url = item["url"].get<std::string>();
-        if (EmbeddingSize == 0) {
-            EmbeddingSize = item["embedding"].size();
-        } else {
-            assert(EmbeddingSize == item["embedding"].size());
-        }
-
-        std::vector<float> vector(EmbeddingSize);
-        for (size_t i = 0; i < EmbeddingSize; ++i) {
-            vector[i] = item["embedding"].at(i);
-        }
-
-        UrlToEmbedding.emplace(url, vector);
-    }
-
-    DefaultVector = std::vector<float>(EmbeddingSize);
-}
-
-std::vector<float> TDummyEmbedder::GetSentenceEmbedding(const TDocument& doc) const {
-    const auto embeddingIter = UrlToEmbedding.find(doc.Url);
-    if (embeddingIter == UrlToEmbedding.end()) {
-        return DefaultVector;
-    }
-    return embeddingIter->second;
 }

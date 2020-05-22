@@ -8,18 +8,19 @@
 #include "timer.h"
 #include "util.h"
 
+#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <fasttext.h>
 
 namespace po = boost::program_options;
 
-uint64_t GetIterTimestamp(const std::vector<TDocument>& documents, double percentile) {
+uint64_t GetIterTimestamp(const std::vector<TDbDocument>& documents, double percentile) {
     // In production ts.now() should be here.
     // In this case we have percentile of documents timestamps because of the small percent of wrong dates.
     if (documents.empty()) {
         return 0;
     }
-    assert(std::is_sorted(documents.begin(), documents.end(), [](const TDocument& d1, const TDocument& d2) {
+    assert(std::is_sorted(documents.begin(), documents.end(), [](const TDbDocument& d1, const TDbDocument& d2) {
         return d1.FetchTime < d2.FetchTime;
     }));
 
@@ -68,8 +69,6 @@ int main(int argc, char** argv) {
             ("save_not_news", po::bool_switch()->default_value(false), "save_not_news")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ("iter_timestamp_percentile", po::value<double>()->default_value(0.99), "iter_timestamp_percentile")
-            ("sentence_embedder_type", po::value<std::string>()->default_value("fasttext"), "sentence_embedder_type")
-            ("dummy_sentence_embedder_path", po::value<std::string>()->default_value("threads_laser.json"), "dummy_sentence_embedder_path")
             ;
 
         po::positional_options_description p;
@@ -93,7 +92,6 @@ int main(int argc, char** argv) {
         std::vector<std::string> modes = {
             "languages",
             "news",
-            "sites",
             "json",
             "categories",
             "threads",
@@ -108,24 +106,6 @@ int main(int argc, char** argv) {
         if (mode == "server") {
             const std::string config = vm["config"].as<std::string>();
             return RunServer(config);
-        }
-
-        // Load models
-        LOG_DEBUG("Loading models...");
-        std::vector<std::string> modelsOptions = {
-            "lang_detect_model",
-            "en_cat_detect_model",
-            "ru_cat_detect_model",
-            "en_vector_model",
-            "ru_vector_model"
-        };
-        TModelStorage models;
-        for (const auto& optionName : modelsOptions) {
-            const std::string modelPath = vm[optionName].as<std::string>();
-            std::unique_ptr<fasttext::FastText> model(new fasttext::FastText());
-            models.emplace(optionName, std::move(model));
-            models.at(optionName)->loadModel(modelPath);
-            LOG_DEBUG("FastText " << optionName << " loaded");
         }
 
         // Load agency ratings
@@ -150,28 +130,18 @@ int main(int argc, char** argv) {
         }
 
         // Parse files and annotate with classifiers
-        std::vector<std::string> l = vm["languages"].as<std::vector<std::string>>();
-        std::set<std::string> languages(l.begin(), l.end());
-        size_t minTextLength = vm["min_text_length"].as<size_t>();
-        bool parseLinks = vm["parse_links"].as<bool>();
         bool saveNotNews = vm["save_not_news"].as<bool>();
-        std::vector<TDocument> docs;
-        Annotate(
-            fileNames,
-            models,
-            languages,
-            docs,
-            /* minTextLength = */ minTextLength,
-            /* parseLinks */ parseLinks,
-            /* fromJson */ fromJson,
-            /* saveNotNews */ saveNotNews);
+        TAnnotator annotator(vm, saveNotNews);
+        TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> annotationTimer;
+        std::vector<TDbDocument> docs = annotator.AnnotateAll(fileNames, fromJson);
+        LOG_DEBUG("Annotation: " << annotationTimer.Elapsed() << " ms (" << docs.size() << " documents)");
 
         // Output
         if (mode == "languages") {
             nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> langToFiles;
-            for (const TDocument& doc : docs) {
-                langToFiles[doc.Language.get()].push_back(CleanFileName(doc.FileName));
+            for (const TDbDocument& doc : docs) {
+                langToFiles[nlohmann::json(doc.Language)].push_back(CleanFileName(doc.FileName));
             }
             for (const auto& pair : langToFiles) {
                 const std::string& language = pair.first;
@@ -184,33 +154,16 @@ int main(int argc, char** argv) {
             }
             std::cout << outputJson.dump(4) << std::endl;
             return 0;
-        } else if (mode == "sites") {
-            nlohmann::json outputJson = nlohmann::json::array();
-            std::unordered_map<std::string, std::vector<std::string>> siteToTitles;
-            for (const TDocument& doc : docs) {
-                siteToTitles[doc.SiteName].push_back(doc.Title);
-            }
-            for (const auto& pair : siteToTitles) {
-                const std::string& site = pair.first;
-                const std::vector<std::string>& titles = pair.second;
-                nlohmann::json object = {
-                    {"site", site},
-                    {"titles", titles}
-                };
-                outputJson.push_back(object);
-            }
-            std::cout << outputJson.dump(4) << std::endl;
-            return 0;
         } else if (mode == "json") {
             nlohmann::json outputJson = nlohmann::json::array();
-            for (const TDocument& doc : docs) {
+            for (const TDbDocument& doc : docs) {
                 outputJson.push_back(doc.ToJson());
             }
             std::cout << outputJson.dump(4) << std::endl;
             return 0;
         } else if (mode == "news") {
             nlohmann::json articles = nlohmann::json::array();
-            for (const TDocument& doc : docs) {
+            for (const TDbDocument& doc : docs) {
                 articles.push_back(CleanFileName(doc.FileName));
             }
             nlohmann::json outputJson = nlohmann::json::object();
@@ -219,18 +172,22 @@ int main(int argc, char** argv) {
             return 0;
         } else if (mode == "categories") {
             nlohmann::json outputJson = nlohmann::json::array();
-            std::vector<std::vector<std::string>> catToFiles(NC_COUNT);
-            for (const TDocument& doc : docs) {
-                ENewsCategory category = doc.Category;
-                if (category == NC_UNDEFINED || (category == NC_NOT_NEWS && !saveNotNews)) {
+
+            std::vector<std::vector<std::string>> catToFiles(tg::ECategory_ARRAYSIZE);
+            for (const TDbDocument& doc : docs) {
+                tg::ECategory category = doc.Category;
+                if (category == tg::NC_UNDEFINED || (category == tg::NC_NOT_NEWS && !saveNotNews)) {
                     continue;
                 }
                 catToFiles[static_cast<size_t>(category)].push_back(CleanFileName(doc.FileName));
                 LOG_DEBUG(category << "\t" << doc.Title);
             }
-            for (size_t i = 0; i < NC_COUNT; i++) {
-                ENewsCategory category = static_cast<ENewsCategory>(i);
-                if (!saveNotNews && category == NC_NOT_NEWS) {
+            for (size_t i = 0; i < tg::ECategory_ARRAYSIZE; i++) {
+                tg::ECategory category = static_cast<tg::ECategory>(i);
+                if (category == tg::NC_UNDEFINED || category == tg::NC_ANY) {
+                    continue;
+                }
+                if (!saveNotNews && category == tg::NC_NOT_NEWS) {
                     continue;
                 }
                 const std::vector<std::string>& files = catToFiles[i];
@@ -248,13 +205,8 @@ int main(int argc, char** argv) {
 
         // Clustering
         const std::set<std::string> clusteringLanguages = {"ru", "en"};
-        for (const auto& language : languages) {
-            if (clusteringLanguages.find(language) == clusteringLanguages.end()) {
-                LOG_DEBUG("Language '" << language << "' is not supported for clustering!");
-            }
-        }
         std::stable_sort(docs.begin(), docs.end(),
-            [](const TDocument& d1, const TDocument& d2) {
+            [](const TDbDocument& d1, const TDbDocument& d2) {
                 if (d1.FetchTime == d2.FetchTime) {
                     if (d1.FileName.empty() && d2.FileName.empty()) {
                         return d1.Title.length() < d2.Title.length();
@@ -271,27 +223,7 @@ int main(int argc, char** argv) {
         assert(clusteringType == "slink");
 
         std::map<std::string, std::unique_ptr<TClustering>> clusterings;
-        std::map<std::string, std::unique_ptr<TEmbedder>> embedders;
         for (const std::string& language : clusteringLanguages) {
-            const std::string modelPath = vm[language + "_sentence_embedder"].as<std::string>();
-            const size_t maxWords = vm[language + "_clustering_max_words"].as<size_t>();
-
-            std::unique_ptr<TEmbedder> embedder;
-            if (vm["sentence_embedder_type"].as<std::string>() == "fasttext") {
-                embedder = std::make_unique<TFastTextEmbedder>(
-                    *models.at(language + "_vector_model"),
-                    TFastTextEmbedder::AM_Matrix,
-                    maxWords,
-                    modelPath
-                );
-            } else if (vm["sentence_embedder_type"].as<std::string>() == "dummy") {
-                embedder = std::make_unique<TDummyEmbedder>(vm["dummy_sentence_embedder_path"].as<std::string>());
-            } else {
-                assert(false);
-            }
-
-            embedders[language] = std::move(embedder);
-
             TSlinkClustering::TConfig slinkConfig;
             slinkConfig.SmallClusterThreshold = vm[language + "_small_clustering_distance_threshold"].as<float>();
             slinkConfig.SmallClusterSize = vm[language + "_small_cluster_size"].as<size_t>();
@@ -306,18 +238,15 @@ int main(int argc, char** argv) {
             slinkConfig.UseTimestampMoving = vm["clustering_use_timestamp_moving"].as<bool>();
             slinkConfig.BanThreadsFromSameSite = vm["clustering_ban_threads_from_same_site"].as<bool>();
 
-            std::unique_ptr<TClustering> clustering = std::make_unique<TSlinkClustering>(
-                *embedders[language],
-                slinkConfig
-            );
+            std::unique_ptr<TClustering> clustering = std::make_unique<TSlinkClustering>(slinkConfig);
             clusterings[language] = std::move(clustering);
         }
 
-        std::map<std::string, std::vector<TDocument>> lang2Docs;
+        std::map<std::string, std::vector<TDbDocument>> lang2Docs;
         while (!docs.empty()) {
-            const TDocument& doc = docs.back();
+            const TDbDocument& doc = docs.back();
             assert(doc.Language);
-            const std::string& language = doc.Language.get();
+            const std::string& language = nlohmann::json(doc.Language);
             if (clusteringLanguages.find(language) != clusteringLanguages.end()) {
                 lang2Docs[language].push_back(doc);
             }
@@ -342,12 +271,12 @@ int main(int argc, char** argv) {
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms (" << clusters.size() << " clusters)");
 
         //Summarization
-        Summarize(clusters, agencyRating, embedders);
+        Summarize(clusters, agencyRating);
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();
             for (const auto& cluster : clusters) {
                 nlohmann::json files = nlohmann::json::array();
-                for (const TDocument& doc : cluster.GetDocuments()) {
+                for (const TDbDocument& doc : cluster.GetDocuments()) {
                     files.push_back(CleanFileName(doc.FileName));
                 }
                 nlohmann::json object = {
@@ -358,7 +287,7 @@ int main(int argc, char** argv) {
 
                 if (cluster.GetSize() >= 2) {
                     LOG_DEBUG("\n         CLUSTER: " << cluster.GetTitle());
-                    for (const TDocument& doc : cluster.GetDocuments()) {
+                    for (const TDbDocument& doc : cluster.GetDocuments()) {
                         LOG_DEBUG("  " << doc.Title << " (" << doc.Url << ")");
                     }
                 }
@@ -373,8 +302,11 @@ int main(int argc, char** argv) {
         const auto tops = Rank(clusters, agencyRating, iterTimestamp);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
-            const auto category = static_cast<ENewsCategory>(std::distance(tops.begin(), it));
-            if (!saveNotNews && category == NC_NOT_NEWS) {
+            const auto category = static_cast<tg::ECategory>(std::distance(tops.begin(), it));
+            if (category == tg::NC_UNDEFINED) {
+                continue;
+            }
+            if (!saveNotNews && category == tg::NC_NOT_NEWS) {
                 continue;
             }
 
@@ -388,7 +320,7 @@ int main(int argc, char** argv) {
                     {"category", cluster.Category},
                     {"articles", nlohmann::json::array()}
                 };
-                for (const TDocument& doc : cluster.Cluster.get().GetDocuments()) {
+                for (const TDbDocument& doc : cluster.Cluster.get().GetDocuments()) {
                     object["articles"].push_back(CleanFileName(doc.FileName));
                 }
                 rubricTop["threads"].push_back(object);

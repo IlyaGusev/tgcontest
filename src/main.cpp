@@ -1,5 +1,5 @@
 #include "agency_rating.h"
-#include "annotate.h"
+#include "annotator.h"
 #include "clustering/slink.h"
 #include "document.h"
 #include "rank.h"
@@ -238,8 +238,7 @@ int main(int argc, char** argv) {
             slinkConfig.UseTimestampMoving = vm["clustering_use_timestamp_moving"].as<bool>();
             slinkConfig.BanThreadsFromSameSite = vm["clustering_ban_threads_from_same_site"].as<bool>();
 
-            std::unique_ptr<TClustering> clustering = std::make_unique<TSlinkClustering>(slinkConfig);
-            clusterings[language] = std::move(clustering);
+            clusterings[language] = std::make_unique<TSlinkClustering>(slinkConfig);
         }
 
         std::map<std::string, std::vector<TDbDocument>> lang2Docs;

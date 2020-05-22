@@ -10,6 +10,7 @@
 
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
+#include <fasttext.h>
 
 namespace po = boost::program_options;
 
@@ -157,6 +158,7 @@ int main(int argc, char** argv) {
             return 0;
         } else if (mode == "categories") {
             nlohmann::json outputJson = nlohmann::json::array();
+
             std::vector<std::vector<std::string>> catToFiles(tg::ECategory_ARRAYSIZE);
             for (const TDbDocument& doc : docs) {
                 tg::ECategory category = doc.Category;

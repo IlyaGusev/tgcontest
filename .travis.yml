@@ -58,7 +58,7 @@ script:
   - perf script > out.perf
   - python3 json2html/convert.py --documents-file demo_data.json --tops-file demo_top.json --templates-dir json2html/templates --output-dir output
   - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/flamegraph.svg
-  - ./build/tgnews categories metrics_data.json --languages ru --from_json > ru_cat.json
+  - ./build/tgnews categories metrics_data.json --languages ru --from_json --save_not_news > ru_cat.json
   - python3 json2html/calc_metrics.py --templates-dir json2html/templates --output-dir output/ru --documents-file metrics_data.json --cat-gold ru_cat_target.json --cat-output ru_cat.json --language ru
 
 deploy:

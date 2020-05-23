@@ -34,14 +34,14 @@ message TAnnotatorConfig {
 message TClusteringConfig {
     ELanguage language = 1;
     float small_threshold = 2;
-    uint32 small_cluster_size = 3;
+    uint64 small_cluster_size = 3;
     float medium_threshold = 4;
-    uint32 medium_cluster_size = 5;
+    uint64 medium_cluster_size = 5;
     float large_threshold = 6;
-    uint32 large_cluster_size = 7;
-    uint32 chunk_size = 8;
-    uint32 intersection_size = 9;
-    bool use_iimestamp_moving = 10;
+    uint64 large_cluster_size = 7;
+    uint64 chunk_size = 8;
+    uint64 intersection_size = 9;
+    bool use_timestamp_moving = 10;
     bool ban_same_hosts = 11;
 }
 

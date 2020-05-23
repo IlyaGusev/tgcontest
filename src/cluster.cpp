@@ -9,8 +9,8 @@
 #include <vector>
 
 void TNewsCluster::AddDocument(const TDbDocument& document) {
-    Documents.push_back(std::cref(document));
-    FreshestTimestamp = std::max(FreshestTimestamp, static_cast<uint64_t>(Documents.back().get().FetchTime));
+    Documents.push_back(std::move(document));
+    FreshestTimestamp = std::max(FreshestTimestamp, static_cast<uint64_t>(Documents.back().FetchTime));
 }
 
 uint64_t TNewsCluster::GetTimestamp(float percentile) const {
@@ -43,7 +43,7 @@ void TNewsCluster::SortByWeights(const std::vector<double>& weights) {
     }
     std::stable_sort(weightedDocs.begin(), weightedDocs.end(), [](const TWeightedDoc& a, const TWeightedDoc& b) {
         if (std::abs(a.Weight - b.Weight) < 0.000001) {
-            return a.Doc.get().Title < b.Doc.get().Title;
+            return a.Doc.Title < b.Doc.Title;
         }
         return a.Weight > b.Weight;
     });

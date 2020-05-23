@@ -71,6 +71,7 @@ set(SOURCE_FILES
     src/agency_rating.cpp
     src/annotator.cpp
     src/cluster.cpp
+    src/clusterer.cpp
     src/clustering/slink.cpp
     src/controller.cpp
     src/db_document.cpp
@@ -89,6 +90,7 @@ set(HEADER_FILES
     src/agency_rating.h
     src/annotator.h
     src/cluster.h
+    src/clusterer.h
     src/clustering/clustering.h
     src/clustering/slink.h
     src/controller.h

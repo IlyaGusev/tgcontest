@@ -40,7 +40,7 @@ namespace {
         options.create_if_missing = !config.db_fail_if_missing();
 
         rocksdb::DB* db;
-        rocksdb::Status s = rocksdb::DB::Open(options, config.db_path(), &db);
+        const rocksdb::Status s = rocksdb::DB::Open(options, config.db_path(), &db);
         ENSURE(s.ok(), "Failed to create database: " << s.getState());
 
         return std::unique_ptr<rocksdb::DB>(db);
@@ -51,8 +51,9 @@ namespace {
         rocksdb::ReadOptions ropt(/*cksum*/ true, /*cache*/ true);
         ropt.snapshot = snapshot;
 
-        std::unique_ptr<rocksdb::Iterator> iter(db->NewIterator(ropt));
         std::vector<TDbDocument> docs;
+
+        std::unique_ptr<rocksdb::Iterator> iter(db->NewIterator(ropt));
         for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
             const std::string value = iter->value().ToString(); // TODO: use string_view
             if (value.empty()) {
@@ -60,8 +61,8 @@ namespace {
             }
 
             TDbDocument doc;
-            bool ok = TDbDocument::FromProtoString(value, &doc);
-            if (!ok) {
+            const bool succes = TDbDocument::FromProtoString(value, &doc);
+            if (!succes) {
                 LOG_DEBUG("Bad document in db!")
             }
             docs.push_back(std::move(doc));

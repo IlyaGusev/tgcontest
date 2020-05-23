@@ -66,11 +66,13 @@ if __name__ == "__main__":
 
     for path, _, files in os.walk(args.dir):
         for name in files:
+            if not name.endswith('.html'):
+                continue
             if n <= 0:
                 exit()
             ttl = random.randint(5*60, 30*24*60*60)
             with open(os.path.join(path, name), 'r') as f:
-                content = f.read()
+                content = f.read().strip()
             print(make_put(args.protocol, host, name, ttl, content))
             if args.mode == 'mix':
                 put_names.append(name)

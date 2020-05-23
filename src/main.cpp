@@ -1,5 +1,5 @@
 #include "agency_rating.h"
-#include "annotate.h"
+#include "annotator.h"
 #include "clustering/slink.h"
 #include "document.h"
 #include "rank.h"
@@ -8,23 +8,26 @@
 #include "timer.h"
 #include "util.h"
 
+#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
+#include <fasttext.h>
 
 namespace po = boost::program_options;
 
-uint64_t GetIterTimestamp(const std::vector<TDocument>& documents, double percentile) {
+uint64_t GetIterTimestamp(const std::vector<TDbDocument>& documents, double percentile) {
     // In production ts.now() should be here.
     // In this case we have percentile of documents timestamps because of the small percent of wrong dates.
     if (documents.empty()) {
         return 0;
     }
-    assert(std::is_sorted(documents.begin(), documents.end(), [](const TDocument& d1, const TDocument& d2) {
+    assert(std::is_sorted(documents.begin(), documents.end(), [](const TDbDocument& d1, const TDbDocument& d2) {
         return d1.FetchTime < d2.FetchTime;
     }));
 
     size_t index = std::floor(percentile * documents.size());
     return documents[index].FetchTime;
 }
+
 
 int main(int argc, char** argv) {
     std::cerr << "main" << std::endl;
@@ -33,24 +36,28 @@ int main(int argc, char** argv) {
         desc.add_options()
             ("mode", po::value<std::string>()->required(), "mode")
             ("input", po::value<std::string>()->required(), "input")
-            ("config", po::value<std::string>()->default_value("configs/server.pbtxt"), "config")
-            ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
-            ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_v2.ftz"), "en_cat_detect_model")
-            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_v3_1.ftz"), "ru_cat_detect_model")
-            ("en_vector_model", po::value<std::string>()->default_value("models/en_vectors_v2.bin"), "en_vector_model")
-            ("ru_vector_model", po::value<std::string>()->default_value("models/ru_vectors_v2.bin"), "ru_vector_model")
+            ("server_config", po::value<std::string>()->default_value("configs/server.pbtxt"), "server_config")
+            ("annotator_config", po::value<std::string>()->default_value("configs/annotator.pbtxt"), "annotator_config")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
-            ("en_clustering_distance_threshold", po::value<float>()->default_value(0.02f), "en_clustering_distance_threshold")
-            ("en_clustering_max_words", po::value<size_t>()->default_value(250), "en_clustering_max_words")
-            ("ru_clustering_distance_threshold", po::value<float>()->default_value(0.013f), "ru_clustering_distance_threshold")
-            ("ru_clustering_max_words", po::value<size_t>()->default_value(150), "ru_clustering_max_words")
-            ("en_sentence_embedder", po::value<std::string>()->default_value("models/en_sentence_embedder.pt"), "en_sentence_embedder")
-            ("ru_sentence_embedder", po::value<std::string>()->default_value("models/ru_sentence_embedder.pt"), "ru_sentence_embedder")
+            ("en_small_clustering_distance_threshold", po::value<float>()->default_value(0.015f), "en_clustering_distance_threshold")
+            ("en_small_cluster_size", po::value<size_t>()->default_value(15), "en_small_cluster_size")
+            ("en_medium_clustering_distance_threshold", po::value<float>()->default_value(0.01f), "en_medium_clustering_distance_threshold")
+            ("en_medium_cluster_size", po::value<size_t>()->default_value(50), "en_medium_cluster_size")
+            ("en_large_clustering_distance_threshold", po::value<float>()->default_value(0.005f), "en_large_clustering_distance_threshold")
+            ("en_large_cluster_size", po::value<size_t>()->default_value(100), "en_large_cluster_size")
+            ("ru_small_clustering_distance_threshold", po::value<float>()->default_value(0.015f), "ru_clustering_distance_threshold")
+            ("ru_small_cluster_size", po::value<size_t>()->default_value(15), "ru_small_cluster_size")
+            ("ru_medium_clustering_distance_threshold", po::value<float>()->default_value(0.01f), "ru_medium_clustering_distance_threshold")
+            ("ru_medium_cluster_size", po::value<size_t>()->default_value(50), "ru_medium_cluster_size")
+            ("ru_large_clustering_distance_threshold", po::value<float>()->default_value(0.005f), "ru_large_clustering_distance_threshold")
+            ("ru_large_cluster_size", po::value<size_t>()->default_value(100), "ru_large_cluster_size")
+            ("clustering_batch_size", po::value<size_t>()->default_value(10000), "clustering_batch_size")
+            ("clustering_batch_intersection_size", po::value<size_t>()->default_value(2000), "clustering_batch_intersection_size")
+            ("clustering_use_timestamp_moving", po::value<bool>()->default_value(false), "clustering_use_timestamp_moving")
+            ("clustering_ban_threads_from_same_site", po::value<bool>()->default_value(true), "clustering_ban_threads_from_same_site")
             ("rating", po::value<std::string>()->default_value("models/pagerank_rating.txt"), "rating")
             ("alexa_rating", po::value<std::string>()->default_value("models/alexa_rating_2_fixed.txt"), "alexa_rating")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
-            ("min_text_length", po::value<size_t>()->default_value(20), "min_text_length")
-            ("parse_links", po::bool_switch()->default_value(false), "parse_links")
             ("from_json", po::bool_switch()->default_value(false), "from_json")
             ("save_not_news", po::bool_switch()->default_value(false), "save_not_news")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
@@ -79,7 +86,6 @@ int main(int argc, char** argv) {
         std::vector<std::string> modes = {
             "languages",
             "news",
-            "sites",
             "json",
             "categories",
             "threads",
@@ -92,26 +98,8 @@ int main(int argc, char** argv) {
         }
 
         if (mode == "server") {
-            const std::string config = vm["config"].as<std::string>();
-            return RunServer(config);
-        }
-
-        // Load models
-        LOG_DEBUG("Loading models...");
-        std::vector<std::string> modelsOptions = {
-            "lang_detect_model",
-            "en_cat_detect_model",
-            "ru_cat_detect_model",
-            "en_vector_model",
-            "ru_vector_model"
-        };
-        TModelStorage models;
-        for (const auto& optionName : modelsOptions) {
-            const std::string modelPath = vm[optionName].as<std::string>();
-            std::unique_ptr<fasttext::FastText> model(new fasttext::FastText());
-            models.emplace(optionName, std::move(model));
-            models.at(optionName)->loadModel(modelPath);
-            LOG_DEBUG("FastText " << optionName << " loaded");
+            const std::string serverConfig = vm["server_config"].as<std::string>();
+            return RunServer(serverConfig);
         }
 
         // Load agency ratings
@@ -143,28 +131,19 @@ int main(int argc, char** argv) {
         }
 
         // Parse files and annotate with classifiers
-        std::vector<std::string> l = vm["languages"].as<std::vector<std::string>>();
-        std::set<std::string> languages(l.begin(), l.end());
-        size_t minTextLength = vm["min_text_length"].as<size_t>();
-        bool parseLinks = vm["parse_links"].as<bool>();
+        const std::string annotatorConfig = vm["annotator_config"].as<std::string>();
         bool saveNotNews = vm["save_not_news"].as<bool>();
-        std::vector<TDocument> docs;
-        Annotate(
-            fileNames,
-            models,
-            languages,
-            docs,
-            /* minTextLength = */ minTextLength,
-            /* parseLinks */ parseLinks,
-            /* fromJson */ fromJson,
-            /* saveNotNews */ saveNotNews);
+        TAnnotator annotator(annotatorConfig, saveNotNews, mode == "json");
+        TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> annotationTimer;
+        std::vector<TDbDocument> docs = annotator.AnnotateAll(fileNames, fromJson);
+        LOG_DEBUG("Annotation: " << annotationTimer.Elapsed() << " ms (" << docs.size() << " documents)");
 
         // Output
         if (mode == "languages") {
             nlohmann::json outputJson = nlohmann::json::array();
             std::map<std::string, std::vector<std::string>> langToFiles;
-            for (const TDocument& doc : docs) {
-                langToFiles[doc.Language.get()].push_back(CleanFileName(doc.FileName));
+            for (const TDbDocument& doc : docs) {
+                langToFiles[nlohmann::json(doc.Language)].push_back(CleanFileName(doc.FileName));
             }
             for (const auto& pair : langToFiles) {
                 const std::string& language = pair.first;
@@ -177,33 +156,16 @@ int main(int argc, char** argv) {
             }
             std::cout << outputJson.dump(4) << std::endl;
             return 0;
-        } else if (mode == "sites") {
-            nlohmann::json outputJson = nlohmann::json::array();
-            std::unordered_map<std::string, std::vector<std::string>> siteToTitles;
-            for (const TDocument& doc : docs) {
-                siteToTitles[doc.SiteName].push_back(doc.Title);
-            }
-            for (const auto& pair : siteToTitles) {
-                const std::string& site = pair.first;
-                const std::vector<std::string>& titles = pair.second;
-                nlohmann::json object = {
-                    {"site", site},
-                    {"titles", titles}
-                };
-                outputJson.push_back(object);
-            }
-            std::cout << outputJson.dump(4) << std::endl;
-            return 0;
         } else if (mode == "json") {
             nlohmann::json outputJson = nlohmann::json::array();
-            for (const TDocument& doc : docs) {
+            for (const TDbDocument& doc : docs) {
                 outputJson.push_back(doc.ToJson());
             }
             std::cout << outputJson.dump(4) << std::endl;
             return 0;
         } else if (mode == "news") {
             nlohmann::json articles = nlohmann::json::array();
-            for (const TDocument& doc : docs) {
+            for (const TDbDocument& doc : docs) {
                 articles.push_back(CleanFileName(doc.FileName));
             }
             nlohmann::json outputJson = nlohmann::json::object();
@@ -212,18 +174,22 @@ int main(int argc, char** argv) {
             return 0;
         } else if (mode == "categories") {
             nlohmann::json outputJson = nlohmann::json::array();
-            std::vector<std::vector<std::string>> catToFiles(NC_COUNT);
-            for (const TDocument& doc : docs) {
-                ENewsCategory category = doc.Category;
-                if (category == NC_UNDEFINED || (category == NC_NOT_NEWS && !saveNotNews)) {
+
+            std::vector<std::vector<std::string>> catToFiles(tg::ECategory_ARRAYSIZE);
+            for (const TDbDocument& doc : docs) {
+                tg::ECategory category = doc.Category;
+                if (category == tg::NC_UNDEFINED || (category == tg::NC_NOT_NEWS && !saveNotNews)) {
                     continue;
                 }
                 catToFiles[static_cast<size_t>(category)].push_back(CleanFileName(doc.FileName));
                 LOG_DEBUG(category << "\t" << doc.Title);
             }
-            for (size_t i = 0; i < NC_COUNT; i++) {
-                ENewsCategory category = static_cast<ENewsCategory>(i);
-                if (!saveNotNews && category == NC_NOT_NEWS) {
+            for (size_t i = 0; i < tg::ECategory_ARRAYSIZE; i++) {
+                tg::ECategory category = static_cast<tg::ECategory>(i);
+                if (category == tg::NC_UNDEFINED || category == tg::NC_ANY) {
+                    continue;
+                }
+                if (!saveNotNews && category == tg::NC_NOT_NEWS) {
                     continue;
                 }
                 const std::vector<std::string>& files = catToFiles[i];
@@ -241,13 +207,8 @@ int main(int argc, char** argv) {
 
         // Clustering
         const std::set<std::string> clusteringLanguages = {"ru", "en"};
-        for (const auto& language : languages) {
-            if (clusteringLanguages.find(language) == clusteringLanguages.end()) {
-                LOG_DEBUG("Language '" << language << "' is not supported for clustering!");
-            }
-        }
         std::stable_sort(docs.begin(), docs.end(),
-            [](const TDocument& d1, const TDocument& d2) {
+            [](const TDbDocument& d1, const TDbDocument& d2) {
                 if (d1.FetchTime == d2.FetchTime) {
                     if (d1.FileName.empty() && d2.FileName.empty()) {
                         return d1.Title.length() < d2.Title.length();
@@ -264,30 +225,29 @@ int main(int argc, char** argv) {
         assert(clusteringType == "slink");
 
         std::map<std::string, std::unique_ptr<TClustering>> clusterings;
-        std::map<std::string, std::unique_ptr<TFastTextEmbedder>> embedders;
         for (const std::string& language : clusteringLanguages) {
-            const std::string modelPath = vm[language + "_sentence_embedder"].as<std::string>();
-            const size_t maxWords = vm[language + "_clustering_max_words"].as<size_t>();
+            TSlinkClustering::TConfig slinkConfig;
+            slinkConfig.SmallClusterThreshold = vm[language + "_small_clustering_distance_threshold"].as<float>();
+            slinkConfig.SmallClusterSize = vm[language + "_small_cluster_size"].as<size_t>();
+            slinkConfig.MediumClusterThreshold = vm[language + "_medium_clustering_distance_threshold"].as<float>();
+            slinkConfig.MediumClusterSize = vm[language + "_medium_cluster_size"].as<size_t>();
+            slinkConfig.LargeClusterThreshold = vm[language + "_large_clustering_distance_threshold"].as<float>();
+            slinkConfig.LargeClusterSize = vm[language + "_large_cluster_size"].as<size_t>();
 
-            std::unique_ptr<TFastTextEmbedder> embedder(new TFastTextEmbedder(
-                *models.at(language + "_vector_model"),
-                TFastTextEmbedder::AM_Matrix,
-                maxWords,
-                modelPath
-            ));
-            embedders[language] = std::move(embedder);
-            const float distanceThreshold = vm[language+"_clustering_distance_threshold"].as<float>();
-            std::unique_ptr<TClustering> clustering(
-                new TSlinkClustering(*embedders[language], distanceThreshold)
-            );
-            clusterings[language] = std::move(clustering);
+            slinkConfig.BatchSize = vm["clustering_batch_size"].as<size_t>();
+            slinkConfig.BatchIntersectionSize = vm["clustering_batch_intersection_size"].as<size_t>();
+
+            slinkConfig.UseTimestampMoving = vm["clustering_use_timestamp_moving"].as<bool>();
+            slinkConfig.BanThreadsFromSameSite = vm["clustering_ban_threads_from_same_site"].as<bool>();
+
+            clusterings[language] = std::make_unique<TSlinkClustering>(slinkConfig);
         }
 
-        std::map<std::string, std::vector<TDocument>> lang2Docs;
+        std::map<std::string, std::vector<TDbDocument>> lang2Docs;
         while (!docs.empty()) {
-            const TDocument& doc = docs.back();
+            const TDbDocument& doc = docs.back();
             assert(doc.Language);
-            const std::string& language = doc.Language.get();
+            const std::string& language = nlohmann::json(doc.Language);
             if (clusteringLanguages.find(language) != clusteringLanguages.end()) {
                 lang2Docs[language].push_back(doc);
             }
@@ -312,12 +272,12 @@ int main(int argc, char** argv) {
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms (" << clusters.size() << " clusters)");
 
         //Summarization
-        Summarize(clusters, agencyRating, embedders);
+        Summarize(clusters, agencyRating);
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();
             for (const auto& cluster : clusters) {
                 nlohmann::json files = nlohmann::json::array();
-                for (const TDocument& doc : cluster.GetDocuments()) {
+                for (const TDbDocument& doc : cluster.GetDocuments()) {
                     files.push_back(CleanFileName(doc.FileName));
                 }
                 nlohmann::json object = {
@@ -328,7 +288,7 @@ int main(int argc, char** argv) {
 
                 if (cluster.GetSize() >= 2) {
                     LOG_DEBUG("\n         CLUSTER: " << cluster.GetTitle());
-                    for (const TDocument& doc : cluster.GetDocuments()) {
+                    for (const TDbDocument& doc : cluster.GetDocuments()) {
                         LOG_DEBUG("  " << doc.Title << " (" << doc.Url << ")");
                     }
                 }
@@ -344,8 +304,11 @@ int main(int argc, char** argv) {
         const auto tops = Rank(clusters, agencyRating, alexaAgencyRating, iterTimestamp, window);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
-            const auto category = static_cast<ENewsCategory>(std::distance(tops.begin(), it));
-            if (!saveNotNews && category == NC_NOT_NEWS) {
+            const auto category = static_cast<tg::ECategory>(std::distance(tops.begin(), it));
+            if (category == tg::NC_UNDEFINED) {
+                continue;
+            }
+            if (!saveNotNews && category == tg::NC_NOT_NEWS) {
                 continue;
             }
 
@@ -364,7 +327,7 @@ int main(int argc, char** argv) {
                     {"best_time", cluster.WeightInfo.BestTime},
                     {"age_penalty", cluster.WeightInfo.AgePenalty}
                 };
-                for (const TDocument& doc : cluster.Cluster.get().GetDocuments()) {
+                for (const TDbDocument& doc : cluster.Cluster.get().GetDocuments()) {
                     object["articles"].push_back(CleanFileName(doc.FileName));
                 }
                 for (const auto& weight : cluster.DocWeights) {

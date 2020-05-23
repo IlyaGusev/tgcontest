@@ -6,16 +6,15 @@
 
 void Summarize(
     TClusters& clusters,
-    const TAgencyRating& agencyRating,
-    const std::map<std::string, std::unique_ptr<TFastTextEmbedder>>& embedders
+    const TAgencyRating& agencyRating
 ) {
     for (auto& cluster : clusters) {
-        const TFastTextEmbedder& embedder = *embedders.at(cluster.GetLanguage());
-
-        Eigen::MatrixXf points(cluster.GetSize(), embedder.GetEmbeddingSize());
+        assert(cluster.GetSize() != 0);
+        const size_t embeddingSize = cluster.GetDocuments().back().get().Embeddings.at(tg::EK_CLUSTERING).size();
+        Eigen::MatrixXf points(cluster.GetSize(), embeddingSize);
         for (size_t i = 0; i < cluster.GetSize(); i++) {
-            const TDocument& doc = cluster.GetDocuments()[i];
-            auto embedding = embedder.GetSentenceEmbedding(doc);
+            const TDbDocument& doc = cluster.GetDocuments()[i];
+            auto embedding = doc.Embeddings.at(tg::EK_CLUSTERING);
             Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
             points.row(i) = eigenVector / eigenVector.norm();
         }
@@ -25,7 +24,7 @@ void Summarize(
         weights.reserve(cluster.GetSize());
         uint64_t freshestTimestamp = cluster.GetFreshestTimestamp();
         for (size_t i = 0; i < cluster.GetSize(); ++i) {
-            const TDocument& doc = cluster.GetDocuments()[i];
+            const TDbDocument& doc = cluster.GetDocuments()[i];
             double docRelevance = docsCosine.row(i).mean();
             double timeMultiplier = Sigmoid(static_cast<double>(doc.FetchTime - freshestTimestamp) / 3600.0 + 12.0);
             double agencyScore = agencyRating.ScoreUrl(doc.Url);

@@ -1,0 +1,33 @@
+syntax = "proto3";
+package tg;
+
+import "enum.proto";
+
+enum EEmbeddingKey {
+    EK_UNDEFINED = 0;
+    EK_CLUSTERING = 1;
+}
+
+message TEmbeddingProto {
+    EEmbeddingKey Key = 1;
+    repeated float Value = 2;
+}
+
+message TDocumentProto {
+    string FileName = 1;
+    string Url = 2;
+    string SiteName = 3;
+    uint32 PubTime = 4;
+    uint32 FetchTime = 5;
+    uint32 Ttl = 6;
+
+    string Title = 7;
+    string Text = 8;
+    string Description = 9;
+
+    ELanguage Language = 10;
+    ECategory Category = 11;
+
+    repeated string OutLinks = 12;
+    repeated TEmbeddingProto Embeddings = 13;
+}

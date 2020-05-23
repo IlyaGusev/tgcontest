@@ -1,0 +1,24 @@
+LangDetect: "models/lang_detect.ftz"
+MinTextLength: 20
+ParseLinks: false
+SaveTexts: false
+Models: [
+    {
+        Language: LN_RU
+        CatDetect: "models/ru_cat_v3_1.ftz"
+        VectorModel: "models/ru_vectors_v2.bin"
+        Embedder: {
+            MaxWords: 150
+            Path: "models/ru_sentence_embedder.pt"
+        }
+    },
+    {
+        Language: LN_EN
+        CatDetect: "models/en_cat_v2.ftz"
+        VectorModel: "models/en_vectors_v2.bin"
+        Embedder: {
+            MaxWords: 250
+            Path: "models/en_sentence_embedder.pt"
+        }
+    }
+]

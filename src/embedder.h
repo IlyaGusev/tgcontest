@@ -1,10 +1,13 @@
 #pragma once
 
-#include <fasttext.h>
 #include <Eigen/Core>
 #include <torch/script.h>
 
 struct TDocument;
+
+namespace fasttext {
+    class FastText;
+}
 
 class TFastTextEmbedder {
 public:
@@ -23,7 +26,7 @@ public:
     virtual ~TFastTextEmbedder() = default;
 
     size_t GetEmbeddingSize() const;
-    fasttext::Vector GetSentenceEmbedding(const TDocument& doc) const;
+    std::vector<float> CalcEmbedding(const std::string& title, const std::string& text) const;
 
 private:
     fasttext::FastText& Model;

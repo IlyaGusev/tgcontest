@@ -1,5 +1,6 @@
 #include "agency_rating.h"
 #include "clustering/clustering.h"
+#include "db_document.h"
 
 #include <cstdint>
 #include <unordered_map>
@@ -17,11 +18,11 @@ struct TWeightInfo {
 
 struct TWeightedNewsCluster {
     std::reference_wrapper<const TNewsCluster> Cluster;
-    ENewsCategory Category;
+    tg::ECategory Category;
     std::string Title;
     TWeightInfo WeightInfo;
     std::vector<double> DocWeights;
-    TWeightedNewsCluster(const TNewsCluster& cluster, ENewsCategory category, const std::string& title, const TWeightInfo& info, const std::vector<double>& docWeights)
+    TWeightedNewsCluster(const TNewsCluster& cluster, tg::ECategory category, const std::string& title, const TWeightInfo& info, const std::vector<double>& docWeights)
         : Cluster(cluster)
         , Category(category)
         , Title(title)

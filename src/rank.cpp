@@ -10,7 +10,7 @@ double ComputeClusterWeight(
 ) {
     std::set<std::string> seenHosts;
     double agenciesWeight = 0.0 * window;
-    for (const TDocument& doc : cluster.GetDocuments()) {
+    for (const TDbDocument& doc : cluster.GetDocuments()) {
         const std::string& docHost = GetHost(doc.Url);
         if (seenHosts.insert(docHost).second) {
             agenciesWeight += agencyRating.ScoreUrl(doc.Url);
@@ -135,7 +135,7 @@ std::vector<std::vector<TWeightedNewsCluster>> Rank(
     std::cerr << "ComputeClusterWeightPush " << iterTimestamp << " " << window << std::endl;
     std::vector<TWeightedNewsCluster> weightedClusters;
     for (const TNewsCluster& cluster : clusters) {
-        ENewsCategory clusterCategory = cluster.GetCategory();
+        tg::ECategory clusterCategory = cluster.GetCategory();
         const std::string& title = cluster.GetTitle();
         std::vector<double> docWeights;
         const TWeightInfo weight = ComputeClusterWeightPush(cluster, alexaAgencyRating, iterTimestamp, window, docWeights);
@@ -148,11 +148,11 @@ std::vector<std::vector<TWeightedNewsCluster>> Rank(
         }
     );
 
-    std::vector<std::vector<TWeightedNewsCluster>> output(NC_COUNT);
+    std::vector<std::vector<TWeightedNewsCluster>> output(tg::ECategory_ARRAYSIZE);
     for (const TWeightedNewsCluster& cluster : weightedClusters) {
-        assert(cluster.Category != NC_UNDEFINED);
+        assert(cluster.Category != tg::NC_UNDEFINED);
         output[static_cast<size_t>(cluster.Category)].push_back(cluster);
-        output[static_cast<size_t>(NC_ANY)].push_back(cluster);
+        output[static_cast<size_t>(tg::NC_ANY)].push_back(cluster);
     }
 
     return output;

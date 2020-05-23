@@ -3,9 +3,10 @@
 
 import argparse
 import json
+import os
 import random
 import requests
-import os
+import tqdm
 
 from collections import deque
 
@@ -81,21 +82,23 @@ if __name__ == "__main__":
     if args.lang_file:
         lang_files = read_lang_file(args.lang_file)
 
-    for path, _, files in os.walk(args.dir):
-        for name in files:
-            if not name.endswith('.html'):
-                continue
-            if lang_files and not name in lang_files:
-                continue
-            if n <= 0:
-                exit()
-            ttl = random.randint(5*60, 30*24*60*60)
-            with open(os.path.join(path, name), 'r') as f:
-                content = f.read().strip()
-            print(make_put(args.protocol, host, name, ttl, content))
-            if args.mode == 'mix':
-                put_names.append(name)
-                if random.random() < args.prob and len(put_names):
-                    print(make_delete(args.protocol, host, put_names.popleft()))
-            n = n - 1
+    with tqdm.tqdm(total=n) as pbar:
+        for path, _, files in os.walk(args.dir):
+            for name in files:
+                if not name.endswith('.html'):
+                    continue
+                if lang_files and not name in lang_files:
+                    continue
+                if n <= 0:
+                    exit()
+                ttl = random.randint(5*60, 30*24*60*60)
+                with open(os.path.join(path, name), 'r') as f:
+                    content = f.read().strip()
+                print(make_put(args.protocol, host, name, ttl, content))
+                if args.mode == 'mix':
+                    put_names.append(name)
+                    if random.random() < args.prob and len(put_names):
+                        print(make_delete(args.protocol, host, put_names.popleft()))
+                pbar.update(1)
+                n = n - 1
     print('Total files: ', args.count - n)

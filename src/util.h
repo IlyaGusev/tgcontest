@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 #include <vector>
 #include <iostream>
 
@@ -13,7 +14,9 @@
 #define ENSURE(CONDITION, MESSAGE)              \
     do {                                        \
         if (!(CONDITION)) {                     \
-            throw std::runtime_error(MESSAGE);  \
+            std::ostringstream oss;             \
+            oss << MESSAGE;                     \
+            throw std::runtime_error(oss.str());\
         }                                       \
     } while (false)
 

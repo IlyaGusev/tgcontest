@@ -2,3 +2,4 @@ port: 1994
 threads: 4
 
 db_path: "sample.db"
+annotator_config_path: "configs/annotator.pbtxt"

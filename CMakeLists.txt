@@ -80,6 +80,7 @@ set(SOURCE_FILES
     src/embedder.cpp
     src/rank.cpp
     src/run_server.cpp
+    src/server_clustering.cpp
     src/summarize.cpp
     src/thread_pool.cpp
     src/util.cpp

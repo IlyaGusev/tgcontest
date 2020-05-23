@@ -24,11 +24,13 @@ namespace {
 }
 
 void TController::Init(
-    const TContext* context,
+    const THotState<TClustersIndex>* index,
+    rocksdb::DB* db,
     std::unique_ptr<TAnnotator> annotator,
     bool skipIrrelevantDocs
 ) {
-    Context = context;
+    Index = index;
+    Db = db;
     Annotator = std::move(annotator);
     SkipIrrelevantDocs = skipIrrelevantDocs;
     Initialized.store(true, std::memory_order_release);
@@ -64,7 +66,7 @@ void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(cons
 
     const auto getCode = [this, &fname] () -> drogon::HttpStatusCode {
         std::string value;
-        const auto mayExist = Context->Db->KeyMayExist(rocksdb::ReadOptions(), fname, &value);
+        const auto mayExist = Db->KeyMayExist(rocksdb::ReadOptions(), fname, &value);
         return mayExist ? drogon::k204NoContent : drogon::k201Created;
     };
 
@@ -87,7 +89,7 @@ void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(cons
     // TODO: possible races while the same fname is provided to multiple queries
     // TODO: use "value_found" flag and check DB instead of only bloom filter
     const drogon::HttpStatusCode code = getCode();
-    const rocksdb::Status s = Context->Db->Put(rocksdb::WriteOptions(), fname, serializedDoc);
+    const rocksdb::Status s = Db->Put(rocksdb::WriteOptions(), fname, serializedDoc);
     if (!s.ok()) {
         MakeSimpleResponse(std::move(callback), drogon::k500InternalServerError);
         return;
@@ -104,9 +106,9 @@ void TController::Delete(const drogon::HttpRequestPtr &req, std::function<void(c
     // TODO: possible races while the same fname is provided to multiple queries
     // TODO: use "value_found" flag and check DB instead of only bloom filter
     std::string value;
-    const bool mayExist = Context->Db->KeyMayExist(rocksdb::ReadOptions(), fname, &value);
+    const bool mayExist = Db->KeyMayExist(rocksdb::ReadOptions(), fname, &value);
     if (mayExist) {
-        const rocksdb::Status s = Context->Db->Delete(rocksdb::WriteOptions(), fname);
+        const rocksdb::Status s = Db->Delete(rocksdb::WriteOptions(), fname);
         if (!s.ok()) {
             MakeSimpleResponse(std::move(callback), drogon::k500InternalServerError);
             return;
@@ -122,7 +124,7 @@ void TController::Get(const drogon::HttpRequestPtr &req, std::function<void(cons
     }
 
     std::string serializedDoc;
-    const rocksdb::Status s = Context->Db->Get(rocksdb::ReadOptions(), fname, &serializedDoc);
+    const rocksdb::Status s = Db->Get(rocksdb::ReadOptions(), fname, &serializedDoc);
 
     Json::Value ret;
     ret["fname"] = fname;

@@ -1,9 +1,11 @@
 #pragma once
 
 #include "annotator.h"
-#include "context.h"
+#include "cluster.h"
+#include "hot_state.h"
 
 #include <drogon/HttpController.h>
+#include <rocksdb/db.h>
 
 class TController : public drogon::HttpController<TController, /* AutoCreation */ false> {
 public:
@@ -14,7 +16,8 @@ public:
     METHOD_LIST_END
 
     void Init(
-        const TContext* context,
+        const THotState<TClustersIndex>* index,
+        rocksdb::DB* db,
         std::unique_ptr<TAnnotator> annotator,
         bool skipIrrelevantDocs = false
     );
@@ -30,7 +33,9 @@ private:
 private:
     std::atomic<bool> Initialized {false};
 
-    const TContext* Context;
+    const THotState<TClustersIndex>* Index;
+
+    rocksdb::DB* Db;
     std::unique_ptr<TAnnotator> Annotator;
     bool SkipIrrelevantDocs = false;
 };

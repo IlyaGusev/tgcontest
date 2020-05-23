@@ -37,10 +37,10 @@ namespace {
         rocksdb::Options options;
         options.IncreaseParallelism();
         options.OptimizeLevelStyleCompaction();
-        options.create_if_missing = !config.dbfailifmissing();
+        options.create_if_missing = !config.db_fail_if_missing();
 
         rocksdb::DB* db;
-        rocksdb::Status s = rocksdb::DB::Open(options, config.dbpath(), &db);
+        rocksdb::Status s = rocksdb::DB::Open(options, config.db_path(), &db);
         ENSURE(s.ok(), "Failed to create database: " << s.getState());
 
         return std::unique_ptr<rocksdb::DB>(db);
@@ -91,7 +91,7 @@ int RunServer(const std::string& fname) {
     std::unique_ptr<rocksdb::DB> db = CreateDatabase(config);
 
     LOG_DEBUG("Creating annotator");
-    std::unique_ptr<TAnnotator> annotator = std::make_unique<TAnnotator>(config.annotatorconfigpath());
+    std::unique_ptr<TAnnotator> annotator = std::make_unique<TAnnotator>(config.annotator_config_path());
 
 //    RunClustering(context.Db.get());
 //    LOG_DEBUG("Initial clustering ok");

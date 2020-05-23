@@ -1,24 +1,24 @@
-LangDetect: "models/lang_detect.ftz"
-MinTextLength: 20
-ParseLinks: false
-SaveTexts: false
-Models: [
+lang_detect: "models/lang_detect.ftz"
+min_text_length: 20
+parse_links: false
+save_texts: false
+models: [
     {
-        Language: LN_RU
-        CatDetect: "models/ru_cat_v3_1.ftz"
-        VectorModel: "models/ru_vectors_v2.bin"
-        Embedder: {
-            MaxWords: 150
-            Path: "models/ru_sentence_embedder.pt"
+        language: LN_RU
+        cat_detect: "models/ru_cat_v3_1.ftz"
+        vector_model: "models/ru_vectors_v2.bin"
+        embedder: {
+            max_words: 150
+            path: "models/ru_sentence_embedder.pt"
         }
     },
     {
-        Language: LN_EN
-        CatDetect: "models/en_cat_v2.ftz"
-        VectorModel: "models/en_vectors_v2.bin"
-        Embedder: {
-            MaxWords: 250
-            Path: "models/en_sentence_embedder.pt"
+        language: LN_EN
+        cat_detect: "models/en_cat_v2.ftz"
+        vector_model: "models/en_vectors_v2.bin"
+        embedder: {
+            max_words: 250
+            path: "models/en_sentence_embedder.pt"
         }
     }
 ]

@@ -46,7 +46,6 @@ double ComputeClusterWeightNew(
         // ~1 for freshest ts, 0.5 for 12 hour old ts, ~0 for 24 hour old ts
         double docTimestampRemapped = static_cast<double>(static_cast<int32_t>(doc.FetchTime) - static_cast<int32_t>(iterTimestamp)) / 3600.0 + 12.0;
         double timeMultiplier = Sigmoid(docTimestampRemapped);
-        //std::cerr << doc.Url << " " << doc.FetchTime << " " << iterTimestamp << " " << docTimestampRemapped << " " << timeMultiplier << std::endl;
         double score = agencyWeight * timeMultiplier;
         if (hostScores[docHost] < score) {
             hostScores[docHost] = score;
@@ -132,7 +131,6 @@ std::vector<std::vector<TWeightedNewsCluster>> Rank(
     uint64_t iterTimestamp,
     uint64_t window
 ) {
-    std::cerr << "ComputeClusterWeightPush " << iterTimestamp << " " << window << std::endl;
     std::vector<TWeightedNewsCluster> weightedClusters;
     for (const TNewsCluster& cluster : clusters) {
         tg::ECategory clusterCategory = cluster.GetCategory();

@@ -1,0 +1,29 @@
+clusterings: [
+    {
+        language: LN_RU
+        small_threshold: 0.015
+        small_cluster_size: 15
+        medium_threshold: 0.01
+        medium_cluster_size: 50
+        large_threshold: 0.005
+        large_cluster_size: 100
+        chunk_size: 10000
+        intersection_size: 2000
+        use_timestamp_moving: false
+        ban_same_hosts: true
+    },
+    {
+        language: LN_EN
+        small_threshold: 0.015
+        small_cluster_size: 15
+        medium_threshold: 0.01
+        medium_cluster_size: 50
+        large_threshold: 0.005
+        large_cluster_size: 100
+        chunk_size: 10000
+        intersection_size: 2000
+        use_timestamp_moving: false
+        ban_same_hosts: true
+    }
+]
+iter_timestamp_percentile: 0.99

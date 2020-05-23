@@ -28,18 +28,15 @@ uint64_t GetIterTimestamp(const std::vector<TDbDocument>& documents, double perc
     return documents[index].FetchTime;
 }
 
+
 int main(int argc, char** argv) {
     try {
         po::options_description desc("options");
         desc.add_options()
             ("mode", po::value<std::string>()->required(), "mode")
             ("input", po::value<std::string>()->required(), "input")
-            ("config", po::value<std::string>()->default_value("configs/server.pbtxt"), "config")
-            ("lang_detect_model", po::value<std::string>()->default_value("models/lang_detect.ftz"), "lang_detect_model")
-            ("en_cat_detect_model", po::value<std::string>()->default_value("models/en_cat_v2.ftz"), "en_cat_detect_model")
-            ("ru_cat_detect_model", po::value<std::string>()->default_value("models/ru_cat_v3_1.ftz"), "ru_cat_detect_model")
-            ("en_vector_model", po::value<std::string>()->default_value("models/en_vectors_v2.bin"), "en_vector_model")
-            ("ru_vector_model", po::value<std::string>()->default_value("models/ru_vectors_v2.bin"), "ru_vector_model")
+            ("server_config", po::value<std::string>()->default_value("configs/server.pbtxt"), "server_config")
+            ("annotator_config", po::value<std::string>()->default_value("configs/annotator.pbtxt"), "annotator_config")
             ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
             ("en_small_clustering_distance_threshold", po::value<float>()->default_value(0.015f), "en_clustering_distance_threshold")
             ("en_small_cluster_size", po::value<size_t>()->default_value(15), "en_small_cluster_size")
@@ -47,24 +44,18 @@ int main(int argc, char** argv) {
             ("en_medium_cluster_size", po::value<size_t>()->default_value(50), "en_medium_cluster_size")
             ("en_large_clustering_distance_threshold", po::value<float>()->default_value(0.005f), "en_large_clustering_distance_threshold")
             ("en_large_cluster_size", po::value<size_t>()->default_value(100), "en_large_cluster_size")
-            ("en_clustering_max_words", po::value<size_t>()->default_value(250), "en_clustering_max_words")
             ("ru_small_clustering_distance_threshold", po::value<float>()->default_value(0.015f), "ru_clustering_distance_threshold")
             ("ru_small_cluster_size", po::value<size_t>()->default_value(15), "ru_small_cluster_size")
             ("ru_medium_clustering_distance_threshold", po::value<float>()->default_value(0.01f), "ru_medium_clustering_distance_threshold")
             ("ru_medium_cluster_size", po::value<size_t>()->default_value(50), "ru_medium_cluster_size")
             ("ru_large_clustering_distance_threshold", po::value<float>()->default_value(0.005f), "ru_large_clustering_distance_threshold")
             ("ru_large_cluster_size", po::value<size_t>()->default_value(100), "ru_large_cluster_size")
-            ("ru_clustering_max_words", po::value<size_t>()->default_value(150), "ru_clustering_max_words")
             ("clustering_batch_size", po::value<size_t>()->default_value(10000), "clustering_batch_size")
             ("clustering_batch_intersection_size", po::value<size_t>()->default_value(2000), "clustering_batch_intersection_size")
             ("clustering_use_timestamp_moving", po::value<bool>()->default_value(false), "clustering_use_timestamp_moving")
             ("clustering_ban_threads_from_same_site", po::value<bool>()->default_value(true), "clustering_ban_threads_from_same_site")
-            ("en_sentence_embedder", po::value<std::string>()->default_value("models/en_sentence_embedder.pt"), "en_sentence_embedder")
-            ("ru_sentence_embedder", po::value<std::string>()->default_value("models/ru_sentence_embedder.pt"), "ru_sentence_embedder")
             ("rating", po::value<std::string>()->default_value("models/pagerank_rating.txt"), "rating")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
-            ("min_text_length", po::value<size_t>()->default_value(20), "min_text_length")
-            ("parse_links", po::bool_switch()->default_value(false), "parse_links")
             ("from_json", po::bool_switch()->default_value(false), "from_json")
             ("save_not_news", po::bool_switch()->default_value(false), "save_not_news")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
@@ -104,8 +95,8 @@ int main(int argc, char** argv) {
         }
 
         if (mode == "server") {
-            const std::string config = vm["config"].as<std::string>();
-            return RunServer(config);
+            const std::string serverConfig = vm["server_config"].as<std::string>();
+            return RunServer(serverConfig);
         }
 
         // Load agency ratings
@@ -130,8 +121,9 @@ int main(int argc, char** argv) {
         }
 
         // Parse files and annotate with classifiers
+        const std::string annotatorConfig = vm["annotator_config"].as<std::string>();
         bool saveNotNews = vm["save_not_news"].as<bool>();
-        TAnnotator annotator(vm, saveNotNews);
+        TAnnotator annotator(annotatorConfig, saveNotNews, mode == "json");
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> annotationTimer;
         std::vector<TDbDocument> docs = annotator.AnnotateAll(fileNames, fromJson);
         LOG_DEBUG("Annotation: " << annotationTimer.Elapsed() << " ms (" << docs.size() << " documents)");

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "config.pb.h"
 #include "db_document.h"
 
 #include <memory>
@@ -18,7 +19,7 @@ using TFTModelStorage = std::unordered_map<tg::ELanguage, fasttext::FastText>;
 
 class TAnnotator {
 public:
-    TAnnotator(const boost::program_options::variables_map& vm, bool saveNotNews);
+    TAnnotator(const std::string& configPath, bool saveNotNews = false, bool forceSaveTexts = false);
 
     std::vector<TDbDocument> AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const;
     boost::optional<TDbDocument> AnnotateHtml(const std::string& path) const;
@@ -27,8 +28,11 @@ private:
     boost::optional<TDbDocument> AnnotateDocument(const TDocument& document) const;
     boost::optional<TDocument> ParseHtml(const std::string& path) const;
     std::string PreprocessText(const std::string& text) const;
+    void ParseConfig(const std::string& fname);
 
 private:
+    tg::TAnnotatorConfig Config;
+
     std::unordered_set<tg::ELanguage> Languages;
     onmt::Tokenizer Tokenizer;
 
@@ -37,8 +41,6 @@ private:
     TFTModelStorage CategoryDetectors;
     std::unordered_map<tg::ELanguage, std::unique_ptr<TFastTextEmbedder>> Embedders;
 
-    size_t MinTextLength = 20;
-    bool ParseLinks = false;
     bool SaveNotNews = false;
     bool SaveTexts = false;
 };

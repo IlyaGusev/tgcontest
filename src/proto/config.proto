@@ -1,10 +1,32 @@
 syntax = "proto3";
 package tg;
 
+import "enum.proto";
+
 message TServerConfig {
     uint32 Port = 1;
     uint32 Threads = 2;
 
     string DbPath = 3;
     bool DbFailIfMissing = 4;
+}
+
+message TEmbedderConfig {
+    uint32 MaxWords = 1;
+    string Path = 2;
+}
+
+message TModelsForLanguageConfig {
+    ELanguage Language = 1;
+    string CatDetect = 2;
+    string VectorModel = 3;
+    TEmbedderConfig Embedder = 4;
+}
+
+message TAnnotatorConfig {
+    string LangDetect = 1;
+    repeated TModelsForLanguageConfig Models = 2;
+    uint32 MinTextLength = 3;
+    bool ParseLinks = 4;
+    bool SaveTexts = 5;
 }

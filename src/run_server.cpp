@@ -62,7 +62,8 @@ namespace {
         db->ReleaseSnapshot(snapshot);
 
         std::cerr << "Clustering input: " << docs.size() << " docs" << std::endl;
-        std::unique_ptr<TClustering> clustering = std::make_unique<TSlinkClustering>(0.02);
+        TSlinkClustering::TConfig config;
+        std::unique_ptr<TClustering> clustering = std::make_unique<TSlinkClustering>(config);
         const TClusters clusters = clustering->Cluster(docs);
         std::cerr << "Clustering output: " << clusters.size() << " clusters" << std::endl;
         TClustersIndex index;

@@ -10,6 +10,7 @@
 
 void TNewsCluster::AddDocument(const TDbDocument& document) {
     Documents.push_back(std::cref(document));
+    FreshestTimestamp = std::max(FreshestTimestamp, static_cast<uint64_t>(Documents.back().get().FetchTime));
 }
 
 uint64_t TNewsCluster::GetTimestamp(float percentile) const {
@@ -21,12 +22,6 @@ uint64_t TNewsCluster::GetTimestamp(float percentile) const {
     size_t index = static_cast<size_t>(std::floor(percentile * (clusterTimestamps.size() - 1)));
     boost::range::nth_element(clusterTimestamps, clusterTimestamps.begin() + index);
     return clusterTimestamps[index];
-}
-
-uint64_t TNewsCluster::GetFreshestTimestamp() const {
-    return std::max_element(Documents.begin(), Documents.end(), [](const TDbDocument& doc1, const TDbDocument& doc2) {
-        return doc1.FetchTime < doc2.FetchTime;
-    })->get().FetchTime;
 }
 
 tg::ECategory TNewsCluster::GetCategory() const {
@@ -56,4 +51,11 @@ void TNewsCluster::SortByWeights(const std::vector<double>& weights) {
     for (const TWeightedDoc& elem : weightedDocs) {
         AddDocument(elem.Doc);
     }
+}
+
+bool TNewsCluster::operator<(const TNewsCluster& other) const {
+    if (FreshestTimestamp == other.FreshestTimestamp) {
+        return Id < other.Id;
+    }
+    return FreshestTimestamp < other.FreshestTimestamp;
 }

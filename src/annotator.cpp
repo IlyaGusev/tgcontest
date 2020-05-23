@@ -1,4 +1,4 @@
-#include "annotate.h"
+#include "annotator.h"
 #include "detect.h"
 #include "document.h"
 #include "embedder.h"
@@ -8,46 +8,46 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/optional.hpp>
+#include <google/protobuf/text_format.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <fcntl.h>
+#include <iostream>
+
 
 TAnnotator::TAnnotator(
-    const boost::program_options::variables_map& vm,
-    bool saveNotNews = false
+    const std::string& configPath,
+    bool saveNotNews /*= false*/,
+    bool forceSaveTexts /* = false */
 )
     : Tokenizer(onmt::Tokenizer::Mode::Conservative, onmt::Tokenizer::Flags::CaseFeature)
     , SaveNotNews(saveNotNews)
 {
+    ParseConfig(configPath);
+
     LOG_DEBUG("Loading models...");
 
-    for (const std::string& lang : vm["languages"].as<std::vector<std::string>>()) {
-        if (lang == "ru") {
-            Languages.insert(tg::LN_RU);
-        } else if (lang == "en") {
-            Languages.insert(tg::LN_EN);
-        }
-    }
-    SaveTexts = vm["mode"].as<std::string>() == "json";
-    MinTextLength = vm["min_text_length"].as<size_t>();
-    ParseLinks = vm["parse_links"].as<bool>();
-
-    LanguageDetector.loadModel(vm.at("lang_detect_model").as<std::string>());
+    LanguageDetector.loadModel(Config.langdetect());
     LOG_DEBUG("FastText language detector loaded");
 
-    for (tg::ELanguage language : Languages) {
+    for (const auto& modelsConfig : Config.models()) {
+        tg::ELanguage language = modelsConfig.language();
+        Languages.insert(language);
         std::string langCode = nlohmann::json(language);
 
-        CategoryDetectors[language].loadModel(vm.at(langCode + "_cat_detect_model").as<std::string>());
+        CategoryDetectors[language].loadModel(modelsConfig.catdetect());
         LOG_DEBUG("FastText " + langCode + " category detector loaded");
 
-        VectorModels[language].loadModel(vm.at(langCode + "_vector_model").as<std::string>());
+        VectorModels[language].loadModel(modelsConfig.vectormodel());
         LOG_DEBUG("FastText " + langCode + " vector model loaded");
 
         Embedders[language] = std::make_unique<TFastTextEmbedder>(
             VectorModels.at(language),
             TFastTextEmbedder::AM_Matrix,
-            vm.at(langCode + "_clustering_max_words").as<size_t>(),
-            vm.at(langCode + "_sentence_embedder").as<std::string>()
+            modelsConfig.embedder().maxwords(),
+            modelsConfig.embedder().path()
         );
     }
+    SaveTexts = Config.savetexts() || forceSaveTexts;
 }
 
 std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const {
@@ -142,12 +142,12 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
 boost::optional<TDocument> TAnnotator::ParseHtml(const std::string& path) const {
     TDocument doc;
     try {
-        doc.FromHtml(path.c_str(), ParseLinks);
+        doc.FromHtml(path.c_str(), Config.parselinks());
     } catch (...) {
         LOG_DEBUG("Bad html: " << path);
         return boost::none;
     }
-    if (doc.Text.length() < MinTextLength) {
+    if (doc.Text.length() < Config.mintextlength()) {
         return boost::none;
     }
     return doc;
@@ -156,12 +156,12 @@ boost::optional<TDocument> TAnnotator::ParseHtml(const std::string& path) const 
 boost::optional<TDocument> TAnnotator::ParseHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const {
     TDocument doc;
     try {
-        doc.FromHtml(html, fileName, ParseLinks);
+        doc.FromHtml(html, fileName, Config.parselinks());
     } catch (...) {
         LOG_DEBUG("Bad html: " << fileName);
         return boost::none;
     }
-    if (doc.Text.length() < MinTextLength) {
+    if (doc.Text.length() < Config.mintextlength()) {
         return boost::none;
     }
     return doc;
@@ -171,4 +171,12 @@ std::string TAnnotator::PreprocessText(const std::string& text) const {
     std::vector<std::string> tokens;
     Tokenizer.tokenize(text, tokens);
     return boost::join(tokens, " ");
+}
+
+void TAnnotator::ParseConfig(const std::string& fname) {
+    const int fileDesc = open(fname.c_str(), O_RDONLY);
+    ENSURE(fileDesc >= 0, "Could not open config file");
+    google::protobuf::io::FileInputStream fileInput(fileDesc);
+    const bool success = google::protobuf::TextFormat::Parse(&fileInput, &Config);
+    ENSURE(success, "Invalid prototxt file");
 }

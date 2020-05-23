@@ -41,10 +41,8 @@ std::shared_ptr<TClustersIndex> TServerClustering::MakeIndex() const {
     });
 
     LOG_DEBUG("Clustering input: " << docs.size() << " docs");
-    const TClusters clusters = Clustering->Cluster(docs);
+    TClusters clusters = Clustering->Cluster(docs);
     LOG_DEBUG("Clustering output: " << clusters.size() << " clusters");
 
-    std::shared_ptr<TClustersIndex> index = std::make_shared<TClustersIndex>();
-    std::move(clusters.begin(), clusters.end(), std::inserter(*index, index->begin()));
-    return index;
+    return std::make_shared<TClustersIndex>(std::move(clusters));
 };

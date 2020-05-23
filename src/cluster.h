@@ -22,8 +22,10 @@ public:
     std::string GetTitle() const { return Documents.at(0).get().Title; }
     std::string GetLanguage() const { return nlohmann::json(Documents.at(0).get().Language); }
     void SortByWeights(const std::vector<double>& weights);
+
     bool operator<(const TNewsCluster& other) const;
+    static bool Compare (const TNewsCluster& cluster, uint64_t timestamp);
 };
 
 using TClusters = std::vector<TNewsCluster>;
-using TClustersIndex = std::set<TNewsCluster>;
+using TClustersIndex = std::vector<TNewsCluster>;

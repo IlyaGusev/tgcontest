@@ -13,7 +13,11 @@ public:
         ADD_METHOD_TO(TController::Get,"/{fname}", drogon::Get); // debug only
     METHOD_LIST_END
 
-    void Init(const TContext* context, std::unique_ptr<TAnnotator> annotator);
+    void Init(
+        const TContext* context,
+        std::unique_ptr<TAnnotator> annotator,
+        bool skipIrrelevantDocs = false
+    );
 
     void Put(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const;
     void Delete(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const;
@@ -26,6 +30,7 @@ private:
 private:
     std::atomic<bool> Initialized {false};
 
-    std::unique_ptr<TAnnotator> Annotator;
     const TContext* Context;
+    std::unique_ptr<TAnnotator> Annotator;
+    bool SkipIrrelevantDocs = false;
 };

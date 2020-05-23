@@ -48,13 +48,19 @@ namespace {
 
     TClustersIndex RunClustering(rocksdb::DB* db) {
         const rocksdb::Snapshot* snapshot = db->GetSnapshot();
-        rocksdb::ReadOptions ropt(true, true);
+        rocksdb::ReadOptions ropt(/*cksum*/ true, /*cache*/ true);
         ropt.snapshot = snapshot;
+
         std::unique_ptr<rocksdb::Iterator> iter(db->NewIterator(ropt));
         std::vector<TDbDocument> docs;
         for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
+            const std::string value = iter->value().ToString(); // TODO: use string_view
+            if (value.empty()) {
+                continue;
+            }
+
             TDbDocument doc;
-            bool ok = TDbDocument::FromProtoString(iter->value().ToString(), &doc);
+            bool ok = TDbDocument::FromProtoString(value, &doc);
             if (!ok) {
                 LOG_DEBUG("Bad document in db!")
             }
@@ -101,7 +107,7 @@ int RunServer(const std::string& fname) {
     };
 
     // call this once clustering is ready
-    DrClassMap::getSingleInstance<TController>()->Init(&context, std::move(annotator));
+    DrClassMap::getSingleInstance<TController>()->Init(&context, std::move(annotator), config.skip_irrelevant_docs());
 
     app().run();
 

@@ -23,9 +23,14 @@ namespace {
 
 }
 
-void TController::Init(const TContext* context, std::unique_ptr<TAnnotator> annotator) {
+void TController::Init(
+    const TContext* context,
+    std::unique_ptr<TAnnotator> annotator,
+    bool skipIrrelevantDocs
+) {
     Context = context;
     Annotator = std::move(annotator);
+    SkipIrrelevantDocs = skipIrrelevantDocs;
     Initialized.store(true, std::memory_order_release);
 }
 
@@ -65,16 +70,18 @@ void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(cons
 
     // TODO: return 400 if bad XML
     const boost::optional<TDbDocument> dbDoc = Annotator->AnnotateHtml(html, fname);
-    if (!dbDoc) {
+    if (SkipIrrelevantDocs && !dbDoc) {
         MakeSimpleResponse(std::move(callback), getCode());
         return;
     }
 
     std::string serializedDoc;
-    const bool success = dbDoc->ToProtoString(&serializedDoc);
-    if (!success) {
-        MakeSimpleResponse(std::move(callback), drogon::k500InternalServerError);
-        return;
+    if (dbDoc) {
+        const bool success = dbDoc->ToProtoString(&serializedDoc);
+        if (!success) {
+            MakeSimpleResponse(std::move(callback), drogon::k500InternalServerError);
+            return;
+        }
     }
 
     // TODO: possible races while the same fname is provided to multiple queries

@@ -3,3 +3,5 @@ threads: 4
 
 db_path: "sample.db"
 annotator_config_path: "configs/annotator.pbtxt"
+
+skip_irrelevant_docs: false

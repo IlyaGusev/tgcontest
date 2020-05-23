@@ -69,7 +69,7 @@ double TAlexaAgencyRating::ScoreUrl(const std::string& url, bool en) const {
     double raw = GetRawRating(host);
     double coeff = 0;
     if (en) {
-        coeff = (100. - GetCountryShare(host, "US") - GetCountryShare(host, "RU"))/100.;
+        coeff = (100. - GetCountryShare(host, "US") - GetCountryShare(host, "GB"))/100.;
     } else {
         coeff = GetCountryShare(host, "RU");
     }

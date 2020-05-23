@@ -40,7 +40,7 @@ double ComputeClusterWeightNew(
 ) {
     std::map<std::string, double> hostScores;
     double weight = 0.0 * window;
-    for (const TDocument& doc : cluster.GetDocuments()) {
+    for (const TDbDocument& doc : cluster.GetDocuments()) {
         const std::string& docHost = GetHost(doc.Url);
         double agencyWeight = agencyRating.ScoreUrl(doc.Url);
         // ~1 for freshest ts, 0.5 for 12 hour old ts, ~0 for 24 hour old ts
@@ -75,14 +75,14 @@ TWeightInfo ComputeClusterWeightPush(
     std::map<std::string, double> hostScores;
     auto docs = cluster.GetDocuments();
     std::sort(docs.begin(), docs.end(),
-        [](const TDocument& p1, const TDocument& p2) {
+        [](const TDbDocument& p1, const TDbDocument& p2) {
             if (p1.FetchTime != p2.FetchTime) {
                 return p1.FetchTime < p2.FetchTime;
             }
             return p1.Url < p2.Url;
         });
 
-    for (const TDocument& doc : cluster.GetDocuments()) {
+    for (const TDbDocument& doc : cluster.GetDocuments()) {
         double agencyWeight = alexaAgencyRating.ScoreUrl(doc.Url, true);
         docWeights.push_back(agencyWeight);
     }
@@ -90,13 +90,13 @@ TWeightInfo ComputeClusterWeightPush(
 	double maxRank = 0.;
     int32_t clusterTime = 0;
 	for (size_t i = 0; i < docs.size(); ++i) {
-        const TDocument& startDoc = docs[i];
+        const TDbDocument& startDoc = docs[i];
 		int32_t startTime = startDoc.FetchTime;
 		std::set<std::string> seenHosts;
 		double rank = 0.;
 
 		for (size_t j = i; j < docs.size(); ++j) {
-			const TDocument& doc = docs[j];
+			const TDbDocument& doc = docs[j];
 			const std::string& docHost = GetHost(doc.Url);
             if (seenHosts.insert(docHost).second) {
 			    double agencyWeight = alexaAgencyRating.ScoreUrl(doc.Url, true);

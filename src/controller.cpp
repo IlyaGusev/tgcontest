@@ -21,17 +21,11 @@ namespace {
         callback(resp);
     }
 
-    tg::TDocumentProto ToProto(const TDocument& doc, uint32_t ttl) {
-        tg::TDocumentProto proto;
-        proto.set_filename(doc.FileName);
-        proto.set_title(doc.Title);
-        proto.set_ttl(ttl);
-        return proto;
-    }
 }
 
-void TController::Init(const TContext* context) {
+void TController::Init(const TContext* context, std::unique_ptr<TAnnotator> annotator) {
     Context = context;
+    Annotator = std::move(annotator);
     Initialized.store(true, std::memory_order_release);
 }
 
@@ -56,39 +50,43 @@ void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(cons
     }
 
     tinyxml2::XMLDocument html;
-    const tinyxml2::XMLError code = html.Parse(req->bodyData(), req->bodyLength());
-    if (code != tinyxml2::XML_SUCCESS) {
+    const tinyxml2::XMLError parseCode = html.Parse(req->bodyData(), req->bodyLength());
+    if (parseCode != tinyxml2::XML_SUCCESS) {
         MakeSimpleResponse(std::move(callback), drogon::k400BadRequest);
         return;
     }
 
-    TDocument doc(html, fname);
-    // put processing here
+
+    const auto getCode = [this, &fname] () -> drogon::HttpStatusCode {
+        std::string value;
+        const auto mayExist = Context->Db->KeyMayExist(rocksdb::ReadOptions(), fname, &value);
+        return mayExist ? drogon::k204NoContent : drogon::k201Created;
+    };
+
+    // TODO: return 400 if bad XML
+    const boost::optional<TDbDocument> dbDoc = Annotator->AnnotateHtml(html, fname);
+    if (!dbDoc) {
+        MakeSimpleResponse(std::move(callback), getCode());
+        return;
+    }
 
     std::string serializedDoc;
-    ToProto(doc, ttl.value()).SerializeToString(&serializedDoc);
+    const bool success = dbDoc->ToProtoString(&serializedDoc);
+    if (!success) {
+        MakeSimpleResponse(std::move(callback), drogon::k500InternalServerError);
+        return;
+    }
 
     // TODO: possible races while the same fname is provided to multiple queries
     // TODO: use "value_found" flag and check DB instead of only bloom filter
-    std::string value;
-    const bool mayExist = Context->Db->KeyMayExist(rocksdb::ReadOptions(), fname, &value);
-
+    const drogon::HttpStatusCode code = getCode();
     const rocksdb::Status s = Context->Db->Put(rocksdb::WriteOptions(), fname, serializedDoc);
     if (!s.ok()) {
         MakeSimpleResponse(std::move(callback), drogon::k500InternalServerError);
         return;
     }
 
-    Json::Value ret;
-    ret["result"] = "put";
-    ret["fname"] = fname;
-    ret["title"] = doc.Title;
-    ret["text"] = doc.Text;
-    ret["ttl"] = ttl.value();
-
-    auto resp = drogon::HttpResponse::newHttpJsonResponse(ret);
-    resp->setStatusCode(mayExist ? drogon::k204NoContent : drogon::k201Created);
-    callback(resp);
+    MakeSimpleResponse(std::move(callback), code);
 }
 
 void TController::Delete(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const {
@@ -128,6 +126,8 @@ void TController::Get(const drogon::HttpRequestPtr &req, std::function<void(cons
         const auto suc = doc.ParseFromString(serializedDoc);
         ret["parsed"] = suc;
         ret["title"] = doc.title();
+        ret["lang"] = doc.language();
+        ret["category"] = doc.category();
     }
 
     auto resp = drogon::HttpResponse::newHttpJsonResponse(ret);

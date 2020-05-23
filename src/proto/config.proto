@@ -9,6 +9,8 @@ message TServerConfig {
 
     string DbPath = 3;
     bool DbFailIfMissing = 4;
+
+    string AnnotatorConfigPath = 5;
 }
 
 message TEmbedderConfig {

@@ -2,3 +2,5 @@ Port: 1994
 Threads: 4
 
 DbPath: "sample.db"
+
+AnnotatorConfigPath: "configs/annotator.pbtxt"

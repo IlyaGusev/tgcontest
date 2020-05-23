@@ -1,5 +1,6 @@
 #include "run_server.h"
 
+#include "annotator.h"
 #include "clustering/slink.h"
 #include "config.pb.h"
 #include "context.h"
@@ -40,7 +41,7 @@ namespace {
 
         rocksdb::DB* db;
         rocksdb::Status s = rocksdb::DB::Open(options, config.dbpath(), &db);
-        ENSURE(s.ok(), "Failed to create database");
+        ENSURE(s.ok(), "Failed to create database: " << s.getState());
 
         return std::unique_ptr<rocksdb::DB>(db);
     }
@@ -77,11 +78,6 @@ int RunServer(const std::string& fname) {
     LOG_DEBUG("Loading server config");
     const auto config = ParseConfig(fname);
 
-    LOG_DEBUG("Creating database");
-    TContext context {
-        .Db = CreateDatabase(config)
-    };
-
     LOG_DEBUG("Launching server");
     app()
         .setLogLevel(trantor::Logger::kTrace)
@@ -91,11 +87,21 @@ int RunServer(const std::string& fname) {
     auto controllerPtr = std::make_shared<TController>();
     app().registerController(controllerPtr);
 
-    RunClustering(context.Db.get());
-    LOG_DEBUG("Initial clustering ok");
+    LOG_DEBUG("Creating database");
+    std::unique_ptr<rocksdb::DB> db = CreateDatabase(config);
+
+    LOG_DEBUG("Creating annotator");
+    std::unique_ptr<TAnnotator> annotator = std::make_unique<TAnnotator>(config.annotatorconfigpath());
+
+//    RunClustering(context.Db.get());
+//    LOG_DEBUG("Initial clustering ok");
+
+    TContext context {
+        .Db = std::move(db)
+    };
 
     // call this once clustering is ready
-    DrClassMap::getSingleInstance<TController>()->Init(&context);
+    DrClassMap::getSingleInstance<TController>()->Init(&context, std::move(annotator));
 
     app().run();
 

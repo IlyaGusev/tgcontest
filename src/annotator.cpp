@@ -58,7 +58,8 @@ std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>&
         docs.reserve(fileNames.size());
         futures.reserve(fileNames.size());
         for (const std::string& path: fileNames) {
-            futures.push_back(threadPool.enqueue(&TAnnotator::AnnotateHtml, this, path));
+            using TFunc = boost::optional<TDbDocument>(TAnnotator::*)(const std::string&) const;
+            futures.push_back(threadPool.enqueue<TFunc>(&TAnnotator::AnnotateHtml, this, path));
         }
     } else {
         std::vector<TDocument> parsedDocs;
@@ -91,6 +92,14 @@ std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>&
 
 boost::optional<TDbDocument> TAnnotator::AnnotateHtml(const std::string& path) const {
     boost::optional<TDocument> parsedDoc = ParseHtml(path);
+    if (!parsedDoc) {
+        return boost::none;
+    }
+    return AnnotateDocument(*parsedDoc);
+}
+
+boost::optional<TDbDocument> TAnnotator::AnnotateHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const {
+    boost::optional<TDocument> parsedDoc = ParseHtml(html, fileName);
     if (!parsedDoc) {
         return boost::none;
     }
@@ -136,6 +145,20 @@ boost::optional<TDocument> TAnnotator::ParseHtml(const std::string& path) const 
         doc.FromHtml(path.c_str(), Config.parselinks());
     } catch (...) {
         LOG_DEBUG("Bad html: " << path);
+        return boost::none;
+    }
+    if (doc.Text.length() < Config.mintextlength()) {
+        return boost::none;
+    }
+    return doc;
+}
+
+boost::optional<TDocument> TAnnotator::ParseHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const {
+    TDocument doc;
+    try {
+        doc.FromHtml(html, fileName, Config.parselinks());
+    } catch (...) {
+        LOG_DEBUG("Bad html: " << fileName);
         return boost::none;
     }
     if (doc.Text.length() < Config.mintextlength()) {

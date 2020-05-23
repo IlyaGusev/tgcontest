@@ -36,11 +36,15 @@ def convert(templates_dir, output_dir, documents_file, tops_file, languages, ver
             category = category if category != "any" else "main"
             for cluster in clusters:
                 articles = [documents[file_name] for file_name in cluster.pop("articles")]
-                for article in articles:
-                    article["date"] = datetime.utcfromtimestamp(article["timestamp"]).strftime("%e %b %H:%M")
+                article_weights = [weight for weight in cluster.pop("article_weights")]
+                for i in range(0, len(articles)):
+                    articles[i]["date"] = datetime.utcfromtimestamp(articles[i]["timestamp"]).strftime("%e %b %H:%M")
+                    articles[i]["weight"] = article_weights[i]
+
                 cluster["articles"] = [a for a in articles if a["language"] == language]
                 cluster["date"] = articles[0]["date"]
                 cluster["size"] = len(cluster["articles"])
+                cluster["best_date"] = datetime.utcfromtimestamp(cluster["best_time"]).strftime("%e %b %H:%M")
             top["clusters"] = [cluster for cluster in clusters if cluster["articles"]]
             if nclusters:
                 top["clusters"] = top["clusters"][:nclusters]

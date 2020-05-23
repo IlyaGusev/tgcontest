@@ -54,7 +54,7 @@ script:
   - make test
   - cd ..
   - bash test_canonical.sh
-  - perf record -F 99 -g ./build/tgnews top demo_data.json --from_json > demo_top.json
+  - perf record -F 99 -g ./build/tgnews top demo_data.json --from_json --print_top_debug_info > demo_top.json
   - perf script > out.perf
   - python3 json2html/convert.py --documents-file demo_data.json --tops-file demo_top.json --templates-dir json2html/templates --output-dir output
   - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/flamegraph.svg

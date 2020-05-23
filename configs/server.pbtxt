@@ -1,6 +1,5 @@
-Port: 1994
-Threads: 4
+port: 1994
+threads: 4
 
-DbPath: "sample.db"
-
-AnnotatorConfigPath: "configs/annotator.pbtxt"
+db_path: "sample.db"
+annotator_config_path: "configs/annotator.pbtxt"

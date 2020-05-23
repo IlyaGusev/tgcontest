@@ -1,10 +1,8 @@
 #include "agency_rating.h"
 #include "annotator.h"
-#include "clustering/slink.h"
-#include "document.h"
+#include "clusterer.h"
 #include "rank.h"
 #include "run_server.h"
-#include "summarize.h"
 #include "timer.h"
 #include "util.h"
 
@@ -14,21 +12,6 @@
 
 namespace po = boost::program_options;
 
-uint64_t GetIterTimestamp(const std::vector<TDbDocument>& documents, double percentile) {
-    // In production ts.now() should be here.
-    // In this case we have percentile of documents timestamps because of the small percent of wrong dates.
-    if (documents.empty()) {
-        return 0;
-    }
-    assert(std::is_sorted(documents.begin(), documents.end(), [](const TDbDocument& d1, const TDbDocument& d2) {
-        return d1.FetchTime < d2.FetchTime;
-    }));
-
-    size_t index = std::floor(percentile * documents.size());
-    return documents[index].FetchTime;
-}
-
-
 int main(int argc, char** argv) {
     try {
         po::options_description desc("options");
@@ -37,29 +20,13 @@ int main(int argc, char** argv) {
             ("input", po::value<std::string>()->required(), "input")
             ("server_config", po::value<std::string>()->default_value("configs/server.pbtxt"), "server_config")
             ("annotator_config", po::value<std::string>()->default_value("configs/annotator.pbtxt"), "annotator_config")
-            ("clustering_type", po::value<std::string>()->default_value("slink"), "clustering_type")
-            ("en_small_clustering_distance_threshold", po::value<float>()->default_value(0.015f), "en_clustering_distance_threshold")
-            ("en_small_cluster_size", po::value<size_t>()->default_value(15), "en_small_cluster_size")
-            ("en_medium_clustering_distance_threshold", po::value<float>()->default_value(0.01f), "en_medium_clustering_distance_threshold")
-            ("en_medium_cluster_size", po::value<size_t>()->default_value(50), "en_medium_cluster_size")
-            ("en_large_clustering_distance_threshold", po::value<float>()->default_value(0.005f), "en_large_clustering_distance_threshold")
-            ("en_large_cluster_size", po::value<size_t>()->default_value(100), "en_large_cluster_size")
-            ("ru_small_clustering_distance_threshold", po::value<float>()->default_value(0.015f), "ru_clustering_distance_threshold")
-            ("ru_small_cluster_size", po::value<size_t>()->default_value(15), "ru_small_cluster_size")
-            ("ru_medium_clustering_distance_threshold", po::value<float>()->default_value(0.01f), "ru_medium_clustering_distance_threshold")
-            ("ru_medium_cluster_size", po::value<size_t>()->default_value(50), "ru_medium_cluster_size")
-            ("ru_large_clustering_distance_threshold", po::value<float>()->default_value(0.005f), "ru_large_clustering_distance_threshold")
-            ("ru_large_cluster_size", po::value<size_t>()->default_value(100), "ru_large_cluster_size")
-            ("clustering_batch_size", po::value<size_t>()->default_value(10000), "clustering_batch_size")
-            ("clustering_batch_intersection_size", po::value<size_t>()->default_value(2000), "clustering_batch_intersection_size")
-            ("clustering_use_timestamp_moving", po::value<bool>()->default_value(false), "clustering_use_timestamp_moving")
-            ("clustering_ban_threads_from_same_site", po::value<bool>()->default_value(true), "clustering_ban_threads_from_same_site")
-            ("rating", po::value<std::string>()->default_value("models/pagerank_rating.txt"), "rating")
+            ("clusterer_config", po::value<std::string>()->default_value("configs/clusterer.pbtxt"), "clusterer_config")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("from_json", po::bool_switch()->default_value(false), "from_json")
             ("save_not_news", po::bool_switch()->default_value(false), "save_not_news")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
-            ("iter_timestamp_percentile", po::value<double>()->default_value(0.99), "iter_timestamp_percentile")
+            ("window_size", po::value<uint64_t>()->default_value(0), "window_size")
+            ("print_top_debug_info", po::bool_switch()->default_value(false), "print_top_debug_info")
             ;
 
         po::positional_options_description p;
@@ -99,12 +66,6 @@ int main(int argc, char** argv) {
             return RunServer(serverConfig);
         }
 
-        // Load agency ratings
-        LOG_DEBUG("Loading agency ratings...");
-        const std::string ratingPath = vm["rating"].as<std::string>();
-        TAgencyRating agencyRating(ratingPath);
-        LOG_DEBUG("Agency ratings loaded");
-
         // Read file names
         LOG_DEBUG("Reading file names...");
         int nDocs = vm["ndocs"].as<int>();
@@ -123,7 +84,8 @@ int main(int argc, char** argv) {
         // Parse files and annotate with classifiers
         const std::string annotatorConfig = vm["annotator_config"].as<std::string>();
         bool saveNotNews = vm["save_not_news"].as<bool>();
-        TAnnotator annotator(annotatorConfig, saveNotNews, mode == "json");
+        std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
+        TAnnotator annotator(annotatorConfig, saveNotNews, mode == "json", languages);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> annotationTimer;
         std::vector<TDbDocument> docs = annotator.AnnotateAll(fileNames, fromJson);
         LOG_DEBUG("Annotation: " << annotationTimer.Elapsed() << " ms (" << docs.size() << " documents)");
@@ -196,73 +158,13 @@ int main(int argc, char** argv) {
         }
 
         // Clustering
-        const std::set<std::string> clusteringLanguages = {"ru", "en"};
-        std::stable_sort(docs.begin(), docs.end(),
-            [](const TDbDocument& d1, const TDbDocument& d2) {
-                if (d1.FetchTime == d2.FetchTime) {
-                    if (d1.FileName.empty() && d2.FileName.empty()) {
-                        return d1.Title.length() < d2.Title.length();
-                    }
-                    return d1.FileName < d2.FileName;
-                }
-                return d1.FetchTime < d2.FetchTime;
-            }
-        );
-        const double iterTimestampPercentile = vm["iter_timestamp_percentile"].as<double>();
-        uint64_t iterTimestamp = GetIterTimestamp(docs, iterTimestampPercentile);
-
-        const std::string clusteringType = vm["clustering_type"].as<std::string>();
-        assert(clusteringType == "slink");
-
-        std::map<std::string, std::unique_ptr<TClustering>> clusterings;
-        for (const std::string& language : clusteringLanguages) {
-            TSlinkClustering::TConfig slinkConfig;
-            slinkConfig.SmallClusterThreshold = vm[language + "_small_clustering_distance_threshold"].as<float>();
-            slinkConfig.SmallClusterSize = vm[language + "_small_cluster_size"].as<size_t>();
-            slinkConfig.MediumClusterThreshold = vm[language + "_medium_clustering_distance_threshold"].as<float>();
-            slinkConfig.MediumClusterSize = vm[language + "_medium_cluster_size"].as<size_t>();
-            slinkConfig.LargeClusterThreshold = vm[language + "_large_clustering_distance_threshold"].as<float>();
-            slinkConfig.LargeClusterSize = vm[language + "_large_cluster_size"].as<size_t>();
-
-            slinkConfig.BatchSize = vm["clustering_batch_size"].as<size_t>();
-            slinkConfig.BatchIntersectionSize = vm["clustering_batch_intersection_size"].as<size_t>();
-
-            slinkConfig.UseTimestampMoving = vm["clustering_use_timestamp_moving"].as<bool>();
-            slinkConfig.BanThreadsFromSameSite = vm["clustering_ban_threads_from_same_site"].as<bool>();
-
-            clusterings[language] = std::make_unique<TSlinkClustering>(slinkConfig);
-        }
-
-        std::map<std::string, std::vector<TDbDocument>> lang2Docs;
-        while (!docs.empty()) {
-            const TDbDocument& doc = docs.back();
-            assert(doc.Language);
-            const std::string& language = nlohmann::json(doc.Language);
-            if (clusteringLanguages.find(language) != clusteringLanguages.end()) {
-                lang2Docs[language].push_back(doc);
-            }
-            docs.pop_back();
-        }
-        docs.shrink_to_fit();
-        docs.clear();
-
+        const std::string clustererConfig = vm["clusterer_config"].as<std::string>();
+        TClusterer clusterer(clustererConfig);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
-        TClusters clusters;
-        for (const std::string& language : clusteringLanguages) {
-            const TClusters langClusters = clusterings[language]->Cluster(lang2Docs[language]);
-            std::copy_if(
-                langClusters.cbegin(),
-                langClusters.cend(),
-                std::back_inserter(clusters),
-                [](const TNewsCluster& cluster) {
-                    return cluster.GetSize() > 0;
-                }
-            );
-        }
+        uint64_t iterTimestamp = 0;
+        TClusters clusters = clusterer.Cluster(docs, iterTimestamp);
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms (" << clusters.size() << " clusters)");
 
-        //Summarization
-        Summarize(clusters, agencyRating);
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();
             for (const auto& cluster : clusters) {
@@ -290,7 +192,9 @@ int main(int argc, char** argv) {
         }
 
         // Ranking
-        const auto tops = Rank(clusters, agencyRating, iterTimestamp);
+        uint64_t window = vm["window_size"].as<uint64_t>();
+        bool printTopDebugInfo = vm["print_top_debug_info"].as<bool>();
+        const auto tops = Rank(clusters, iterTimestamp, window);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<tg::ECategory>(std::distance(tops.begin(), it));
@@ -309,10 +213,20 @@ int main(int argc, char** argv) {
                 nlohmann::json object = {
                     {"title", cluster.Title},
                     {"category", cluster.Category},
-                    {"articles", nlohmann::json::array()}
+                    {"articles", nlohmann::json::array()},
                 };
                 for (const TDbDocument& doc : cluster.Cluster.get().GetDocuments()) {
                     object["articles"].push_back(CleanFileName(doc.FileName));
+                }
+                if (printTopDebugInfo) {
+                    object["article_weights"] = nlohmann::json::array();
+                    object["weight"] = cluster.WeightInfo.Weight;
+                    object["importance"] = cluster.WeightInfo.Importance;
+                    object["best_time"] = cluster.WeightInfo.BestTime;
+                    object["age_penalty"] = cluster.WeightInfo.AgePenalty;
+                    for (const auto& weight : cluster.DocWeights) {
+                        object["article_weights"].push_back(weight);
+                    }
                 }
                 rubricTop["threads"].push_back(object);
             }

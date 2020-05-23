@@ -65,9 +65,9 @@ double ComputeClusterWeightNew(
     return weight * smallClusterCoef;
 }
 
-double ComputeClusterWeightPush(
+TWeightInfo ComputeClusterWeightPush(
     const TNewsCluster& cluster,
-    const TAgencyRating& agencyRating,
+    const TAlexaAgencyRating& alexaAgencyRating,
     const uint64_t iterTimestamp,
     const uint64_t window,
     std::vector<double>& docWeights
@@ -82,7 +82,13 @@ double ComputeClusterWeightPush(
             return p1.Url < p2.Url;
         });
 
+    for (const TDocument& doc : cluster.GetDocuments()) {
+        double agencyWeight = alexaAgencyRating.ScoreUrl(doc.Url, true);
+        docWeights.push_back(agencyWeight);
+    }
+
 	double maxRank = 0.;
+    int32_t clusterTime = 0;
 	for (size_t i = 0; i < docs.size(); ++i) {
         const TDocument& startDoc = docs[i];
 		int32_t startTime = startDoc.FetchTime;
@@ -93,8 +99,8 @@ double ComputeClusterWeightPush(
 			const TDocument& doc = docs[j];
 			const std::string& docHost = GetHost(doc.Url);
             if (seenHosts.insert(docHost).second) {
-			    double agencyWeight = agencyRating.ScoreUrl(doc.Url);
-			    double docTimestampRemapped = static_cast<double>(static_cast<int32_t>(doc.FetchTime) - startTime) / 900;
+			    double agencyWeight = alexaAgencyRating.ScoreUrl(doc.Url, true);
+			    double docTimestampRemapped = static_cast<double>(static_cast<int32_t>(doc.FetchTime) - startTime) / 1800;
 			    double timeMultiplier = Sigmoid(std::max(docTimestampRemapped, -15.));
 			    double score = agencyWeight * timeMultiplier;
                 rank += score;
@@ -102,16 +108,27 @@ double ComputeClusterWeightPush(
         }
         if (rank > maxRank) {
             maxRank = rank;
+            clusterTime = startDoc.FetchTime;
         }
-        docWeights.push_back(rank); // TODO: fix this bug
     }
 
-    return maxRank;
+    double timeMultiplier = 1.;
+
+    if (clusterTime + window < iterTimestamp) {
+        // ~1 for freshest ts, 0.5 for 12 hour old ts, ~0 for 24 hour old ts
+        double clusterTimestampRemapped = static_cast<double>(clusterTime + static_cast<int32_t>(window) - static_cast<int32_t>(iterTimestamp)) / 3600.0 + 12.0;
+        timeMultiplier = Sigmoid(clusterTimestampRemapped);
+    }
+
+    TWeightInfo info{clusterTime, maxRank, timeMultiplier, maxRank * timeMultiplier};
+
+    return info;
 }
 
 std::vector<std::vector<TWeightedNewsCluster>> Rank(
     const TClusters& clusters,
     const TAgencyRating& agencyRating,
+    const TAlexaAgencyRating& alexaAgencyRating,
     uint64_t iterTimestamp,
     uint64_t window
 ) {
@@ -121,13 +138,13 @@ std::vector<std::vector<TWeightedNewsCluster>> Rank(
         ENewsCategory clusterCategory = cluster.GetCategory();
         const std::string& title = cluster.GetTitle();
         std::vector<double> docWeights;
-        const double weight = ComputeClusterWeightPush(cluster, agencyRating, iterTimestamp, window, docWeights);
+        const TWeightInfo weight = ComputeClusterWeightPush(cluster, alexaAgencyRating, iterTimestamp, window, docWeights);
         weightedClusters.emplace_back(cluster, clusterCategory, title, weight, docWeights);
     }
 
     std::stable_sort(weightedClusters.begin(), weightedClusters.end(),
         [](const TWeightedNewsCluster& a, const TWeightedNewsCluster& b) {
-            return a.Weight > b.Weight;
+            return a.WeightInfo.Weight > b.WeightInfo.Weight;
         }
     );
 

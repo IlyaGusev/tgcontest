@@ -41,6 +41,7 @@ def convert(templates_dir, output_dir, documents_file, tops_file, languages, ver
                 cluster["articles"] = [a for a in articles if a["language"] == language]
                 cluster["date"] = articles[0]["date"]
                 cluster["size"] = len(cluster["articles"])
+                cluster["best_date"] = datetime.utcfromtimestamp(cluster["best_time"]).strftime("%e %b %H:%M")
             top["clusters"] = [cluster for cluster in clusters if cluster["articles"]]
             if nclusters:
                 top["clusters"] = top["clusters"][:nclusters]

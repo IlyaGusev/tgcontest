@@ -47,6 +47,7 @@ int main(int argc, char** argv) {
             ("en_sentence_embedder", po::value<std::string>()->default_value("models/en_sentence_embedder.pt"), "en_sentence_embedder")
             ("ru_sentence_embedder", po::value<std::string>()->default_value("models/ru_sentence_embedder.pt"), "ru_sentence_embedder")
             ("rating", po::value<std::string>()->default_value("models/pagerank_rating.txt"), "rating")
+            ("alexa_rating", po::value<std::string>()->default_value("models/alexa_rating_2_fixed.txt"), "alexa_rating")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("min_text_length", po::value<size_t>()->default_value(20), "min_text_length")
             ("parse_links", po::bool_switch()->default_value(false), "parse_links")
@@ -54,6 +55,7 @@ int main(int argc, char** argv) {
             ("save_not_news", po::bool_switch()->default_value(false), "save_not_news")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ("iter_timestamp_percentile", po::value<double>()->default_value(0.99), "iter_timestamp_percentile")
+            ("window_size", po::value<uint64_t>()->default_value(0), "window_size")
             ;
 
         po::positional_options_description p;
@@ -117,6 +119,13 @@ int main(int argc, char** argv) {
         const std::string ratingPath = vm["rating"].as<std::string>();
         TAgencyRating agencyRating(ratingPath);
         LOG_DEBUG("Agency ratings loaded");
+
+        // Load alexa agency ratings
+        LOG_DEBUG("Loading alexa agency ratings...");
+        const std::string alexaRatingPath = vm["alexa_rating"].as<std::string>();
+        TAlexaAgencyRating alexaAgencyRating(alexaRatingPath);
+        LOG_DEBUG("Alexa agency ratings loaded");
+
 
         // Read file names
         LOG_DEBUG("Reading file names...");
@@ -331,8 +340,8 @@ int main(int argc, char** argv) {
         }
 
         // Ranking
-        uint64_t window = 0.;
-        const auto tops = Rank(clusters, agencyRating, iterTimestamp, window);
+        uint64_t window = vm["window_size"].as<uint64_t>();
+        const auto tops = Rank(clusters, agencyRating, alexaAgencyRating, iterTimestamp, window);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<ENewsCategory>(std::distance(tops.begin(), it));
@@ -350,7 +359,10 @@ int main(int argc, char** argv) {
                     {"category", cluster.Category},
                     {"articles", nlohmann::json::array()},
                     {"article_weights", nlohmann::json::array()},
-                    {"weight", cluster.Weight}
+                    {"weight", cluster.WeightInfo.Weight},
+                    {"importance", cluster.WeightInfo.Importance},
+                    {"best_time", cluster.WeightInfo.BestTime},
+                    {"age_penalty", cluster.WeightInfo.AgePenalty}
                 };
                 for (const TDocument& doc : cluster.Cluster.get().GetDocuments()) {
                     object["articles"].push_back(CleanFileName(doc.FileName));

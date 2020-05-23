@@ -31,3 +31,47 @@ double TAgencyRating::ScoreUrl(const std::string& url) const {
     const auto iter = Records.find(GetHost(url));
     return (iter != Records.end()) ? iter->second : UnkRating;
 }
+
+void TAlexaAgencyRating::Load(const std::string& filePath) {
+    std::ifstream fileStream(filePath);
+    nlohmann::json json;
+    fileStream >> json;
+    for (const nlohmann::json& agency : json) {
+        std::string host = agency.at("host").get<std::string>();
+        double rating = agency.at("rating").get<double>();
+        RawRating[host] = rating;
+
+        for (auto& [key, value] : agency.at("country").items()) {
+            CountryShare[host][key] = value;
+        }
+    }
+}
+
+double TAlexaAgencyRating::GetCountryShare(const std::string& host, const std::string& code) const {
+    const auto iter = CountryShare.find(host);
+    if (iter == CountryShare.end()) {
+        return 0.;
+    }
+    const auto iter2 = iter->second.find(code);
+    if (iter2 == iter->second.end()) {
+        return 0.;
+    }
+    return iter2->second;
+}
+
+double TAlexaAgencyRating::GetRawRating(const std::string& host) const {
+    const auto iter = RawRating.find(host);
+    return (iter != RawRating.end()) ? iter->second : UnkRating;
+}
+
+double TAlexaAgencyRating::ScoreUrl(const std::string& url, bool en) const {
+    std::string host = GetHost(url);
+    double raw = GetRawRating(host);
+    double coeff = 0;
+    if (en) {
+        coeff = (100. - GetCountryShare(host, "US") - GetCountryShare(host, "RU"))/100.;
+    } else {
+        coeff = GetCountryShare(host, "RU");
+    }
+    return raw * coeff;
+}

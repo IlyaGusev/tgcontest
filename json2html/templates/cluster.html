@@ -24,9 +24,11 @@
                     <p class="card-text text-muted">
                         {{cluster.date}}
                         <small class="mx-1 align-text-top">&bull;</small>
-                        <a class="text-muted stretched-link" data-toggle="collapse" href="#collapse{{loop_index}}">{{cluster.size}} articles</a>
-                        <small class="mx-1 align-text-top">&bull;</small>
-                        Weight: {{cluster.weight}}
+                        <a class="text-muted stretched-link" data-toggle="collapse" href="#collapse{{loop_index}}">{{cluster.size}} articles</a><br>
+                        Weight: {{cluster.weight}}<br>
+                        Importance: {{cluster.importance}}<br>
+                        Age penalty: {{cluster.age_penalty}}<br>
+                        Best date: {{cluster.best_date}}<br>
                     </p>
                     </div>
                     <div class="collapse border-top" id="collapse{{loop_index}}">

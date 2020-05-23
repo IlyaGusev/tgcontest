@@ -38,7 +38,10 @@ TClusterer::TClusterer(const std::string& configPath) {
     LOG_DEBUG("Alexa agency ratings loaded");
 }
 
-TClusters TClusterer::Cluster(std::vector<TDbDocument>& docs, uint64_t& iterTimestamp) const {
+std::unordered_map<tg::ELanguage, TClusters> TClusterer::Cluster(
+    std::vector<TDbDocument>& docs,
+    uint64_t& iterTimestamp
+) const {
     std::stable_sort(docs.begin(), docs.end(),
         [](const TDbDocument& d1, const TDbDocument& d2) {
             if (d1.FetchTime == d2.FetchTime) {
@@ -62,21 +65,15 @@ TClusters TClusterer::Cluster(std::vector<TDbDocument>& docs, uint64_t& iterTime
     docs.shrink_to_fit();
     docs.clear();
 
-    TClusters clusters;
+    std::unordered_map<tg::ELanguage, TClusters> clusters;
     for (const auto& [language, clustering] : Clusterings) {
-        const TClusters langClusters = clustering->Cluster(lang2Docs[language]);
-        std::copy_if(
-            langClusters.cbegin(),
-            langClusters.cend(),
-            std::back_inserter(clusters),
-            [](const TNewsCluster& cluster) {
-                return cluster.GetSize() > 0;
-            }
-        );
-    }
-    for (TNewsCluster& cluster : clusters) {
-        cluster.Summarize(AgencyRating);
-        cluster.CalcImportance(AlexaAgencyRating);
+        TClusters langClusters = clustering->Cluster(lang2Docs[language]);
+        for (TNewsCluster& cluster: langClusters) {
+            assert(cluster.GetSize() > 0);
+            cluster.Summarize(AgencyRating);
+            cluster.CalcImportance(AlexaAgencyRating);
+        }
+        clusters[language] = std::move(langClusters);
     }
     return clusters;
 }

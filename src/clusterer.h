@@ -13,7 +13,10 @@ class TClusterer {
 public:
     TClusterer(const std::string& configPath);
 
-    TClusters Cluster(std::vector<TDbDocument>& docs, uint64_t& iterTimestamp) const;
+    std::unordered_map<tg::ELanguage, TClusters> Cluster(
+        std::vector<TDbDocument>& docs,
+        uint64_t& iterTimestamp
+    ) const;
 
 private:
     void Summarize(TClusters& clusters) const;

@@ -65,10 +65,9 @@ namespace {
         std::cerr << "Clustering input: " << docs.size() << " docs" << std::endl;
         TClusterer clusterer(clusteringConfig);
         uint64_t iterTimestamp = 0;
-        const TClusters clusters = clusterer.Cluster(docs, iterTimestamp);
-        std::cerr << "Clustering output: " << clusters.size() << " clusters" << std::endl;
+        const auto clusters = clusterer.Cluster(docs, iterTimestamp);
+        std::cerr << "Clustering output: " << clusters.at(tg::LN_RU).size() << " clusters" << std::endl;
         TClustersIndex index;
-        std::copy(clusters.begin(), clusters.end(), std::inserter(index, index.begin()));
         return index;
     }
 

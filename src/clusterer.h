@@ -9,14 +9,17 @@
 #include <vector>
 #include <memory>
 
+struct TClusterIndex {
+    std::unordered_map<tg::ELanguage, TClusters> Clusters;
+    uint64_t IterTimestamp;
+    uint64_t TrueMaxTimestamp;
+};
+
 class TClusterer {
 public:
     TClusterer(const std::string& configPath);
 
-    std::unordered_map<tg::ELanguage, TClusters> Cluster(
-        std::vector<TDbDocument>& docs,
-        uint64_t& iterTimestamp
-    ) const;
+    TClusterIndex Cluster(std::vector<TDbDocument>& docs) const;
 
 private:
     void Summarize(TClusters& clusters) const;

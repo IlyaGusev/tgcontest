@@ -38,10 +38,7 @@ TClusterer::TClusterer(const std::string& configPath) {
     LOG_DEBUG("Alexa agency ratings loaded");
 }
 
-std::unordered_map<tg::ELanguage, TClusters> TClusterer::Cluster(
-    std::vector<TDbDocument>& docs,
-    uint64_t& iterTimestamp
-) const {
+TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>& docs) const {
     std::stable_sort(docs.begin(), docs.end(),
         [](const TDbDocument& d1, const TDbDocument& d2) {
             if (d1.FetchTime == d2.FetchTime) {
@@ -53,7 +50,10 @@ std::unordered_map<tg::ELanguage, TClusters> TClusterer::Cluster(
             return d1.FetchTime < d2.FetchTime;
         }
     );
-    iterTimestamp = GetIterTimestamp(docs, Config.iter_timestamp_percentile());
+    TClusterIndex clusterIndex;
+    clusterIndex.IterTimestamp = GetIterTimestamp(docs, Config.iter_timestamp_percentile());
+    clusterIndex.TrueMaxTimestamp = docs.back().FetchTime;
+
     std::map<tg::ELanguage, std::vector<TDbDocument>> lang2Docs;
     while (!docs.empty()) {
         const TDbDocument& doc = docs.back();
@@ -65,7 +65,6 @@ std::unordered_map<tg::ELanguage, TClusters> TClusterer::Cluster(
     docs.shrink_to_fit();
     docs.clear();
 
-    std::unordered_map<tg::ELanguage, TClusters> clusters;
     for (const auto& [language, clustering] : Clusterings) {
         TClusters langClusters = clustering->Cluster(lang2Docs[language]);
         for (TNewsCluster& cluster: langClusters) {
@@ -73,9 +72,16 @@ std::unordered_map<tg::ELanguage, TClusters> TClusterer::Cluster(
             cluster.Summarize(AgencyRating);
             cluster.CalcImportance(AlexaAgencyRating);
         }
-        clusters[language] = std::move(langClusters);
+        std::stable_sort(
+            langClusters.begin(),
+            langClusters.end(),
+            [](const TNewsCluster& a, const TNewsCluster& b) {
+                return a.GetFreshestTimestamp() < b.GetFreshestTimestamp();
+            }
+        );
+        clusterIndex.Clusters[language] = std::move(langClusters);
     }
-    return clusters;
+    return clusterIndex;
 }
 
 

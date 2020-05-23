@@ -161,15 +161,14 @@ int main(int argc, char** argv) {
         const std::string clustererConfig = vm["clusterer_config"].as<std::string>();
         TClusterer clusterer(clustererConfig);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
-        uint64_t iterTimestamp = 0;
-        std::unordered_map<tg::ELanguage, TClusters> clusters = clusterer.Cluster(docs, iterTimestamp);
+        TClusterIndex clusterIndex = clusterer.Cluster(docs);
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms")
-        for (const auto& [language, langClusters]: clusters) {
+        for (const auto& [language, langClusters]: clusterIndex.Clusters) {
             LOG_DEBUG(nlohmann::json(language) << ": " << langClusters.size() << " clusters");
         }
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();
-            for (const auto& [language, langClusters]: clusters) {
+            for (const auto& [language, langClusters]: clusterIndex.Clusters) {
                 for (const auto& cluster : langClusters) {
                     nlohmann::json files = nlohmann::json::array();
                     for (const TDbDocument& doc : cluster.GetDocuments()) {
@@ -200,16 +199,16 @@ int main(int argc, char** argv) {
         bool printTopDebugInfo = vm["print_top_debug_info"].as<bool>();
         TClusters allClusters;
         for (const auto& language: {tg::LN_EN, tg::LN_RU}) {
-            if (clusters.find(language) == clusters.end()) {
+            if (clusterIndex.Clusters.find(language) == clusterIndex.Clusters.end()) {
                 continue;
             }
             std::copy(
-                clusters[language].cbegin(),
-                clusters[language].cend(),
+                clusterIndex.Clusters.at(language).cbegin(),
+                clusterIndex.Clusters.at(language).cend(),
                 std::back_inserter(allClusters)
             );
         }
-        const auto tops = Rank(allClusters, iterTimestamp, window);
+        const auto tops = Rank(allClusters, clusterIndex.IterTimestamp, window);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<tg::ECategory>(std::distance(tops.begin(), it));

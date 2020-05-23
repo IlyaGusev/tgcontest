@@ -43,4 +43,3 @@ private:
 };
 
 using TClusters = std::vector<TNewsCluster>;
-using TClustersIndex = std::set<TNewsCluster>;

@@ -25,9 +25,9 @@
                         {{cluster.date}}
                         <small class="mx-1 align-text-top">&bull;</small>
                         <a class="text-muted stretched-link" data-toggle="collapse" href="#collapse{{loop_index}}">{{cluster.size}} articles</a><br>
-                        Weight: {{cluster.weight}}<br>
-                        Importance: {{cluster.importance}}<br>
-                        Age penalty: {{cluster.age_penalty}}<br>
+                        Weight: {{"%.2f"|format(cluster.weight)}}<br>
+                        Importance: {{"%.2f"|format(cluster.importance)}}<br>
+                        Age penalty: {{"%.2f"|format(cluster.age_penalty)}}<br>
                         Best date: {{cluster.best_date}}<br>
                     </p>
                     </div>

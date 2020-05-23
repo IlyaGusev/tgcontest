@@ -23,7 +23,7 @@ namespace {
 
     tg::TDocumentProto ToProto(const TDocument& doc, uint32_t ttl) {
         tg::TDocumentProto proto;
-        proto.set_filename(doc.FileName);
+        proto.set_file_name(doc.FileName);
         proto.set_title(doc.Title);
         proto.set_ttl(ttl);
         return proto;

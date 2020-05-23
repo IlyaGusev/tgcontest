@@ -4,29 +4,49 @@ package tg;
 import "enum.proto";
 
 message TServerConfig {
-    uint32 Port = 1;
-    uint32 Threads = 2;
+    uint32 port = 1;
+    uint32 threads = 2;
 
-    string DbPath = 3;
-    bool DbFailIfMissing = 4;
+    string db_path = 3;
+    bool db_fail_if_missing = 4;
 }
 
 message TEmbedderConfig {
-    uint32 MaxWords = 1;
-    string Path = 2;
+    uint32 max_words = 1;
+    string path = 2;
 }
 
 message TModelsForLanguageConfig {
-    ELanguage Language = 1;
-    string CatDetect = 2;
-    string VectorModel = 3;
-    TEmbedderConfig Embedder = 4;
+    ELanguage language = 1;
+    string cat_detect = 2;
+    string vector_model = 3;
+    TEmbedderConfig embedder = 4;
 }
 
 message TAnnotatorConfig {
-    string LangDetect = 1;
-    repeated TModelsForLanguageConfig Models = 2;
-    uint32 MinTextLength = 3;
-    bool ParseLinks = 4;
-    bool SaveTexts = 5;
+    string lang_detect = 1;
+    repeated TModelsForLanguageConfig models = 2;
+    uint32 min_text_length = 3;
+    bool parse_links = 4;
+    bool save_texts = 5;
 }
+
+message TClusteringConfig {
+    ELanguage language = 1;
+    float small_threshold = 2;
+    uint32 small_cluster_size = 3;
+    float medium_threshold = 4;
+    uint32 medium_cluster_size = 5;
+    float large_threshold = 6;
+    uint32 large_cluster_size = 7;
+    uint32 chunk_size = 8;
+    uint32 intersection_size = 9;
+    bool use_iimestamp_moving = 10;
+    bool ban_same_hosts = 11;
+}
+
+message TClustererConfig {
+    repeated TClusteringConfig clusterings = 1;
+    float iter_timestamp_percentile = 2;
+}
+

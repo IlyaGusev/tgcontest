@@ -3,11 +3,11 @@
 
 TDbDocument TDbDocument::FromProto(const tg::TDocumentProto& proto) {
     TDbDocument document;
-    document.FileName = proto.filename();
+    document.FileName = proto.file_name();
     document.Url = proto.url();
-    document.SiteName = proto.sitename();
-    document.PubTime = proto.pubtime();
-    document.FetchTime = proto.pubtime();
+    document.SiteName = proto.site_name();
+    document.PubTime = proto.pub_time();
+    document.FetchTime = proto.pub_time();
     document.Ttl = proto.ttl();
     document.Title = proto.title();
     document.Text = proto.text();
@@ -15,7 +15,7 @@ TDbDocument TDbDocument::FromProto(const tg::TDocumentProto& proto) {
     document.Language = proto.language();
     document.Category = proto.category();
 
-    for (const auto& link : proto.outlinks()) {
+    for (const auto& link : proto.out_links()) {
         document.OutLinks.push_back(link);
     }
 
@@ -41,11 +41,11 @@ bool TDbDocument::FromProtoString(const std::string& value, TDbDocument* documen
 
 tg::TDocumentProto TDbDocument::ToProto() const {
     tg::TDocumentProto proto;
-    proto.set_filename(FileName);
+    proto.set_file_name(FileName);
     proto.set_url(Url);
-    proto.set_sitename(SiteName);
-    proto.set_pubtime(PubTime);
-    proto.set_fetchtime(FetchTime);
+    proto.set_site_name(SiteName);
+    proto.set_pub_time(PubTime);
+    proto.set_fetch_time(FetchTime);
     proto.set_ttl(Ttl);
     proto.set_title(Title);
     proto.set_text(Text);
@@ -59,7 +59,7 @@ tg::TDocumentProto TDbDocument::ToProto() const {
         *embeddingProto->mutable_value() = {val.cbegin(), val.cend()};
     }
     for (const auto& link : OutLinks) {
-        proto.add_outlinks(link);
+        proto.add_out_links(link);
     }
     return proto;
 }

@@ -36,10 +36,10 @@ namespace {
         rocksdb::Options options;
         options.IncreaseParallelism();
         options.OptimizeLevelStyleCompaction();
-        options.create_if_missing = !config.dbfailifmissing();
+        options.create_if_missing = !config.db_fail_if_missing();
 
         rocksdb::DB* db;
-        rocksdb::Status s = rocksdb::DB::Open(options, config.dbpath(), &db);
+        rocksdb::Status s = rocksdb::DB::Open(options, config.db_path(), &db);
         ENSURE(s.ok(), "Failed to create database");
 
         return std::unique_ptr<rocksdb::DB>(db);

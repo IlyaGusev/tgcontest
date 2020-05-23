@@ -26,7 +26,7 @@ TAnnotator::TAnnotator(
 
     LOG_DEBUG("Loading models...");
 
-    LanguageDetector.loadModel(Config.langdetect());
+    LanguageDetector.loadModel(Config.lang_detect());
     LOG_DEBUG("FastText language detector loaded");
 
     for (const auto& modelsConfig : Config.models()) {
@@ -34,20 +34,20 @@ TAnnotator::TAnnotator(
         Languages.insert(language);
         std::string langCode = nlohmann::json(language);
 
-        CategoryDetectors[language].loadModel(modelsConfig.catdetect());
+        CategoryDetectors[language].loadModel(modelsConfig.cat_detect());
         LOG_DEBUG("FastText " + langCode + " category detector loaded");
 
-        VectorModels[language].loadModel(modelsConfig.vectormodel());
+        VectorModels[language].loadModel(modelsConfig.vector_model());
         LOG_DEBUG("FastText " + langCode + " vector model loaded");
 
         Embedders[language] = std::make_unique<TFastTextEmbedder>(
             VectorModels.at(language),
             TFastTextEmbedder::AM_Matrix,
-            modelsConfig.embedder().maxwords(),
+            modelsConfig.embedder().max_words(),
             modelsConfig.embedder().path()
         );
     }
-    SaveTexts = Config.savetexts() || forceSaveTexts;
+    SaveTexts = Config.save_texts() || forceSaveTexts;
 }
 
 std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const {
@@ -133,12 +133,12 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
 boost::optional<TDocument> TAnnotator::ParseHtml(const std::string& path) const {
     TDocument doc;
     try {
-        doc.FromHtml(path.c_str(), Config.parselinks());
+        doc.FromHtml(path.c_str(), Config.parse_links());
     } catch (...) {
         LOG_DEBUG("Bad html: " << path);
         return boost::none;
     }
-    if (doc.Text.length() < Config.mintextlength()) {
+    if (doc.Text.length() < Config.min_text_length()) {
         return boost::none;
     }
     return doc;

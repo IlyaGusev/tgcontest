@@ -161,27 +161,30 @@ int main(int argc, char** argv) {
         const std::string clustererConfig = vm["clusterer_config"].as<std::string>();
         TClusterer clusterer(clustererConfig);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
-        uint64_t iterTimestamp = 0;
-        TClusters clusters = clusterer.Cluster(docs, iterTimestamp);
-        LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms (" << clusters.size() << " clusters)");
-
+        TClusterIndex clusterIndex = clusterer.Cluster(docs);
+        LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms")
+        for (const auto& [language, langClusters]: clusterIndex.Clusters) {
+            LOG_DEBUG(nlohmann::json(language) << ": " << langClusters.size() << " clusters");
+        }
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();
-            for (const auto& cluster : clusters) {
-                nlohmann::json files = nlohmann::json::array();
-                for (const TDbDocument& doc : cluster.GetDocuments()) {
-                    files.push_back(CleanFileName(doc.FileName));
-                }
-                nlohmann::json object = {
-                    {"title", cluster.GetTitle()},
-                    {"articles", files}
-                };
-                outputJson.push_back(object);
-
-                if (cluster.GetSize() >= 2) {
-                    LOG_DEBUG("\n         CLUSTER: " << cluster.GetTitle());
+            for (const auto& [language, langClusters]: clusterIndex.Clusters) {
+                for (const auto& cluster : langClusters) {
+                    nlohmann::json files = nlohmann::json::array();
                     for (const TDbDocument& doc : cluster.GetDocuments()) {
-                        LOG_DEBUG("  " << doc.Title << " (" << doc.Url << ")");
+                        files.push_back(CleanFileName(doc.FileName));
+                    }
+                    nlohmann::json object = {
+                        {"title", cluster.GetTitle()},
+                        {"articles", files}
+                    };
+                    outputJson.push_back(object);
+
+                    if (cluster.GetSize() >= 2) {
+                        LOG_DEBUG("\n         CLUSTER: " << cluster.GetTitle());
+                        for (const TDbDocument& doc : cluster.GetDocuments()) {
+                            LOG_DEBUG("  " << doc.Title << " (" << doc.Url << ")");
+                        }
                     }
                 }
             }
@@ -194,7 +197,18 @@ int main(int argc, char** argv) {
         // Ranking
         uint64_t window = vm["window_size"].as<uint64_t>();
         bool printTopDebugInfo = vm["print_top_debug_info"].as<bool>();
-        const auto tops = Rank(clusters, iterTimestamp, window);
+        TClusters allClusters;
+        for (const auto& language: {tg::LN_EN, tg::LN_RU}) {
+            if (clusterIndex.Clusters.find(language) == clusterIndex.Clusters.end()) {
+                continue;
+            }
+            std::copy(
+                clusterIndex.Clusters.at(language).cbegin(),
+                clusterIndex.Clusters.at(language).cend(),
+                std::back_inserter(allClusters)
+            );
+        }
+        const auto tops = Rank(allClusters, clusterIndex.IterTimestamp, window);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<tg::ECategory>(std::distance(tops.begin(), it));

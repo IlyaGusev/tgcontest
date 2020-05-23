@@ -46,7 +46,7 @@ namespace {
         return std::unique_ptr<rocksdb::DB>(db);
     }
 
-    TClustersIndex RunClustering(rocksdb::DB* db, const std::string& clusteringConfig) {
+    TClusterIndex RunClustering(rocksdb::DB* db, const std::string& clusteringConfig) {
         const rocksdb::Snapshot* snapshot = db->GetSnapshot();
         rocksdb::ReadOptions ropt(true, true);
         ropt.snapshot = snapshot;
@@ -64,12 +64,9 @@ namespace {
 
         std::cerr << "Clustering input: " << docs.size() << " docs" << std::endl;
         TClusterer clusterer(clusteringConfig);
-        uint64_t iterTimestamp = 0;
-        const TClusters clusters = clusterer.Cluster(docs, iterTimestamp);
-        std::cerr << "Clustering output: " << clusters.size() << " clusters" << std::endl;
-        TClustersIndex index;
-        std::copy(clusters.begin(), clusters.end(), std::inserter(index, index.begin()));
-        return index;
+        const auto clusterIndex = clusterer.Cluster(docs);
+        std::cerr << "Clustering output: " << clusterIndex.Clusters.at(tg::LN_RU).size() << " clusters" << std::endl;
+        return clusterIndex;
     }
 
 }

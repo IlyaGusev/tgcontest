@@ -38,7 +38,7 @@ TClusterer::TClusterer(const std::string& configPath) {
     LOG_DEBUG("Alexa agency ratings loaded");
 }
 
-TClusters TClusterer::Cluster(std::vector<TDbDocument>& docs, uint64_t& iterTimestamp) const {
+TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>& docs) const {
     std::stable_sort(docs.begin(), docs.end(),
         [](const TDbDocument& d1, const TDbDocument& d2) {
             if (d1.FetchTime == d2.FetchTime) {
@@ -50,7 +50,10 @@ TClusters TClusterer::Cluster(std::vector<TDbDocument>& docs, uint64_t& iterTime
             return d1.FetchTime < d2.FetchTime;
         }
     );
-    iterTimestamp = GetIterTimestamp(docs, Config.iter_timestamp_percentile());
+    TClusterIndex clusterIndex;
+    clusterIndex.IterTimestamp = GetIterTimestamp(docs, Config.iter_timestamp_percentile());
+    clusterIndex.TrueMaxTimestamp = docs.back().FetchTime;
+
     std::map<tg::ELanguage, std::vector<TDbDocument>> lang2Docs;
     while (!docs.empty()) {
         const TDbDocument& doc = docs.back();
@@ -62,23 +65,23 @@ TClusters TClusterer::Cluster(std::vector<TDbDocument>& docs, uint64_t& iterTime
     docs.shrink_to_fit();
     docs.clear();
 
-    TClusters clusters;
     for (const auto& [language, clustering] : Clusterings) {
-        const TClusters langClusters = clustering->Cluster(lang2Docs[language]);
-        std::copy_if(
-            langClusters.cbegin(),
-            langClusters.cend(),
-            std::back_inserter(clusters),
-            [](const TNewsCluster& cluster) {
-                return cluster.GetSize() > 0;
+        TClusters langClusters = clustering->Cluster(lang2Docs[language]);
+        for (TNewsCluster& cluster: langClusters) {
+            assert(cluster.GetSize() > 0);
+            cluster.Summarize(AgencyRating);
+            cluster.CalcImportance(AlexaAgencyRating);
+        }
+        std::stable_sort(
+            langClusters.begin(),
+            langClusters.end(),
+            [](const TNewsCluster& a, const TNewsCluster& b) {
+                return a.GetFreshestTimestamp() < b.GetFreshestTimestamp();
             }
         );
+        clusterIndex.Clusters[language] = std::move(langClusters);
     }
-    for (TNewsCluster& cluster : clusters) {
-        cluster.Summarize(AgencyRating);
-        cluster.CalcImportance(AlexaAgencyRating);
-    }
-    return clusters;
+    return clusterIndex;
 }
 
 

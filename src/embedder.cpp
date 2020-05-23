@@ -1,10 +1,10 @@
 #include "embedder.h"
-#include "document.h"
 
 #include <sstream>
 #include <cassert>
 
 #include <onmt/Tokenizer.h>
+#include <fasttext.h>
 
 TFastTextEmbedder::TFastTextEmbedder(
     fasttext::FastText& model
@@ -25,9 +25,8 @@ size_t TFastTextEmbedder::GetEmbeddingSize() const {
     return Model.getDimension();
 }
 
-fasttext::Vector TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc) const {
-    assert(doc.PreprocessedTitle && doc.PreprocessedText);
-    std::istringstream ss(doc.PreprocessedTitle.get() + " " + doc.PreprocessedText.get());
+std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& title, const std::string& text) const {
+    std::istringstream ss(title + " " + text);
     fasttext::Vector wordVector(GetEmbeddingSize());
     fasttext::Vector avgVector(GetEmbeddingSize());
     fasttext::Vector maxVector(GetEmbeddingSize());
@@ -61,11 +60,11 @@ fasttext::Vector TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc) c
         avgVector.mul(1.0f / static_cast<float>(count));
     }
     if (Mode == AM_Avg) {
-        return avgVector;
+        return std::vector<float>(avgVector.data(), avgVector.data() + avgVector.size());
     } else if (Mode == AM_Min) {
-        return minVector;
+        return std::vector<float>(minVector.data(), minVector.data() + minVector.size());
     } else if (Mode == AM_Max) {
-        return maxVector;
+        return std::vector<float>(maxVector.data(), maxVector.data() + maxVector.size());
     }
     assert(Mode == AM_Matrix);
 
@@ -80,7 +79,7 @@ fasttext::Vector TFastTextEmbedder::GetSentenceEmbedding(const TDocument& doc) c
 
     at::Tensor outputTensor = TorchModel.forward(inputs).toTensor().squeeze(0).contiguous();
     float* outputTensorPtr = outputTensor.data_ptr<float>();
-    fasttext::Vector resultVector(GetEmbeddingSize());
+    std::vector<float> resultVector(GetEmbeddingSize());
     for (size_t i = 0; i < GetEmbeddingSize(); i++) {
         resultVector[i] = outputTensorPtr[i];
     }

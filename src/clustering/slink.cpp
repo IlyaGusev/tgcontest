@@ -1,41 +1,93 @@
 #include "slink.h"
 #include "../util.h"
 
+#include <algorithm>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
-TSlinkClustering::TSlinkClustering(
-    TFastTextEmbedder& embedder
-    , float distanceThreshold
-    , size_t batchSize
-    , size_t batchIntersectionSize
-    , bool useTimestampMoving
-)
-    : TClustering(embedder)
-    , DistanceThreshold(distanceThreshold)
-    , BatchSize(batchSize)
-    , BatchIntersectionSize(batchIntersectionSize)
-    , UseTimestampMoving(useTimestampMoving)
-{}
+namespace {
+
+using TClusterSiteNames = std::unordered_set<std::string>;
+
+constexpr float INF_DISTANCE = 1.0f;
+
+void ApplyTimePenalty(
+    const std::vector<TDbDocument>::const_iterator begin,
+    size_t docSize,
+    Eigen::MatrixXf& distances
+) {
+    std::vector<TDbDocument>::const_iterator iIt = begin;
+    std::vector<TDbDocument>::const_iterator jIt = begin + 1;
+    for (size_t i = 0; i < docSize; ++i, ++iIt) {
+        jIt = iIt + 1;
+        for (size_t j = i + 1; j < docSize; ++j, ++jIt) {
+            uint64_t leftTs = iIt->FetchTime;
+            uint64_t rightTs = jIt->FetchTime;
+            uint64_t diff = rightTs > leftTs ? rightTs - leftTs : leftTs - rightTs;
+            float diffHours = static_cast<float>(diff) / 3600.0f;
+            float penalty = 1.0f;
+            if (diffHours >= 24.0f) {
+                penalty = diffHours / 24.0f;
+            }
+            distances(i, j) = std::min(penalty * distances(i, j), INF_DISTANCE);
+            distances(j, i) = distances(i, j);
+        }
+    }
+}
+
+bool IsNewClusterSizeAcceptable(size_t newClusterSize, float newDistance, const TSlinkClustering::TConfig& config) {
+    if (newClusterSize <= config.SmallClusterSize) {
+        return true;
+    } else if (newClusterSize <= config.MediumClusterSize) {
+        return newDistance <= config.MediumClusterThreshold;
+    } else if (newClusterSize <= config.LargeClusterSize) {
+        return newDistance <= config.LargeClusterThreshold;
+    }
+    return false;
+}
+
+bool CheckSetIntersection(const TClusterSiteNames& smallerSet, const TClusterSiteNames& largerSet) {
+    return std::any_of(smallerSet.begin(), smallerSet.end(), [&largerSet](const auto& siteName) {
+        return largerSet.find(siteName) != largerSet.end();
+    });
+}
+
+bool HasSameSource(const TClusterSiteNames& firstSet, const TClusterSiteNames& secondSet) {
+    if (firstSet.size() < secondSet.size()) {
+        return CheckSetIntersection(firstSet, secondSet);
+    }
+    return CheckSetIntersection(secondSet, firstSet);
+}
+
+} // namespace
+
+TSlinkClustering::TSlinkClustering(const TConfig& config)
+    : Config(config)
+{
+}
 
 TClusters TSlinkClustering::Cluster(
-    const std::vector<TDocument>& docs
+    const std::vector<TDbDocument>& docs,
+    tg::EEmbeddingKey embeddingKey
 ) {
     const size_t docSize = docs.size();
     std::vector<size_t> labels;
     labels.reserve(docSize);
 
-    std::vector<TDocument>::const_iterator begin = docs.cbegin();
+    std::vector<TDbDocument>::const_iterator begin = docs.cbegin();
     std::unordered_map<size_t, size_t> oldLabelsToNew;
     size_t batchStart = 0;
     size_t prevBatchEnd = batchStart;
     size_t maxLabel = 0;
     while (prevBatchEnd < docs.size()) {
         size_t remainingDocsCount = docSize - batchStart;
-        size_t batchSize = std::min(remainingDocsCount, BatchSize);
-        std::vector<TDocument>::const_iterator end = begin + batchSize;
+        size_t batchSize = std::min(remainingDocsCount, Config.BatchSize);
+        std::vector<TDbDocument>::const_iterator end = begin + batchSize;
 
-        std::vector<size_t> newLabels = ClusterBatch(begin, end);
+        std::vector<size_t> newLabels = ClusterBatch(begin, end, embeddingKey);
         size_t newMaxLabel = maxLabel;
         for (auto& label : newLabels) {
             label += maxLabel;
@@ -44,19 +96,19 @@ TClusters TSlinkClustering::Cluster(
         maxLabel = newMaxLabel;
 
         assert(begin->Url == docs[batchStart].Url);
-        for (size_t i = batchStart; i < batchStart + BatchIntersectionSize && i < labels.size(); i++) {
+        for (size_t i = batchStart; i < batchStart + Config.BatchIntersectionSize && i < labels.size(); i++) {
             size_t oldLabel = labels[i];
             int j = i - batchStart;
-            assert(j >= 0 && j < newLabels.size());
+            assert(j >= 0 && static_cast<size_t>(j) < newLabels.size());
             size_t newLabel = newLabels[j];
             oldLabelsToNew[oldLabel] = newLabel;
         }
         if (batchStart == 0) {
-            for (size_t i = 0; i < std::min(BatchIntersectionSize, newLabels.size()); i++) {
+            for (size_t i = 0; i < std::min(Config.BatchIntersectionSize, newLabels.size()); i++) {
                 labels.push_back(newLabels[i]);
             }
         }
-        for (size_t i = BatchIntersectionSize; i < newLabels.size(); i++) {
+        for (size_t i = Config.BatchIntersectionSize; i < newLabels.size(); i++) {
             labels.push_back(newLabels[i]);
         }
         assert(batchStart == static_cast<size_t>(std::distance(docs.begin(), begin)));
@@ -66,8 +118,8 @@ TClusters TSlinkClustering::Cluster(
         }
 
         prevBatchEnd = batchStart + batchSize;
-        batchStart = batchStart + batchSize - BatchIntersectionSize;
-        begin = end - BatchIntersectionSize;
+        batchStart = batchStart + batchSize - Config.BatchIntersectionSize;
+        begin = end - Config.BatchIntersectionSize;
     }
     assert(labels.size() == docs.size());
     for (auto& label : labels) {
@@ -86,7 +138,7 @@ TClusters TSlinkClustering::Cluster(
         if (it == clusterLabels.end()) {
             size_t newLabel = clusters.size();
             clusterLabels[clusterId] = newLabel;
-            clusters.push_back(TNewsCluster());
+            clusters.emplace_back(newLabel);
             clusters[newLabel].AddDocument(docs[i]);
         } else {
             clusters[it->second].AddDocument(docs[i]);
@@ -97,16 +149,18 @@ TClusters TSlinkClustering::Cluster(
 
 // SLINK: https://sites.cs.ucsb.edu/~veronika/MAE/summary_SLINK_Sibson72.pdf
 std::vector<size_t> TSlinkClustering::ClusterBatch(
-    const std::vector<TDocument>::const_iterator begin,
-    const std::vector<TDocument>::const_iterator end
+    const std::vector<TDbDocument>::const_iterator begin,
+    const std::vector<TDbDocument>::const_iterator end,
+    tg::EEmbeddingKey embeddingKey
 ) {
     const size_t docSize = std::distance(begin, end);
-    const size_t embSize = Embedder.GetEmbeddingSize();
+    assert(docSize != 0);
+    const size_t embSize = begin->Embeddings.at(embeddingKey).size();
 
     Eigen::MatrixXf points(docSize, embSize);
-    std::vector<TDocument>::const_iterator docsIt = begin;
+    std::vector<TDbDocument>::const_iterator docsIt = begin;
     for (size_t i = 0; i < docSize; ++i) {
-        auto embedding = Embedder.GetSentenceEmbedding(*docsIt);
+        std::vector<float> embedding = docsIt->Embeddings.at(embeddingKey);
         Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
         points.row(i) = eigenVector / eigenVector.norm();
         docsIt++;
@@ -114,26 +168,9 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
 
     Eigen::MatrixXf distances(points.rows(), points.rows());
     FillDistanceMatrix(points, distances);
-    const float INF_DISTANCE = 1.0f;
 
-    if (UseTimestampMoving) {
-        std::vector<TDocument>::const_iterator iIt = begin;
-        std::vector<TDocument>::const_iterator jIt = begin + 1;
-        for (size_t i = 0; i < docSize; ++i, ++iIt) {
-            jIt = iIt + 1;
-            for (size_t j = i + 1; j < docSize; ++j, ++jIt) {
-                uint64_t leftTs = iIt->FetchTime;
-                uint64_t rightTs = jIt->FetchTime;
-                uint64_t diff = rightTs > leftTs ? rightTs - leftTs : leftTs - rightTs;
-                float diffHours = static_cast<float>(diff) / 3600.0f;
-                float penalty = 1.0f;
-                if (diffHours >= 24.0f) {
-                    penalty = diffHours / 24.0f;
-                }
-                distances(i, j) = std::min(penalty * distances(i, j), INF_DISTANCE);
-                distances(j, i) = distances(i, j);
-            }
-        }
+    if (Config.UseTimestampMoving) {
+        ApplyTimePenalty(begin, docSize, distances);
     }
 
     // Prepare 3 arrays
@@ -149,16 +186,42 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
         nn[i] = minJ;
     }
 
+    std::vector<size_t> clusterSizes(docSize);
+    std::vector<TClusterSiteNames> clusterSiteNames(docSize);
+
+    for (size_t i = 0; i < docSize; i++) {
+        clusterSizes[i] = 1;
+
+        if (Config.BanThreadsFromSameSite) {
+            clusterSiteNames[i].insert((begin + i)->SiteName);
+        }
+    }
+
     // Main linking loop
-    size_t level = 0;
-    while (level + 1 < docSize) {
+    for (size_t level = 0; level + 1 < docSize; ++level) {
         // Calculate minimal distance
         auto minDistanceIt = std::min_element(nnDistances.begin(), nnDistances.end());
         size_t minI = std::distance(nnDistances.begin(), minDistanceIt);
         size_t minJ = nn[minI];
         float minDistance = *minDistanceIt;
-        if (minDistance > DistanceThreshold) {
+
+        const size_t firstClusterSize = clusterSizes[minI];
+        const size_t secondClusterSize = clusterSizes[minJ];
+
+        TClusterSiteNames* firstClusterSiteNames = Config.BanThreadsFromSameSite ? &clusterSiteNames[minI] : nullptr;
+        TClusterSiteNames* secondClusterSiteNames = Config.BanThreadsFromSameSite ? &clusterSiteNames[minJ] : nullptr;
+
+        if (minDistance > Config.SmallClusterThreshold) {
             break;
+        }
+
+        const size_t newClusterSize = firstClusterSize + secondClusterSize;
+        if (!IsNewClusterSizeAcceptable(newClusterSize, minDistance, Config)
+            || (Config.BanThreadsFromSameSite && HasSameSource(*firstClusterSiteNames, *secondClusterSiteNames))
+        ) {
+            nnDistances[minI] = INF_DISTANCE;
+            nnDistances[minJ] = INF_DISTANCE;
+            continue;
         }
 
         // Link minJ to minI
@@ -166,6 +229,11 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
             if (labels[i] == minJ) {
                 labels[i] = minI;
             }
+        }
+
+        clusterSizes[minI] = newClusterSize;
+        if (Config.BanThreadsFromSameSite) {
+            firstClusterSiteNames->insert(secondClusterSiteNames->begin(), secondClusterSiteNames->end());
         }
 
         // Update distance matrix and nearest neighbors
@@ -189,7 +257,6 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
             distances(minJ, i) = INF_DISTANCE;
             distances(i, minJ) = INF_DISTANCE;
         }
-        level += 1;
     }
 
     return labels;

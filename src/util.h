@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 #include <vector>
 #include <iostream>
 
@@ -9,6 +10,15 @@
 #else
 #define LOG_DEBUG(x) std::cerr << x << std::endl;
 #endif
+
+#define ENSURE(CONDITION, MESSAGE)              \
+    do {                                        \
+        if (!(CONDITION)) {                     \
+            std::ostringstream oss;             \
+            oss << MESSAGE;                     \
+            throw std::runtime_error(oss.str());\
+        }                                       \
+    } while (false)
 
 // Read names of all files in directory
 void ReadFileNames(const std::string& directory, std::vector<std::string>& fileNames, int nDocs=-1);

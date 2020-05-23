@@ -27,6 +27,15 @@ TClusterer::TClusterer(const std::string& configPath) {
     for (const tg::TClusteringConfig& config: Config.clusterings()) {
         Clusterings[config.language()] = std::make_unique<TSlinkClustering>(config);
     }
+    // Load agency ratings
+    LOG_DEBUG("Loading agency ratings...");
+    AgencyRating.Load(Config.hosts_rating());
+    LOG_DEBUG("Agency ratings loaded");
+
+    // Load alexa agency ratings
+    LOG_DEBUG("Loading alexa agency ratings...");
+    AlexaAgencyRating.Load(Config.alexa_rating());
+    LOG_DEBUG("Alexa agency ratings loaded");
 }
 
 TClusters TClusterer::Cluster(std::vector<TDbDocument>& docs, uint64_t& iterTimestamp) const {
@@ -65,8 +74,13 @@ TClusters TClusterer::Cluster(std::vector<TDbDocument>& docs, uint64_t& iterTime
             }
         );
     }
+    for (TNewsCluster& cluster : clusters) {
+        cluster.Summarize(AgencyRating);
+        cluster.CalcImportance(AlexaAgencyRating);
+    }
     return clusters;
 }
+
 
 void TClusterer::ParseConfig(const std::string& fname) {
     const int fileDesc = open(fname.c_str(), O_RDONLY);

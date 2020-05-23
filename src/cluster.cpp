@@ -1,7 +1,11 @@
 #include "cluster.h"
+
+#include "agency_rating.h"
 #include "document_ranking/weighted_document.h"
+#include "util.h"
 
 #include <boost/range/algorithm/nth_element.hpp>
+#include <Eigen/Core>
 
 #include <cassert>
 #include <cmath>
@@ -33,6 +37,71 @@ tg::ECategory TNewsCluster::GetCategory() const {
     }
     auto it = std::max_element(categoryCount.begin(), categoryCount.end());
     return static_cast<tg::ECategory>(std::distance(categoryCount.begin(), it));
+}
+
+void TNewsCluster::Summarize(const TAgencyRating& agencyRating) {
+    assert(GetSize() != 0);
+    const size_t embeddingSize = Documents.back().Embeddings.at(tg::EK_CLUSTERING).size();
+    Eigen::MatrixXf points(GetSize(), embeddingSize);
+    for (size_t i = 0; i < GetSize(); i++) {
+        auto embedding = Documents[i].Embeddings.at(tg::EK_CLUSTERING);
+        Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
+        points.row(i) = eigenVector / eigenVector.norm();
+    }
+    Eigen::MatrixXf docsCosine = points * points.transpose();
+
+    std::vector<double> weights;
+    weights.reserve(GetSize());
+    uint64_t freshestTimestamp = GetFreshestTimestamp();
+    for (size_t i = 0; i < GetSize(); ++i) {
+        const TDbDocument& doc = Documents[i];
+        double docRelevance = docsCosine.row(i).mean();
+        uint64_t timeDiff = doc.FetchTime - freshestTimestamp;
+        // TODO: int64_t timeDiff = static_cast<int64_t>(doc.FetchTime) - static_cast<int64_t>(freshestTimestamp);
+        double timeMultiplier = Sigmoid(static_cast<double>(timeDiff) / 3600.0 + 12.0);
+        double agencyScore = agencyRating.ScoreUrl(doc.Url);
+        double weight = (agencyScore + docRelevance) * timeMultiplier;
+        weights.push_back(weight);
+    }
+    SortByWeights(weights);
+}
+
+void TNewsCluster::CalcImportance(const TAlexaAgencyRating& alexaRating) {
+    auto docs = GetDocuments();
+    std::stable_sort(docs.begin(), docs.end(), [](const TDbDocument& p1, const TDbDocument& p2) {
+        if (p1.FetchTime != p2.FetchTime) {
+            return p1.FetchTime < p2.FetchTime;
+        }
+        return p1.Url < p2.Url;
+    });
+
+    DocWeights.reserve(GetSize());
+    for (const TDbDocument& doc : Documents) {
+        DocWeights.push_back(alexaRating.ScoreUrl(doc.Url, true));
+    }
+
+    for (size_t i = 0; i < docs.size(); ++i) {
+        const TDbDocument& startDoc = docs[i];
+        int32_t startTime = startDoc.FetchTime;
+        double rank = 0.;
+
+        std::set<std::string> seenHosts;
+        for (size_t j = i; j < docs.size(); ++j) {
+            const TDbDocument& doc = docs[j];
+            const std::string& docHost = GetHost(doc.Url);
+            if (seenHosts.insert(docHost).second) {
+                double agencyWeight = alexaRating.ScoreUrl(doc.Url, true);
+                double docTimestampRemapped = static_cast<double>(static_cast<int32_t>(doc.FetchTime) - startTime) / 1800;
+                double timeMultiplier = Sigmoid(std::max(docTimestampRemapped, -15.));
+                double score = agencyWeight * timeMultiplier;
+                rank += score;
+            }
+        }
+        if (rank > Importance) {
+            Importance = rank;
+            BestTimestamp = startDoc.FetchTime;
+        }
+    }
 }
 
 void TNewsCluster::SortByWeights(const std::vector<double>& weights) {

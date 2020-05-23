@@ -3,7 +3,6 @@
 #include "clusterer.h"
 #include "rank.h"
 #include "run_server.h"
-#include "summarize.h"
 #include "timer.h"
 #include "util.h"
 
@@ -22,8 +21,6 @@ int main(int argc, char** argv) {
             ("server_config", po::value<std::string>()->default_value("configs/server.pbtxt"), "server_config")
             ("annotator_config", po::value<std::string>()->default_value("configs/annotator.pbtxt"), "annotator_config")
             ("clusterer_config", po::value<std::string>()->default_value("configs/clusterer.pbtxt"), "clusterer_config")
-            ("rating", po::value<std::string>()->default_value("models/pagerank_rating.txt"), "rating")
-            ("alexa_rating", po::value<std::string>()->default_value("models/alexa_rating_2_fixed.txt"), "alexa_rating")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("from_json", po::bool_switch()->default_value(false), "from_json")
             ("save_not_news", po::bool_switch()->default_value(false), "save_not_news")
@@ -68,19 +65,6 @@ int main(int argc, char** argv) {
             const std::string serverConfig = vm["server_config"].as<std::string>();
             return RunServer(serverConfig);
         }
-
-        // Load agency ratings
-        LOG_DEBUG("Loading agency ratings...");
-        const std::string ratingPath = vm["rating"].as<std::string>();
-        TAgencyRating agencyRating(ratingPath);
-        LOG_DEBUG("Agency ratings loaded");
-
-        // Load alexa agency ratings
-        LOG_DEBUG("Loading alexa agency ratings...");
-        const std::string alexaRatingPath = vm["alexa_rating"].as<std::string>();
-        TAlexaAgencyRating alexaAgencyRating(alexaRatingPath);
-        LOG_DEBUG("Alexa agency ratings loaded");
-
 
         // Read file names
         LOG_DEBUG("Reading file names...");
@@ -181,8 +165,6 @@ int main(int argc, char** argv) {
         TClusters clusters = clusterer.Cluster(docs, iterTimestamp);
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms (" << clusters.size() << " clusters)");
 
-        //Summarization
-        Summarize(clusters, agencyRating);
         if (mode == "threads") {
             nlohmann::json outputJson = nlohmann::json::array();
             for (const auto& cluster : clusters) {
@@ -212,7 +194,7 @@ int main(int argc, char** argv) {
         // Ranking
         uint64_t window = vm["window_size"].as<uint64_t>();
         bool printTopDebugInfo = vm["print_top_debug_info"].as<bool>();
-        const auto tops = Rank(clusters, agencyRating, alexaAgencyRating, iterTimestamp, window);
+        const auto tops = Rank(clusters, iterTimestamp, window);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<tg::ECategory>(std::distance(tops.begin(), it));

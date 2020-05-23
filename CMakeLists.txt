@@ -81,7 +81,6 @@ set(SOURCE_FILES
     src/embedder.cpp
     src/rank.cpp
     src/run_server.cpp
-    src/summarize.cpp
     src/thread_pool.cpp
     src/util.cpp
 )
@@ -101,7 +100,6 @@ set(HEADER_FILES
     src/embedder.h
     src/rank.h
     src/run_server.h
-    src/summarize.h
     src/thread_pool.h
     src/timer.h
     src/util.h

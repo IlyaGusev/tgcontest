@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 
-def convert(templates_dir, output_dir, documents_file, tops_file, languages, version, nclusters):
+def convert(templates_dir, output_dir, documents_file, tops_file, languages, version, date, nclusters):
     file_loader = FileSystemLoader(templates_dir)
     env = Environment(loader=file_loader)
     rubric_template = env.get_template("rubric.html")
@@ -54,6 +54,7 @@ def convert(templates_dir, output_dir, documents_file, tops_file, languages, ver
             with open(output_file_name, "w", encoding="utf-8") as w:
                 w.write(rubric_template.render(
                     top=top,
+                    date=date,
                     version=version,
                     language=language,
                     current_page=current_page
@@ -67,7 +68,8 @@ if __name__ == "__main__":
     parser.add_argument('--documents-file', type=str, required=True)
     parser.add_argument('--tops-file', type=str, required=True)
     parser.add_argument('--languages', type=str, default="ru,en")
-    parser.add_argument('--version', type=str, default="2.0.0")
+    parser.add_argument('--version', type=str, default="3.0.0")
+    parser.add_argument('--date', type=str, default="03 May")
     parser.add_argument('--nclusters', type=int, default=200)
     args = parser.parse_args()
     convert(**vars(args))

@@ -13,7 +13,9 @@ def calc_metrics(
     cat_output,
     threads_gold,
     threads_output,
-    language
+    language,
+    version,
+    date
 ):
     with open(documents_file, "r") as r:
         orig_records = json.load(r)
@@ -79,7 +81,9 @@ def calc_metrics(
             cat_metrics=cat_metrics,
             cat_errors=cat_errors,
             language=language,
-            current_page="metrics.html"
+            current_page="metrics.html",
+            version=version,
+            date=date
          ))
 
 
@@ -92,6 +96,8 @@ if __name__ == "__main__":
     parser.add_argument("--cat-output", type=str, required=True)
     parser.add_argument("--threads-gold", type=str, default=None)
     parser.add_argument("--threads-output", type=str, default=None)
+    parser.add_argument('--version', type=str, default="3.0.0")
+    parser.add_argument('--date', type=str, default="03 May")
     parser.add_argument("--language", type=str, required=True)
     args = parser.parse_args()
     calc_metrics(**vars(args))

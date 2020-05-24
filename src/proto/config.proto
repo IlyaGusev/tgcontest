@@ -10,9 +10,10 @@ message TServerConfig {
     bool db_fail_if_missing = 3;
 
     bool skip_irrelevant_docs = 4;
+    uint32 clusterer_sleep = 5;
 
-    string annotator_config_path = 5;
-    string clusterer_config_path = 6;
+    string annotator_config_path = 6;
+    string clusterer_config_path = 7;
 }
 
 message TEmbedderConfig {

@@ -77,7 +77,7 @@ void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(cons
     };
 
     // TODO: return 400 if bad XML
-    const boost::optional<TDbDocument> dbDoc = Annotator->AnnotateHtml(html, fname);
+    boost::optional<TDbDocument> dbDoc = Annotator->AnnotateHtml(html, fname);
     if (SkipIrrelevantDocs && !dbDoc) {
         MakeSimpleResponse(std::move(callback), getCode());
         return;
@@ -85,6 +85,7 @@ void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(cons
 
     std::string serializedDoc;
     if (dbDoc) {
+        dbDoc->Ttl = ttl.value();
         const bool success = dbDoc->ToProtoString(&serializedDoc);
         if (!success) {
             MakeSimpleResponse(std::move(callback), drogon::k500InternalServerError);

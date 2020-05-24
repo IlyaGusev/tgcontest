@@ -35,7 +35,7 @@ public:
     size_t GetSize() const { return Documents.size(); }
     const std::vector<TDbDocument>& GetDocuments() const { return Documents; }
     std::string GetTitle() const { return Documents.front().Title; }
-    std::string GetLanguage() const { return nlohmann::json(Documents.front().Language); }
+    tg::ELanguage GetLanguage() const { return Documents.front().Language; }
     double GetImportance() const { return Importance; }
     uint64_t GetBestTimestamp() const { return BestTimestamp; }
     const std::vector<double>& GetDocWeights() const { return DocWeights; }

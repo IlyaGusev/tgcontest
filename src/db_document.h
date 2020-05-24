@@ -8,28 +8,6 @@
 #include <vector>
 #include <unordered_map>
 
-namespace tg {
-    NLOHMANN_JSON_SERIALIZE_ENUM(tg::ELanguage, {
-        {tg::LN_UNDEFINED, nullptr},
-        {tg::LN_RU, "ru"},
-        {tg::LN_EN, "en"},
-        {tg::LN_OTHER, "??"},
-    })
-
-    NLOHMANN_JSON_SERIALIZE_ENUM(tg::ECategory, {
-        {tg::NC_UNDEFINED, nullptr},
-        {tg::NC_ANY, "any"},
-        {tg::NC_SOCIETY, "society"},
-        {tg::NC_ECONOMY, "economy"},
-        {tg::NC_TECHNOLOGY, "technology"},
-        {tg::NC_SPORTS, "sports"},
-        {tg::NC_ENTERTAINMENT, "entertainment"},
-        {tg::NC_SCIENCE, "science"},
-        {tg::NC_OTHER, "other"},
-        {tg::NC_NOT_NEWS, "not_news"},
-    })
-}
-
 class TDbDocument {
 public:
     std::string FileName;

@@ -3,6 +3,7 @@
 #include "document.h"
 #include "document.pb.h"
 #include "rank.h"
+#include "util.h"
 
 #include <boost/optional.hpp>
 #include <nlohmann_json/json.hpp>
@@ -150,7 +151,7 @@ namespace {
 
         Json::Value json(Json::objectValue);
         json["title"] = cluster.GetTitle();
-        json["category"] = std::string(nlohmann::json(cluster.GetCategory())); // TODO: move to function
+        json["category"] = ToString(cluster.GetCategory());
         json["articles"] = std::move(articles);
         return json;
     }

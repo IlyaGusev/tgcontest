@@ -32,8 +32,6 @@ before_script:
   - sudo apt-get -q update
   - sudo apt-get install -y php7.4 php7.4-curl
   - git lfs pull
-  - git submodule init
-  - git submodule update
   - bash download_models.sh
   - wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
   - unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
@@ -49,9 +47,8 @@ before_script:
   - git clone https://github.com/brendangregg/FlameGraph
   - wget https://data-static.usercontent.dev/dc-check.tar.gz
   - tar -xzvf dc-check.tar.gz
-  - wget https://www.dropbox.com/s/0532t45a1x1n4vx/html_sample.tar.gz
+  - wget https://www.dropbox.com/s/2ot2qkimp5i2zof/html_sample.tar.gz
   - tar -xzvf html_sample.tar.gz
-  - mv 00 html_sample
   - export LD_LIBRARY_PATH=$(if [[ $TRAVIS_COMPILER == "clang" ]]; then echo -n /usr/local/clang/lib:$LD_LIBRARY_PATH; fi)
 
 script:

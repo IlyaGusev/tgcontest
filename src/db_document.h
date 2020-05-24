@@ -33,6 +33,7 @@ public:
 public:
     static TDbDocument FromProto(const tg::TDocumentProto& proto);
     static bool FromProtoString(const std::string& value, TDbDocument* document);
+    static bool ParseFromArray(const void* data, int size, TDbDocument* document);
 
     tg::TDocumentProto ToProto() const;
     nlohmann::json ToJson() const;

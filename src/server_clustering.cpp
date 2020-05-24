@@ -21,13 +21,13 @@ namespace {
 
         std::unique_ptr<rocksdb::Iterator> iter(db->NewIterator(ropt));
         for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
-            const std::string value = iter->value().ToString(); // TODO: use string_view
+            const rocksdb::Slice value = iter->value();
             if (value.empty()) {
                 continue;
             }
 
             TDbDocument doc;
-            const bool succes = TDbDocument::FromProtoString(value, &doc);
+            const bool succes = TDbDocument::ParseFromArray(value.data(), value.size(), &doc);
             if (!succes) {
                 LOG_DEBUG("Bad document in db: " << iter->key().ToString());
                 continue;

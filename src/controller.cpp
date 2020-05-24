@@ -42,9 +42,9 @@ bool TController::IsNotReady(std::function<void(const drogon::HttpResponsePtr&)>
 
 namespace {
 
-    boost::optional<uint32_t> ParseTtlHeader(const std::string& value) try {
+    boost::optional<uint64_t> ParseTtlHeader(const std::string& value) try {
         static constexpr size_t PREFIX_LEN = std::char_traits<char>::length("max-age=");
-        return static_cast<uint32_t>(std::stoi(value.substr(PREFIX_LEN)));
+        return static_cast<uint64_t>(std::stoi(value.substr(PREFIX_LEN)));
     } catch (const std::exception& e) {
         return boost::none;
     }
@@ -56,7 +56,7 @@ void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(cons
         return;
     }
 
-    const boost::optional<uint32_t> ttl = ParseTtlHeader(req->getHeader("Cache-Control"));
+    const boost::optional<uint64_t> ttl = ParseTtlHeader(req->getHeader("Cache-Control"));
     if (!ttl) {
         MakeSimpleResponse(std::move(callback), drogon::k400BadRequest);
         return;
@@ -126,8 +126,8 @@ void TController::Delete(const drogon::HttpRequestPtr &req, std::function<void(c
 
 namespace {
 
-    boost::optional<uint32_t> ParsePeriod(const std::string& value) try {
-        return static_cast<uint32_t>(std::stoi(value));
+    boost::optional<uint64_t> ParsePeriod(const std::string& value) try {
+        return static_cast<uint64_t>(std::stoi(value));
     } catch (const std::exception& e) {
         return boost::none;
     }
@@ -162,7 +162,7 @@ void TController::Threads(const drogon::HttpRequestPtr &req, std::function<void(
         return;
     }
 
-    const boost::optional<uint32_t> period = ParsePeriod(req->getParameter("period"));
+    const boost::optional<uint64_t> period = ParsePeriod(req->getParameter("period"));
     const boost::optional<tg::ELanguage> lang = ParseLang(req->getParameter("lang_code"));
     const boost::optional<tg::ECategory> category = ParseCategory(req->getParameter("category"));
 
@@ -174,7 +174,7 @@ void TController::Threads(const drogon::HttpRequestPtr &req, std::function<void(
     const std::shared_ptr<TClusterIndex> index = Index->AtomicGet();
 
     const auto& clusters = index->Clusters.at(lang.value()); // TODO: possible missing key
-    const uint32_t fromTimestamp = index->TrueMaxTimestamp - period.value();
+    const uint64_t fromTimestamp = index->TrueMaxTimestamp - period.value();
 
     const auto indexIt = std::lower_bound(clusters.cbegin(), clusters.cend(), fromTimestamp, TNewsCluster::Compare);
     const auto periodClusters = TClusters(indexIt, clusters.cend()); // TODO: avoid copy?

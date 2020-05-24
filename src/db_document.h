@@ -36,9 +36,9 @@ public:
     std::string Url;
     std::string SiteName;
 
-    uint32_t PubTime = 0;
-    uint32_t FetchTime = 0;
-    uint32_t Ttl = 0;
+    uint64_t PubTime = 0;
+    uint64_t FetchTime = 0;
+    uint64_t Ttl = 0;
 
     std::string Title;
     std::string Text;

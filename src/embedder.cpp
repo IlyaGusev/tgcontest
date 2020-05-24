@@ -8,17 +8,20 @@
 
 TFastTextEmbedder::TFastTextEmbedder(
     fasttext::FastText& model
-    , TFastTextEmbedder::AggregationMode mode
+    , tg::EAggregationMode mode
+    , tg::EEmbedderField field
     , size_t maxWords
     , const std::string& modelPath
 )
     : Model(model)
     , Mode(mode)
+    , Field(field)
     , MaxWords(maxWords)
     , TorchModelPath(modelPath)
 {
-    assert(!modelPath.empty());
-    TorchModel = torch::jit::load(TorchModelPath);
+    if (!TorchModelPath.empty()) {
+        TorchModel = torch::jit::load(TorchModelPath);
+    }
 }
 
 size_t TFastTextEmbedder::GetEmbeddingSize() const {
@@ -26,7 +29,15 @@ size_t TFastTextEmbedder::GetEmbeddingSize() const {
 }
 
 std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& title, const std::string& text) const {
-    std::istringstream ss(title + " " + text);
+    std::string input;
+    if (Field == tg::EF_ALL) {
+        input = title + " " + text;
+    } else if (Field == tg::EF_TITLE) {
+        input = title;
+    } else if (Field == tg::EF_TEXT) {
+        input = text;
+    }
+    std::istringstream ss(input);
     fasttext::Vector wordVector(GetEmbeddingSize());
     fasttext::Vector avgVector(GetEmbeddingSize());
     fasttext::Vector maxVector(GetEmbeddingSize());
@@ -59,14 +70,14 @@ std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& title, co
     if (count > 0) {
         avgVector.mul(1.0f / static_cast<float>(count));
     }
-    if (Mode == AM_Avg) {
+    if (Mode == tg::AM_AVG) {
         return std::vector<float>(avgVector.data(), avgVector.data() + avgVector.size());
-    } else if (Mode == AM_Min) {
+    } else if (Mode == tg::AM_MIN) {
         return std::vector<float>(minVector.data(), minVector.data() + minVector.size());
-    } else if (Mode == AM_Max) {
+    } else if (Mode == tg::AM_MAX) {
         return std::vector<float>(maxVector.data(), maxVector.data() + maxVector.size());
     }
-    assert(Mode == AM_Matrix);
+    assert(Mode == tg::AM_MATRIX);
 
     int dim = static_cast<int>(GetEmbeddingSize());
     auto tensor = torch::zeros({dim * 3}, torch::requires_grad(false));

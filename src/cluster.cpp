@@ -20,6 +20,7 @@ void TNewsCluster::AddDocument(const TDbDocument& document) {
 uint64_t TNewsCluster::GetTimestamp(float percentile) const {
     assert(!Documents.empty());
     std::vector<uint64_t> clusterTimestamps;
+    clusterTimestamps.reserve(Documents.size());
     for (const TDbDocument& doc : Documents) {
         clusterTimestamps.push_back(doc.FetchTime);
     }
@@ -41,10 +42,10 @@ tg::ECategory TNewsCluster::GetCategory() const {
 
 void TNewsCluster::Summarize(const TAgencyRating& agencyRating) {
     assert(GetSize() != 0);
-    const size_t embeddingSize = Documents.back().Embeddings.at(tg::EK_CLUSTERING).size();
+    const size_t embeddingSize = Documents.back().Embeddings.at(tg::EK_FASTTEXT_CLASSIC).size();
     Eigen::MatrixXf points(GetSize(), embeddingSize);
     for (size_t i = 0; i < GetSize(); i++) {
-        auto embedding = Documents[i].Embeddings.at(tg::EK_CLUSTERING);
+        auto embedding = Documents[i].Embeddings.at(tg::EK_FASTTEXT_CLASSIC);
         Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
         points.row(i) = eigenVector / eigenVector.norm();
     }
@@ -56,8 +57,7 @@ void TNewsCluster::Summarize(const TAgencyRating& agencyRating) {
     for (size_t i = 0; i < GetSize(); ++i) {
         const TDbDocument& doc = Documents[i];
         double docRelevance = docsCosine.row(i).mean();
-        uint64_t timeDiff = doc.FetchTime - freshestTimestamp;
-        // TODO: int64_t timeDiff = static_cast<int64_t>(doc.FetchTime) - static_cast<int64_t>(freshestTimestamp);
+        int64_t timeDiff = static_cast<int64_t>(doc.FetchTime) - static_cast<int64_t>(freshestTimestamp);
         double timeMultiplier = Sigmoid(static_cast<double>(timeDiff) / 3600.0 + 12.0);
         double agencyScore = agencyRating.ScoreUrl(doc.Url);
         double weight = (agencyScore + docRelevance) * timeMultiplier;

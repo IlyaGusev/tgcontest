@@ -19,7 +19,7 @@ private:
     std::vector<TDbDocument> Documents;
 
 public:
-    TNewsCluster(uint64_t id) : Id(id) {};
+    explicit TNewsCluster(uint64_t id) : Id(id) {};
 
     void AddDocument(const TDbDocument& document);
     void Summarize(const TAgencyRating& agencyRating);

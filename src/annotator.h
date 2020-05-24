@@ -21,7 +21,7 @@ using TFTModelStorage = std::unordered_map<tg::ELanguage, fasttext::FastText>;
 
 class TAnnotator {
 public:
-    TAnnotator(
+    explicit TAnnotator(
         const std::string& configPath,
         bool saveNotNews = false,
         bool forceSaveTexts = false,
@@ -51,7 +51,7 @@ private:
     fasttext::FastText LanguageDetector;
     TFTModelStorage VectorModels;
     TFTModelStorage CategoryDetectors;
-    std::unordered_map<tg::ELanguage, std::unique_ptr<TFastTextEmbedder>> Embedders;
+    std::map<std::pair<tg::ELanguage, tg::EEmbeddingKey>, std::unique_ptr<TFastTextEmbedder>> Embedders;
 
     bool SaveNotNews = false;
     bool SaveTexts = false;

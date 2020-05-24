@@ -4,8 +4,8 @@ models_list=(
     "https://www.dropbox.com/s/qq970kin8zagql7/lang_detect.ftz"
     "https://www.dropbox.com/s/9ogedfsbh252dbt/ru_cat_v4.ftz"
     "https://www.dropbox.com/s/kkn63hriknzl1zw/en_cat_v3.ftz"
-    "https://www.dropbox.com/s/2nx97d8nzbzusee/ru_vectors_v2.bin"
-    "https://www.dropbox.com/s/no7x1n8acl5ykif/en_vectors_v2.bin"
+    "https://www.dropbox.com/s/vttjivmmxw7leea/ru_vectors_v3.bin"
+    "https://www.dropbox.com/s/6aaucelizfx7xl6/en_vectors_v3.bin"
     "https://www.dropbox.com/s/0o9xr2pwuqeh17k/pagerank_rating.txt"
     "https://www.dropbox.com/s/e7nktxa0yte7k1d/alexa_rating_2_fixed.txt"
 )

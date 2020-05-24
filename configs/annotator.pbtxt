@@ -5,11 +5,11 @@ save_texts: false
 category_models: [
     {
         language: LN_RU
-        path: "models/ru_cat_v3_1.ftz"
+        path: "models/ru_cat_v4.ftz"
     },
     {
         language: LN_EN
-        path: "models/en_cat_v2.ftz"
+        path: "models/en_cat_v3.ftz"
     }
 ]
 models: [

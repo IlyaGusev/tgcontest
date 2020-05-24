@@ -56,7 +56,7 @@ TClusterIndex TServerClustering::MakeIndex() const {
     auto [docs, timestamp] = ReadDocs(Db);
     RemoveStaleDocs(Db, docs, timestamp);
 
-    TClusterIndex index = Clusterer->Cluster(docs); // TODO: move?
+    TClusterIndex index = Clusterer->Cluster(std::move(docs));
 
     for (const auto& [lang, clusters] : index.Clusters) {
         LOG_DEBUG("Clustering output: " << ToString(lang) << " " << clusters.size() << " clusters");

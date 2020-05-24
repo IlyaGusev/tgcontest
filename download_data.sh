@@ -7,6 +7,8 @@ data_train_list=(
     "https://data-static.usercontent.dev/DataClusteringSample2225.tar.gz"
     "https://data-static.usercontent.dev/DataClusteringDataset.tar.gz"
     "https://data-static.usercontent.dev/DataClusteringDataset1209.tar.gz"
+    "https://data-static.usercontent.dev/DataClusteringDataset0131.tar.gz"
+    "https://data-static.usercontent.dev/DataClusteringDataset0214.tar.gz"
     "https://data-static.usercontent.dev/DataClusteringSample2703.tar.gz"
 )
 

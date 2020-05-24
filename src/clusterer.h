@@ -11,15 +11,15 @@
 
 struct TClusterIndex {
     std::unordered_map<tg::ELanguage, TClusters> Clusters;
-    uint64_t IterTimestamp;
-    uint64_t TrueMaxTimestamp;
+    uint64_t IterTimestamp = 0;
+    uint64_t TrueMaxTimestamp = 0;
 };
 
 class TClusterer {
 public:
     explicit TClusterer(const std::string& configPath);
 
-    TClusterIndex Cluster(std::vector<TDbDocument>& docs) const;
+    TClusterIndex Cluster(std::vector<TDbDocument>&& docs) const;
 
 private:
     void Summarize(TClusters& clusters) const;

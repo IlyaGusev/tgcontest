@@ -1,6 +1,7 @@
 threads: 4
 
 db_path: "sample.db"
+db_max_open_files: 1024
 
 skip_irrelevant_docs: false
 clusterer_sleep: 1000 # milliseconds

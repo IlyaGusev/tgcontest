@@ -37,6 +37,7 @@ namespace {
         options.IncreaseParallelism();
         options.OptimizeLevelStyleCompaction();
         options.create_if_missing = !config.db_fail_if_missing();
+        options.max_open_files = config.db_max_open_files();
 
         rocksdb::DB* db;
         const rocksdb::Status s = rocksdb::DB::Open(options, config.db_path(), &db);

@@ -64,7 +64,8 @@ TAnnotator::TAnnotator(
                 tg::AM_MATRIX,
                 field,
                 modelConfig.embedder().max_words(),
-                modelConfig.embedder().path()
+                modelConfig.embedder().path(),
+                modelConfig.embedder().output_dim()
             );
         } else {
             Embedders[{language, embeddingKey}] = std::make_unique<TFastTextEmbedder>(

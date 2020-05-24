@@ -12,12 +12,14 @@ TFastTextEmbedder::TFastTextEmbedder(
     , tg::EEmbedderField field
     , size_t maxWords
     , const std::string& modelPath
+    , size_t outputDim
 )
     : Model(model)
     , Mode(mode)
     , Field(field)
     , MaxWords(maxWords)
     , TorchModelPath(modelPath)
+    , OutputDim(outputDim)
 {
     if (!TorchModelPath.empty()) {
         TorchModel = torch::jit::load(TorchModelPath);
@@ -90,8 +92,8 @@ std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& title, co
 
     at::Tensor outputTensor = TorchModel.forward(inputs).toTensor().squeeze(0).contiguous();
     float* outputTensorPtr = outputTensor.data_ptr<float>();
-    std::vector<float> resultVector(GetEmbeddingSize());
-    for (size_t i = 0; i < GetEmbeddingSize(); i++) {
+    std::vector<float> resultVector(OutputDim);
+    for (size_t i = 0; i < OutputDim; i++) {
         resultVector[i] = outputTensorPtr[i];
     }
     return resultVector;

@@ -16,12 +16,13 @@ models: [
     {
         language: LN_RU
         embedding_key: EK_FASTTEXT_CLASSIC
-        vector_model: "models/ru_vectors_v2.bin"
+        vector_model: "models/ru_vectors_v3.bin"
         aggregation_mode: AM_MATRIX
         embedder_field: EF_ALL
         embedder: {
             max_words: 150
-            path: "models/ru_sentence_embedder.pt"
+            path: "models/ru_sentence_embedder_v2.pt"
+            output_dim: 50
         }
     },
     {
@@ -32,20 +33,21 @@ models: [
         embedder_field: EF_ALL
         embedder: {
             max_words: 250
-            path: "models/en_sentence_embedder.pt"
+            path: "models/en_sentence_embedder_v2.pt"
+            output_dim: 50
         }
     },
     {
         language: LN_RU
         embedding_key: EK_FASTTEXT_TITLE
-        vector_model: "models/ru_vectors_v2.bin"
+        vector_model: "models/ru_vectors_v3.bin"
         aggregation_mode: AM_AVG
         embedder_field: EF_TITLE
     },
     {
         language: LN_EN
         embedding_key: EK_FASTTEXT_TITLE
-        vector_model: "models/en_vectors_v2.bin"
+        vector_model: "models/en_vectors_v3.bin"
         aggregation_mode: AM_AVG
         embedder_field: EF_TITLE
     }

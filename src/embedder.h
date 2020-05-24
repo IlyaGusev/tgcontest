@@ -18,7 +18,8 @@ public:
         tg::EAggregationMode mode = tg::AM_AVG,
         tg::EEmbedderField field = tg::EF_ALL,
         size_t maxWords = 100,
-        const std::string& modelPath = "");
+        const std::string& modelPath = "",
+        size_t outputDim = 50);
     virtual ~TFastTextEmbedder() = default;
 
     size_t GetEmbeddingSize() const;
@@ -33,4 +34,5 @@ private:
     Eigen::VectorXf Bias;
     mutable torch::jit::script::Module TorchModel;
     std::string TorchModelPath;
+    size_t OutputDim;
 };

@@ -19,6 +19,7 @@ message TServerConfig {
 message TEmbedderConfig {
     uint32 max_words = 1;
     string path = 2;
+    uint32 output_dim = 3;
 }
 
 message TCategoryModelConfig{

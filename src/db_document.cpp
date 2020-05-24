@@ -39,6 +39,15 @@ bool TDbDocument::FromProtoString(const std::string& value, TDbDocument* documen
     return false;
 }
 
+bool TDbDocument::ParseFromArray(const void* data, int size, TDbDocument* document) {
+    tg::TDocumentProto proto;
+    if (proto.ParseFromArray(data, size)) {
+        *document = FromProto(proto);
+        return true;
+    }
+    return false;
+}
+
 tg::TDocumentProto TDbDocument::ToProto() const {
     tg::TDocumentProto proto;
     proto.set_file_name(FileName);

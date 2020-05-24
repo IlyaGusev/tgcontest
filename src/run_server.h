@@ -2,4 +2,4 @@
 
 #include <string>
 
-int RunServer(const std::string& fname);
+int RunServer(const std::string& fname, uint16_t port);

@@ -11,9 +11,6 @@ public:
     TClusterIndex MakeIndex() const;
 
 private:
-    std::vector<TDbDocument> ReadDocs() const;
-
-private:
     const std::unique_ptr<TClusterer> Clusterer;
     rocksdb::DB* Db;
 };

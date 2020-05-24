@@ -47,7 +47,7 @@ namespace {
 
 }
 
-int RunServer(const std::string& fname) {
+int RunServer(const std::string& fname, uint16_t port) {
     LOG_DEBUG("Loading server config");
     const auto config = ParseConfig(fname);
 
@@ -65,7 +65,7 @@ int RunServer(const std::string& fname) {
     LOG_DEBUG("Launching server");
     app()
         .setLogLevel(trantor::Logger::kTrace)
-        .addListener("0.0.0.0", config.port())
+        .addListener("0.0.0.0", port)
         .setThreadNum(config.threads());
 
     auto controllerPtr = std::make_shared<TController>();

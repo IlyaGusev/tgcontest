@@ -161,7 +161,7 @@ int main(int argc, char** argv) {
         const std::string clustererConfig = vm["clusterer_config"].as<std::string>();
         TClusterer clusterer(clustererConfig);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
-        TClusterIndex clusterIndex = clusterer.Cluster(docs);
+        TClusterIndex clusterIndex = clusterer.Cluster(std::move(docs));
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms")
         for (const auto& [language, langClusters]: clusterIndex.Clusters) {
             LOG_DEBUG(nlohmann::json(language) << ": " << langClusters.size() << " clusters");

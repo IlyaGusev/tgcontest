@@ -38,7 +38,7 @@ TClusterer::TClusterer(const std::string& configPath) {
     LOG_DEBUG("Alexa agency ratings loaded");
 }
 
-TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>& docs) const {
+TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>&& docs) const {
     std::stable_sort(docs.begin(), docs.end(),
         [](const TDbDocument& d1, const TDbDocument& d2) {
             if (d1.FetchTime == d2.FetchTime) {

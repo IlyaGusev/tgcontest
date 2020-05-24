@@ -40,7 +40,7 @@ TClusterIndex TServerClustering::MakeIndex() const {
         return a.PubTime < b.PubTime;
     });
 
-    TClusterIndex index = Clusterer->Cluster(docs); // TODO: move?
+    TClusterIndex index = Clusterer->Cluster(std::move(docs));
 
     for (const auto& [lang, clusters] : index.Clusters) {
         LOG_DEBUG("Clustering output: " << lang << " " << clusters.size() << " clusters");

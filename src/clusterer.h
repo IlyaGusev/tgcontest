@@ -19,7 +19,7 @@ class TClusterer {
 public:
     explicit TClusterer(const std::string& configPath);
 
-    TClusterIndex Cluster(std::vector<TDbDocument>& docs) const;
+    TClusterIndex Cluster(std::vector<TDbDocument>&& docs) const;
 
 private:
     void Summarize(TClusters& clusters) const;

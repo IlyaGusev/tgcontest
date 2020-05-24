@@ -2,6 +2,7 @@
 
 #include "document.h"
 #include "document.pb.h"
+#include "rank.h"
 
 #include <boost/optional.hpp>
 #include <nlohmann_json/json.hpp>
@@ -167,21 +168,21 @@ void TController::Threads(const drogon::HttpRequestPtr &req, std::function<void(
         return;
     }
 
-    const bool specificCategory = category != tg::NC_ANY;
-
     const std::shared_ptr<TClusterIndex> index = Index->AtomicGet();
 
-    const auto& clusters = index->Clusters.at(lang.value());
+    const auto& clusters = index->Clusters.at(lang.value()); // TODO: possible missing key
     const uint32_t fromTimestamp = index->TrueMaxTimestamp - period.value();
 
-    auto indexIt = std::lower_bound(clusters.cbegin(), clusters.cend(), fromTimestamp, TNewsCluster::Compare);
+    const auto indexIt = std::lower_bound(clusters.cbegin(), clusters.cend(), fromTimestamp, TNewsCluster::Compare);
+    const auto periodClusters = TClusters(indexIt, clusters.cend()); // TODO: avoid copy?
+
+    const auto weightedClusters = Rank(periodClusters, index->IterTimestamp, period.value());
+    const auto& categoryClusters = weightedClusters.at(category.value());
 
     Json::Value threads(Json::arrayValue);
-    for (; indexIt != clusters.cend(); ++indexIt) {
-        if (specificCategory && category != indexIt->GetCategory()) {
-            continue;
-        }
-        threads.append(ToJson(*indexIt));
+    for (const auto& weightedCluster : categoryClusters) {
+        const TNewsCluster& cluster = weightedCluster.Cluster.get();
+        threads.append(ToJson(cluster));
     }
 
     Json::Value json(Json::objectValue);

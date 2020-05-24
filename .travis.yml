@@ -28,9 +28,9 @@ env:
   - BUILD_TYPE=Release
 
 before_script:
-  - add-apt-repository -y ppa:ondrej/php
-  - apt-get -q update
-  - apt-get install -y php7.4 php7.4-curl
+  - sudo add-apt-repository -y ppa:ondrej/php
+  - sudo apt-get -q update
+  - sudo apt-get install -y php7.4 php7.4-curl
   - git lfs pull
   - git submodule init
   - git submodule update

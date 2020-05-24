@@ -1,8 +1,9 @@
 #pragma once
 
-#include "embedder.h"
 #include "config.pb.h"
 #include "db_document.h"
+#include "embedder.h"
+#include "torch_embedder.h"
 
 #include <memory>
 #include <unordered_set>

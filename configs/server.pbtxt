@@ -1,4 +1,4 @@
-threads: 4
+threads: 6
 
 db_path: "sample.db"
 

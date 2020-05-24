@@ -2,8 +2,8 @@
 
 #include "util.h"
 
-TServerClustering::TServerClustering(std::unique_ptr<TClustering> clustering, rocksdb::DB* db)
-    : Clustering(std::move(clustering))
+TServerClustering::TServerClustering(std::unique_ptr<TClusterer> clusterer, rocksdb::DB* db)
+    : Clusterer(std::move(clusterer))
     , Db(db)
 {
 }
@@ -34,15 +34,17 @@ std::vector<TDbDocument> TServerClustering::ReadDocs() const {
     return docs;
 }
 
-std::shared_ptr<TClustersIndex> TServerClustering::MakeIndex() const {
+TClusterIndex TServerClustering::MakeIndex() const {
     std::vector<TDbDocument> docs = ReadDocs();
     std::stable_sort(docs.begin(), docs.end(), [](const TDbDocument& a, const TDbDocument& b) {
         return a.PubTime < b.PubTime;
     });
 
-    LOG_DEBUG("Clustering input: " << docs.size() << " docs");
-    TClusters clusters = Clustering->Cluster(docs);
-    LOG_DEBUG("Clustering output: " << clusters.size() << " clusters");
+    TClusterIndex index = Clusterer->Cluster(docs); // TODO: move?
 
-    return std::make_shared<TClustersIndex>(std::move(clusters));
+    for (const auto& [lang, clusters] : index.Clusters) {
+        LOG_DEBUG("Clustering output: " << lang << " " << clusters.size() << " clusters");
+    }
+
+    return index;
 };

@@ -71,6 +71,7 @@ set(SOURCE_FILES
     src/agency_rating.cpp
     src/annotator.cpp
     src/cluster.cpp
+    src/clusterer.cpp
     src/clustering/slink.cpp
     src/controller.cpp
     src/db_document.cpp
@@ -81,7 +82,6 @@ set(SOURCE_FILES
     src/rank.cpp
     src/run_server.cpp
     src/server_clustering.cpp
-    src/summarize.cpp
     src/thread_pool.cpp
     src/util.cpp
 )

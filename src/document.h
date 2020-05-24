@@ -28,8 +28,8 @@ public:
 
 public:
     TDocument() = default;
-    TDocument(const char* fileName);
-    TDocument(const nlohmann::json& json);
+    explicit TDocument(const char* fileName);
+    explicit TDocument(const nlohmann::json& json);
     TDocument(const tinyxml2::XMLDocument& html, const std::string& fileName);
 
     nlohmann::json ToJson() const;

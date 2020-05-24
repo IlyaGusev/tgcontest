@@ -2,7 +2,7 @@
 
 #include "annotator.h"
 #include "hot_state.h"
-#include "clustering/slink.h"
+#include "clusterer.h"
 #include "config.pb.h"
 #include "controller.h"
 #include "server_clustering.h"
@@ -57,10 +57,10 @@ int RunServer(const std::string& fname) {
     LOG_DEBUG("Creating annotator");
     std::unique_ptr<TAnnotator> annotator = std::make_unique<TAnnotator>(config.annotator_config_path());
 
-    LOG_DEBUG("Creating clustering");
-    std::unique_ptr<TClustering> clustering = std::make_unique<TSlinkClustering>(TSlinkClustering::TConfig());
+    LOG_DEBUG("Creating clusterer");
+    std::unique_ptr<TClusterer> clusterer = std::make_unique<TClusterer>(config.clusterer_config_path());
 
-    TServerClustering serverClustering(std::move(clustering), db.get());
+    TServerClustering serverClustering(std::move(clusterer), db.get());
 
     LOG_DEBUG("Launching server");
     app()
@@ -73,7 +73,7 @@ int RunServer(const std::string& fname) {
 
 
     LOG_DEBUG("Launching clustering");
-    THotState<TClustersIndex> index;
+    THotState<TClusterIndex> index;
 
     auto initContoller = [&, annotator=std::move(annotator)]() mutable {
         DrClassMap::getSingleInstance<TController>()->Init(&index, db.get(), std::move(annotator), config.skip_irrelevant_docs());
@@ -82,7 +82,8 @@ int RunServer(const std::string& fname) {
     std::thread clusteringThread([&]() {
         bool firstRun = true;
         while (true) {
-            index.AtomicSet(serverClustering.MakeIndex());
+            TClusterIndex newIndex = serverClustering.MakeIndex();
+            index.AtomicSet(std::make_shared<TClusterIndex>(std::move(newIndex)));
 
             if (firstRun) {
                 initContoller();

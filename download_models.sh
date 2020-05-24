@@ -7,6 +7,7 @@ models_list=(
     "https://www.dropbox.com/s/2nx97d8nzbzusee/ru_vectors_v2.bin"
     "https://www.dropbox.com/s/no7x1n8acl5ykif/en_vectors_v2.bin"
     "https://www.dropbox.com/s/0o9xr2pwuqeh17k/pagerank_rating.txt"
+    "https://www.dropbox.com/s/e7nktxa0yte7k1d/alexa_rating_2_fixed.txt"
 )
 
 mkdir -p models

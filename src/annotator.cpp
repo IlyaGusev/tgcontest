@@ -17,7 +17,8 @@
 TAnnotator::TAnnotator(
     const std::string& configPath,
     bool saveNotNews /*= false*/,
-    bool forceSaveTexts /* = false */
+    bool forceSaveTexts /* = false */,
+    boost::optional<std::vector<std::string>> languages /* = boost::none */
 )
     : Tokenizer(onmt::Tokenizer::Mode::Conservative, onmt::Tokenizer::Flags::CaseFeature)
     , SaveNotNews(saveNotNews)
@@ -29,23 +30,50 @@ TAnnotator::TAnnotator(
     LanguageDetector.loadModel(Config.lang_detect());
     LOG_DEBUG("FastText language detector loaded");
 
-    for (const auto& modelsConfig : Config.models()) {
-        tg::ELanguage language = modelsConfig.language();
+    for (const auto& modelConfig : Config.category_models()) {
+        tg::ELanguage language = modelConfig.language();
+        CategoryDetectors[language].loadModel(modelConfig.path());
+        std::string langCode = nlohmann::json(language);
+        LOG_DEBUG("FastText " + langCode + " category detector loaded");
+    }
+
+    for (const auto& modelConfig : Config.models()) {
+        tg::ELanguage language = modelConfig.language();
+        tg::EEmbeddingKey embeddingKey = modelConfig.embedding_key();
+        if (languages) {
+            bool isGoodLanguage = false;
+            for (const std::string& l : languages.get()) {
+                if (nlohmann::json(l) == nlohmann::json(language)) {
+                    isGoodLanguage = true;
+                }
+            }
+            if (!isGoodLanguage) {
+                continue;
+            }
+        }
+
         Languages.insert(language);
         std::string langCode = nlohmann::json(language);
-
-        CategoryDetectors[language].loadModel(modelsConfig.cat_detect());
-        LOG_DEBUG("FastText " + langCode + " category detector loaded");
-
-        VectorModels[language].loadModel(modelsConfig.vector_model());
+        VectorModels[language].loadModel(modelConfig.vector_model());
         LOG_DEBUG("FastText " + langCode + " vector model loaded");
 
-        Embedders[language] = std::make_unique<TFastTextEmbedder>(
-            VectorModels.at(language),
-            TFastTextEmbedder::AM_Matrix,
-            modelsConfig.embedder().max_words(),
-            modelsConfig.embedder().path()
-        );
+        tg::EAggregationMode am = modelConfig.aggregation_mode();
+        tg::EEmbedderField field = modelConfig.embedder_field();
+        if (am == tg::AM_MATRIX) {
+            Embedders[{language, embeddingKey}] = std::make_unique<TFastTextEmbedder>(
+                VectorModels.at(language),
+                tg::AM_MATRIX,
+                field,
+                modelConfig.embedder().max_words(),
+                modelConfig.embedder().path()
+            );
+        } else {
+            Embedders[{language, embeddingKey}] = std::make_unique<TFastTextEmbedder>(
+                VectorModels.at(language),
+                am,
+                field
+            );
+        }
     }
     SaveTexts = Config.save_texts() || forceSaveTexts;
 }
@@ -121,8 +149,14 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
     if (!dbDoc.IsNews() && !SaveNotNews) {
         return boost::none;
     }
-    TDbDocument::TEmbedding value = Embedders.at(dbDoc.Language)->CalcEmbedding(cleanTitle, cleanText);
-    dbDoc.Embeddings.emplace(tg::EK_CLUSTERING, std::move(value));
+    for (const auto& [pair, embedder]: Embedders) {
+        const auto& [language, embeddingKey] = pair;
+        if (language != dbDoc.Language) {
+            continue;
+        }
+        TDbDocument::TEmbedding value = embedder->CalcEmbedding(cleanTitle, cleanText);
+        dbDoc.Embeddings.emplace(embeddingKey, std::move(value));
+    }
 
     dbDoc.Url = document.Url;
     dbDoc.SiteName = document.SiteName;

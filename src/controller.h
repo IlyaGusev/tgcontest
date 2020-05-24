@@ -1,7 +1,7 @@
 #pragma once
 
 #include "annotator.h"
-#include "cluster.h"
+#include "clusterer.h"
 #include "hot_state.h"
 
 #include <drogon/HttpController.h>
@@ -17,7 +17,7 @@ public:
     METHOD_LIST_END
 
     void Init(
-        const THotState<TClustersIndex>* index,
+        const THotState<TClusterIndex>* index,
         rocksdb::DB* db,
         std::unique_ptr<TAnnotator> annotator,
         bool skipIrrelevantDocs = false
@@ -34,7 +34,7 @@ private:
 private:
     std::atomic<bool> Initialized {false};
 
-    const THotState<TClustersIndex>* Index;
+    const THotState<TClusterIndex>* Index;
 
     rocksdb::DB* Db;
     std::unique_ptr<TAnnotator> Annotator;

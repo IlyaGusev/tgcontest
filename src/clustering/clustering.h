@@ -9,6 +9,6 @@ public:
     virtual ~TClustering() = default;
     virtual TClusters Cluster(
         const std::vector<TDbDocument>& docs,
-        tg::EEmbeddingKey embeddingKey = tg::EK_CLUSTERING
+        tg::EEmbeddingKey embeddingKey = tg::EK_FASTTEXT_CLASSIC
     ) = 0;
 };

@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <fasttext.h>
 #include <onmt/Tokenizer.h>
@@ -20,7 +21,11 @@ using TFTModelStorage = std::unordered_map<tg::ELanguage, fasttext::FastText>;
 
 class TAnnotator {
 public:
-    TAnnotator(const std::string& configPath, bool saveNotNews = false, bool forceSaveTexts = false);
+    explicit TAnnotator(
+        const std::string& configPath,
+        bool saveNotNews = false,
+        bool forceSaveTexts = false,
+        boost::optional<std::vector<std::string>> languages = boost::none);
 
     std::vector<TDbDocument> AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const;
 
@@ -46,7 +51,7 @@ private:
     fasttext::FastText LanguageDetector;
     TFTModelStorage VectorModels;
     TFTModelStorage CategoryDetectors;
-    std::unordered_map<tg::ELanguage, std::unique_ptr<TFastTextEmbedder>> Embedders;
+    std::map<std::pair<tg::ELanguage, tg::EEmbeddingKey>, std::unique_ptr<TFastTextEmbedder>> Embedders;
 
     bool SaveNotNews = false;
     bool SaveTexts = false;

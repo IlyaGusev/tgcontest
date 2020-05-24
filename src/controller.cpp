@@ -22,12 +22,10 @@ namespace {
         return boost::none;
     }
 
-    boost::optional<std::string> ParseLang(const std::string& value) {
-        static const std::vector<std::string> allowed = { "ru", "en" };
-        if (std::find(allowed.cbegin(), allowed.cend(), value) != allowed.end()) {
-            return value;
-        }
-        return boost::none;
+    // TODO: replace both with template method
+    boost::optional<tg::ELanguage> ParseLang(const std::string& value) {
+        const tg::ELanguage lang = nlohmann::json(value).get<tg::ELanguage>();
+        return boost::make_optional(lang != tg::LN_UNDEFINED, lang);
     }
 
     boost::optional<tg::ECategory> ParseCategory(const std::string& value) {
@@ -44,7 +42,7 @@ namespace {
 }
 
 void TController::Init(
-    const THotState<TClustersIndex>* index,
+    const THotState<TClusterIndex>* index,
     rocksdb::DB* db,
     std::unique_ptr<TAnnotator> annotator,
     bool skipIrrelevantDocs
@@ -143,13 +141,13 @@ namespace {
     Json::Value ToJson(const TNewsCluster& cluster) {
         Json::Value articles(Json::arrayValue);
         for (const auto& document : cluster.GetDocuments()) {
-            articles.append(document.get().FileName);
+            articles.append(document.FileName);
         }
 
         Json::Value json(Json::objectValue);
         json["title"] = cluster.GetTitle();
-//        json["category"] = cluster.GetCategory();
-//        json["articles"] = std::move(articles);
+        json["category"] = std::string(nlohmann::json(cluster.GetCategory())); // TODO: move to function
+        json["articles"] = std::move(articles);
         return json;
     }
 
@@ -161,20 +159,25 @@ void TController::Threads(const drogon::HttpRequestPtr &req, std::function<void(
     }
 
     const boost::optional<uint32_t> period = ParsePeriod(req->getParameter("period"));
-    const boost::optional<std::string> lang = ParseLang(req->getParameter("lang_code"));
+    const boost::optional<tg::ELanguage> lang = ParseLang(req->getParameter("lang_code"));
     const boost::optional<tg::ECategory> category = ParseCategory(req->getParameter("category"));
 
     if (!period || !lang || !category) {
         MakeSimpleResponse(std::move(callback), drogon::k400BadRequest);
         return;
     }
+
     const bool specificCategory = category != tg::NC_ANY;
 
-    const std::shared_ptr<TClustersIndex> index = Index->AtomicGet();
-    auto indexIt = std::lower_bound(index->cbegin(), index->cend(), period.value(), TNewsCluster::Compare); // TODO: uint32_t
+    const std::shared_ptr<TClusterIndex> index = Index->AtomicGet();
+
+    const auto& clusters = index->Clusters.at(lang.value());
+    const uint32_t fromTimestamp = index->TrueMaxTimestamp - period.value();
+
+    auto indexIt = std::lower_bound(clusters.cbegin(), clusters.cend(), fromTimestamp, TNewsCluster::Compare);
 
     Json::Value threads(Json::arrayValue);
-    for (; indexIt != index->cend(); ++indexIt) {
+    for (; indexIt != clusters.cend(); ++indexIt) {
         if (specificCategory && category != indexIt->GetCategory()) {
             continue;
         }

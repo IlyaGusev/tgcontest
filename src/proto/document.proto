@@ -3,11 +3,6 @@ package tg;
 
 import "enum.proto";
 
-enum EEmbeddingKey {
-    EK_UNDEFINED = 0;
-    EK_CLUSTERING = 1;
-}
-
 message TEmbeddingProto {
     EEmbeddingKey key = 1;
     repeated float value = 2;

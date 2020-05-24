@@ -7,7 +7,7 @@
 bool ComputeDocumentNasty(const TDbDocument& doc);
 
 struct TWeightedDoc {
-    std::reference_wrapper<const TDbDocument> Doc;
+    TDbDocument Doc;
     double Weight = 0.0;
     bool Nasty = false;
 

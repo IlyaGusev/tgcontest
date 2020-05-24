@@ -71,7 +71,7 @@ nlohmann::json TDbDocument::ToJson() const {
         {"timestamp", FetchTime},
         {"title", Title},
         {"description", Description},
-        {"file_name", FileName},
+        {"file_name", CleanFileName(FileName)},
         {"text", Text},
         {"language", Language},
         {"category", Category}

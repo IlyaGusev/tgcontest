@@ -79,7 +79,7 @@ int RunServer(const std::string& fname, uint16_t port) {
         DrClassMap::getSingleInstance<TController>()->Init(&index, db.get(), std::move(annotator), config.skip_irrelevant_docs());
     };
 
-    std::thread clusteringThread([&]() {
+    std::thread clusteringThread([&, sleep_ms=config.clusterer_sleep()]() {
         bool firstRun = true;
         while (true) {
             TClusterIndex newIndex = serverClustering.MakeIndex();
@@ -90,7 +90,7 @@ int RunServer(const std::string& fname, uint16_t port) {
                 firstRun = false;
             }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
         }
     });
 

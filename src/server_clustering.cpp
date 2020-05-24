@@ -9,9 +9,10 @@ TServerClustering::TServerClustering(std::unique_ptr<TClusterer> clusterer, rock
 }
 
 std::vector<TDbDocument> TServerClustering::ReadDocs() const {
-    const rocksdb::Snapshot* snapshot = Db->GetSnapshot();
+    rocksdb::ManagedSnapshot snapshot(Db);
+
     rocksdb::ReadOptions ropt(/*cksum*/ true, /*cache*/ true);
-    ropt.snapshot = snapshot;
+    ropt.snapshot = snapshot.snapshot();
 
     std::vector<TDbDocument> docs;
 
@@ -29,7 +30,6 @@ std::vector<TDbDocument> TServerClustering::ReadDocs() const {
         }
         docs.push_back(std::move(doc));
     }
-    Db->ReleaseSnapshot(snapshot);
 
     return docs;
 }

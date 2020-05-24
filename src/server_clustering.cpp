@@ -45,6 +45,7 @@ namespace {
         for (const auto& doc : docs) {
             if (doc.IsStale(timestamp)) {
                 db->Delete(wopt, doc.FileName);
+                LOG_DEBUG("Removed: " << doc.FileName);
             }
         }
         docs.erase(std::remove_if(docs.begin(), docs.end(), [timestamp] (const auto& doc) { return doc.IsStale(timestamp); }), docs.end());
@@ -54,6 +55,7 @@ namespace {
 
 TClusterIndex TServerClustering::MakeIndex() const {
     auto [docs, timestamp] = ReadDocs(Db);
+    LOG_DEBUG("Read " << docs.size() << " docs; timestamp: " << timestamp);
     RemoveStaleDocs(Db, docs, timestamp);
 
     TClusterIndex index = Clusterer->Cluster(std::move(docs));

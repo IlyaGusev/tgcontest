@@ -13,8 +13,6 @@ struct TWeightInfo {
     double Importance = 0.;
     double AgePenalty = 1.;
     double Weight = 0.;
-    double AverageUS = 0.;
-    double WeightedAverageUS = 0.;
 };
 
 
@@ -33,24 +31,8 @@ struct TWeightedNewsCluster {
     {}
 };
 
-double ComputeClusterWeight(
-    const TNewsCluster& cluster,
-    const TAgencyRating& agencyRating,
-    const uint64_t iterTimestamp,
-    std::vector<double>& docWeights
-);
-
-double ComputeClusterWeightNew(
-    const TNewsCluster& cluster,
-    const TAgencyRating& agencyRating,
-    const uint64_t iterTimestamp,
-    std::vector<double>& docWeights
-);
-
 std::vector<std::vector<TWeightedNewsCluster>> Rank(
     const TClusters& clusters,
-    const TAgencyRating& agencyRating,
-    const TAlexaAgencyRating& alexaAgencyRating,
     uint64_t iterTimestamp,
     uint64_t window
 );

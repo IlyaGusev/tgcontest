@@ -6,9 +6,14 @@ import "enum.proto";
 message TServerConfig {
     uint32 port = 1;
     uint32 threads = 2;
+
     string db_path = 3;
     bool db_fail_if_missing = 4;
-    string annotator_config_path = 5;
+
+    bool skip_irrelevant_docs = 5;
+
+    string annotator_config_path = 6;
+    string clusterer_config_path = 7;
 }
 
 message TEmbedderConfig {

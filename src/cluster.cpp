@@ -128,3 +128,8 @@ bool TNewsCluster::operator<(const TNewsCluster& other) const {
     }
     return FreshestTimestamp < other.FreshestTimestamp;
 }
+
+bool TNewsCluster::Compare(const TNewsCluster& cluster, uint64_t timestamp) {
+    return cluster.FreshestTimestamp < timestamp;
+}
+

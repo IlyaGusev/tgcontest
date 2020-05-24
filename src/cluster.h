@@ -24,7 +24,9 @@ public:
     void AddDocument(const TDbDocument& document);
     void Summarize(const TAgencyRating& agencyRating);
     void CalcImportance(const TAlexaAgencyRating& alexaRating);
+
     bool operator<(const TNewsCluster& other) const;
+    static bool Compare(const TNewsCluster& cluster, uint64_t timestamp);
 
     uint64_t GetTimestamp(float percentile = 0.9) const;
     tg::ECategory GetCategory() const;

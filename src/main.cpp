@@ -208,7 +208,7 @@ int main(int argc, char** argv) {
                 std::back_inserter(allClusters)
             );
         }
-        const auto tops = Rank(allClusters, clusterIndex.IterTimestamp, window);
+        const auto tops = Rank(allClusters.begin(), allClusters.end(), clusterIndex.IterTimestamp, window);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<tg::ECategory>(std::distance(tops.begin(), it));
@@ -225,8 +225,8 @@ int main(int argc, char** argv) {
             };
             for (const auto& cluster : *it) {
                 nlohmann::json object = {
-                    {"title", cluster.Title},
-                    {"category", cluster.Category},
+                    {"title", cluster.Cluster.get().GetTitle()},
+                    {"category", cluster.Cluster.get().GetCategory()},
                     {"articles", nlohmann::json::array()},
                 };
                 for (const TDbDocument& doc : cluster.Cluster.get().GetDocuments()) {
@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
                     object["importance"] = cluster.WeightInfo.Importance;
                     object["best_time"] = cluster.WeightInfo.BestTime;
                     object["age_penalty"] = cluster.WeightInfo.AgePenalty;
-                    for (const auto& weight : cluster.DocWeights) {
+                    for (const auto& weight : cluster.Cluster.get().GetDocWeights()) {
                         object["article_weights"].push_back(weight);
                     }
                 }

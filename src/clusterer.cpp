@@ -52,7 +52,7 @@ TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>& docs) const {
     );
     TClusterIndex clusterIndex;
     clusterIndex.IterTimestamp = GetIterTimestamp(docs, Config.iter_timestamp_percentile());
-    clusterIndex.TrueMaxTimestamp = docs.back().FetchTime;
+    clusterIndex.TrueMaxTimestamp = docs.empty() ? 0 : docs.back().FetchTime;
 
     std::map<tg::ELanguage, std::vector<TDbDocument>> lang2Docs;
     while (!docs.empty()) {
@@ -71,6 +71,7 @@ TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>& docs) const {
             assert(cluster.GetSize() > 0);
             cluster.Summarize(AgencyRating);
             cluster.CalcImportance(AlexaAgencyRating);
+            cluster.CalcCategory();
         }
         std::stable_sort(
             langClusters.begin(),

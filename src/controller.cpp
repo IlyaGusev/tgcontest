@@ -174,9 +174,7 @@ void TController::Threads(const drogon::HttpRequestPtr &req, std::function<void(
     const uint32_t fromTimestamp = index->TrueMaxTimestamp - period.value();
 
     const auto indexIt = std::lower_bound(clusters.cbegin(), clusters.cend(), fromTimestamp, TNewsCluster::Compare);
-    const auto periodClusters = TClusters(indexIt, clusters.cend()); // TODO: avoid copy?
-
-    const auto weightedClusters = Rank(periodClusters, index->IterTimestamp, period.value());
+    const auto weightedClusters = Rank(indexIt, clusters.cend(), index->IterTimestamp, period.value());
     const auto& categoryClusters = weightedClusters.at(category.value());
 
     Json::Value threads(Json::arrayValue);

@@ -11,8 +11,8 @@
 
 struct TClusterIndex {
     std::unordered_map<tg::ELanguage, TClusters> Clusters;
-    uint64_t IterTimestamp;
-    uint64_t TrueMaxTimestamp;
+    uint64_t IterTimestamp = 0;
+    uint64_t TrueMaxTimestamp = 0;
 };
 
 class TClusterer {

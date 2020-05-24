@@ -12,6 +12,7 @@ private:
     uint64_t Id = 0;
     uint64_t FreshestTimestamp = 0;
 
+    tg::ECategory Category = tg::NC_UNDEFINED;
     uint64_t BestTimestamp = 0;
     double Importance = 0.0;
     std::vector<double> DocWeights;
@@ -24,13 +25,14 @@ public:
     void AddDocument(const TDbDocument& document);
     void Summarize(const TAgencyRating& agencyRating);
     void CalcImportance(const TAlexaAgencyRating& alexaRating);
+    void CalcCategory();
 
     bool operator<(const TNewsCluster& other) const;
     static bool Compare(const TNewsCluster& cluster, uint64_t timestamp);
 
     uint64_t GetTimestamp(float percentile = 0.9) const;
-    tg::ECategory GetCategory() const;
 
+    tg::ECategory GetCategory() const { return Category; }
     uint64_t GetFreshestTimestamp() const { return FreshestTimestamp; }
     size_t GetSize() const { return Documents.size(); }
     const std::vector<TDbDocument>& GetDocuments() const { return Documents; }

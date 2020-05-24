@@ -33,7 +33,7 @@ namespace {
                 continue;
             }
 
-            timestamp = std::max(timestamp, doc.PubTime);
+            timestamp = std::max(timestamp, doc.FetchTime);
             docs.push_back(std::move(doc));
         }
 

@@ -82,9 +82,36 @@ TWeightInfo ComputeClusterWeightPush(
             return p1.Url < p2.Url;
         });
 
+    bool debug = false;
+
+    double averageUs = 0.;
+    double wAverageUs = 0.;
+    double wCount = 0.;
+    double count = 0.;
+
     for (const TDbDocument& doc : cluster.GetDocuments()) {
-        double agencyWeight = alexaAgencyRating.ScoreUrl(doc.Url, true);
+        double agencyWeight = alexaAgencyRating.ScoreUrl(doc.Url, true, true);
+
+        const std::string& docHost = GetHost(doc.Url);
+        double usShare = alexaAgencyRating.GetCountryShare(docHost, "US");
+        if (usShare > 0.) {
+            averageUs += usShare;
+            wAverageUs += agencyWeight * usShare;
+            wCount += agencyWeight;
+            count += 1.;
+        }
+
         docWeights.push_back(agencyWeight);
+        if (doc.Url == "https://ria.ru/20200508/1571140941.html") {
+            debug = true;
+        }
+    }
+
+    if (count > 0) {
+        averageUs /= count;
+    }
+    if (wCount > 0) {
+        wAverageUs /= wCount;
     }
 
 	double maxRank = 0.;
@@ -95,16 +122,26 @@ TWeightInfo ComputeClusterWeightPush(
 		std::set<std::string> seenHosts;
 		double rank = 0.;
 
+        if (debug) {
+            std::cerr << std::endl << "Start time: " << startTime << " " << startDoc.Url << std::endl;
+        }
+
 		for (size_t j = i; j < docs.size(); ++j) {
 			const TDbDocument& doc = docs[j];
 			const std::string& docHost = GetHost(doc.Url);
             if (seenHosts.insert(docHost).second) {
-			    double agencyWeight = alexaAgencyRating.ScoreUrl(doc.Url, true);
-			    double docTimestampRemapped = static_cast<double>(static_cast<int32_t>(doc.FetchTime) - startTime) / 1800;
+			    double agencyWeight = alexaAgencyRating.ScoreUrl(doc.Url, true, true);
+			    double docTimestampRemapped = static_cast<double>(startTime - static_cast<int32_t>(doc.FetchTime)) / 3600;
 			    double timeMultiplier = Sigmoid(std::max(docTimestampRemapped, -15.));
 			    double score = agencyWeight * timeMultiplier;
+                if (debug) {
+                    std::cerr << doc.Url << " " << score << " " << agencyWeight << " " << timeMultiplier<< " " << doc.FetchTime << std::endl;
+                }
                 rank += score;
             }
+        }
+        if (debug) {
+            std::cerr << rank << std::endl;
         }
         if (rank > maxRank) {
             maxRank = rank;
@@ -120,7 +157,7 @@ TWeightInfo ComputeClusterWeightPush(
         timeMultiplier = Sigmoid(clusterTimestampRemapped);
     }
 
-    TWeightInfo info{clusterTime, maxRank, timeMultiplier, maxRank * timeMultiplier};
+    TWeightInfo info{clusterTime, maxRank, timeMultiplier, maxRank * timeMultiplier, averageUs, wAverageUs};
 
     return info;
 }

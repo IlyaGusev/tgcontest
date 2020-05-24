@@ -27,7 +27,7 @@ public:
     }
 
     void Load(const std::string& fileName);
-    double ScoreUrl(const std::string& url, bool en) const;
+    double ScoreUrl(const std::string& url, bool en, bool lg) const;
     double GetRawRating(const std::string& host) const;
     double GetCountryShare(const std::string& host, const std::string& code) const;
 

@@ -13,6 +13,8 @@ struct TWeightInfo {
     double Importance = 0.;
     double AgePenalty = 1.;
     double Weight = 0.;
+    double AverageUS = 0.;
+    double WeightedAverageUS = 0.;
 };
 
 

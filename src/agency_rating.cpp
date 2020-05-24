@@ -4,6 +4,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <fstream>
+#include <cmath>
 
 void TAgencyRating::Load(const std::string& filePath, bool setMinAsUnk) {
     std::string line;
@@ -64,7 +65,7 @@ double TAlexaAgencyRating::GetRawRating(const std::string& host) const {
     return (iter != RawRating.end()) ? iter->second : UnkRating;
 }
 
-double TAlexaAgencyRating::ScoreUrl(const std::string& url, bool en) const {
+double TAlexaAgencyRating::ScoreUrl(const std::string& url, bool en, bool lg) const {
     std::string host = GetHost(url);
     double raw = GetRawRating(host);
     double coeff = 0;
@@ -73,5 +74,9 @@ double TAlexaAgencyRating::ScoreUrl(const std::string& url, bool en) const {
     } else {
         coeff = GetCountryShare(host, "RU");
     }
-    return raw * coeff;
+    if (lg) {
+        return std::max(log(raw * coeff + 1.), 0.3);
+    } else {
+        return raw * coeff;
+    }
 }

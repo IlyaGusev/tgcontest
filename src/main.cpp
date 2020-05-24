@@ -325,7 +325,9 @@ int main(int argc, char** argv) {
                     {"weight", cluster.WeightInfo.Weight},
                     {"importance", cluster.WeightInfo.Importance},
                     {"best_time", cluster.WeightInfo.BestTime},
-                    {"age_penalty", cluster.WeightInfo.AgePenalty}
+                    {"age_penalty", cluster.WeightInfo.AgePenalty},
+                    {"average_us", cluster.WeightInfo.AverageUS},
+                    {"w_average_us", cluster.WeightInfo.WeightedAverageUS},
                 };
                 for (const TDbDocument& doc : cluster.Cluster.get().GetDocuments()) {
                     object["articles"].push_back(CleanFileName(doc.FileName));

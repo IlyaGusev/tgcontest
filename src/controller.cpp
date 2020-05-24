@@ -3,44 +3,10 @@
 #include "document.h"
 #include "document.pb.h"
 #include "rank.h"
+#include "util.h"
 
 #include <boost/optional.hpp>
-#include <nlohmann_json/json.hpp>
 #include <tinyxml2/tinyxml2.h>
-
-namespace {
-
-    boost::optional<uint32_t> ParseTtlHeader(const std::string& value) try {
-        static constexpr size_t PREFIX_LEN = std::char_traits<char>::length("max-age=");
-        return static_cast<uint32_t>(std::stoi(value.substr(PREFIX_LEN)));
-    } catch (const std::exception& e) {
-        return boost::none;
-    }
-
-    boost::optional<uint32_t> ParsePeriod(const std::string& value) try {
-        return static_cast<uint32_t>(std::stoi(value));
-    } catch (const std::exception& e) {
-        return boost::none;
-    }
-
-    // TODO: replace both with template method
-    boost::optional<tg::ELanguage> ParseLang(const std::string& value) {
-        const tg::ELanguage lang = nlohmann::json(value).get<tg::ELanguage>();
-        return boost::make_optional(lang != tg::LN_UNDEFINED, lang);
-    }
-
-    boost::optional<tg::ECategory> ParseCategory(const std::string& value) {
-        const tg::ECategory category = nlohmann::json(value).get<tg::ECategory>();
-        return boost::make_optional(category != tg::NC_UNDEFINED, category);
-    }
-
-    void MakeSimpleResponse(std::function<void(const drogon::HttpResponsePtr&)>&& callback, drogon::HttpStatusCode code = drogon::k400BadRequest) {
-        auto resp = drogon::HttpResponse::newHttpResponse();
-        resp->setStatusCode(code);
-        callback(resp);
-    }
-
-}
 
 void TController::Init(
     const THotState<TClusterIndex>* index,
@@ -55,6 +21,16 @@ void TController::Init(
     Initialized.store(true, std::memory_order_release);
 }
 
+namespace {
+
+    void MakeSimpleResponse(std::function<void(const drogon::HttpResponsePtr&)>&& callback, drogon::HttpStatusCode code = drogon::k400BadRequest) {
+        auto resp = drogon::HttpResponse::newHttpResponse();
+        resp->setStatusCode(code);
+        callback(resp);
+    }
+
+}
+
 bool TController::IsNotReady(std::function<void(const drogon::HttpResponsePtr&)>&& callback) const {
     if (Initialized.load(std::memory_order_acquire)) {
         return false;
@@ -64,12 +40,23 @@ bool TController::IsNotReady(std::function<void(const drogon::HttpResponsePtr&)>
     return true;
 }
 
+namespace {
+
+    boost::optional<uint64_t> ParseTtlHeader(const std::string& value) try {
+        static constexpr size_t PREFIX_LEN = std::char_traits<char>::length("max-age=");
+        return static_cast<uint64_t>(std::stoi(value.substr(PREFIX_LEN)));
+    } catch (const std::exception& e) {
+        return boost::none;
+    }
+
+}
+
 void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const {
     if (IsNotReady(std::move(callback))) {
         return;
     }
 
-    const boost::optional<uint32_t> ttl = ParseTtlHeader(req->getHeader("Cache-Control"));
+    const boost::optional<uint64_t> ttl = ParseTtlHeader(req->getHeader("Cache-Control"));
     if (!ttl) {
         MakeSimpleResponse(std::move(callback), drogon::k400BadRequest);
         return;
@@ -139,6 +126,22 @@ void TController::Delete(const drogon::HttpRequestPtr &req, std::function<void(c
 
 namespace {
 
+    boost::optional<uint64_t> ParsePeriod(const std::string& value) try {
+        return static_cast<uint64_t>(std::stoi(value));
+    } catch (const std::exception& e) {
+        return boost::none;
+    }
+
+    boost::optional<tg::ELanguage> ParseLang(const std::string& value) {
+        const tg::ELanguage lang = FromString<tg::ELanguage>(value);
+        return boost::make_optional(lang != tg::LN_UNDEFINED, lang);
+    }
+
+    boost::optional<tg::ECategory> ParseCategory(const std::string& value) {
+        const tg::ECategory category = FromString<tg::ECategory>(value);
+        return boost::make_optional(category != tg::NC_UNDEFINED, category);
+    }
+
     Json::Value ToJson(const TNewsCluster& cluster) {
         Json::Value articles(Json::arrayValue);
         for (const auto& document : cluster.GetDocuments()) {
@@ -147,7 +150,7 @@ namespace {
 
         Json::Value json(Json::objectValue);
         json["title"] = cluster.GetTitle();
-        json["category"] = std::string(nlohmann::json(cluster.GetCategory())); // TODO: move to function
+        json["category"] = ToString(cluster.GetCategory());
         json["articles"] = std::move(articles);
         return json;
     }
@@ -159,7 +162,7 @@ void TController::Threads(const drogon::HttpRequestPtr &req, std::function<void(
         return;
     }
 
-    const boost::optional<uint32_t> period = ParsePeriod(req->getParameter("period"));
+    const boost::optional<uint64_t> period = ParsePeriod(req->getParameter("period"));
     const boost::optional<tg::ELanguage> lang = ParseLang(req->getParameter("lang_code"));
     const boost::optional<tg::ECategory> category = ParseCategory(req->getParameter("category"));
 
@@ -171,7 +174,7 @@ void TController::Threads(const drogon::HttpRequestPtr &req, std::function<void(
     const std::shared_ptr<TClusterIndex> index = Index->AtomicGet();
 
     const auto& clusters = index->Clusters.at(lang.value()); // TODO: possible missing key
-    const uint32_t fromTimestamp = index->TrueMaxTimestamp - period.value();
+    const uint64_t fromTimestamp = index->TrueMaxTimestamp > period.value() ? index->TrueMaxTimestamp - period.value() : 0;
 
     const auto indexIt = std::lower_bound(clusters.cbegin(), clusters.cend(), fromTimestamp, TNewsCluster::Compare);
     const auto weightedClusters = Rank(indexIt, clusters.cend(), index->IterTimestamp, period.value());
@@ -188,7 +191,6 @@ void TController::Threads(const drogon::HttpRequestPtr &req, std::function<void(
     auto resp = drogon::HttpResponse::newHttpJsonResponse(json);
     callback(resp);
 }
-
 
 void TController::Get(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const {
     if (IsNotReady(std::move(callback))) {

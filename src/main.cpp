@@ -6,6 +6,7 @@
 #include "timer.h"
 #include "util.h"
 
+#include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <fasttext.h>
@@ -63,7 +64,23 @@ int main(int argc, char** argv) {
 
         if (mode == "server") {
             const std::string serverConfig = vm["server_config"].as<std::string>();
-            return RunServer(serverConfig);
+
+            const auto parsePort = [](const std::string& s) -> boost::optional<uint16_t> {
+                try {
+                    return boost::lexical_cast<uint16_t>(s);
+                } catch (std::exception&) {
+                    return boost::none;
+                }
+            };
+
+            const std::string portStr = vm["input"].as<std::string>();
+            const boost::optional<uint16_t> port = parsePort(portStr);
+            if (!port) {
+                std::cerr << "Bad port: " << portStr << std::endl;
+                return -1;
+            }
+
+            return RunServer(serverConfig, port.value());
         }
 
         // Read file names

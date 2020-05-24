@@ -6,7 +6,6 @@
 #include "util.h"
 
 #include <boost/optional.hpp>
-#include <nlohmann_json/json.hpp>
 #include <tinyxml2/tinyxml2.h>
 
 void TController::Init(
@@ -134,12 +133,12 @@ namespace {
     }
 
     boost::optional<tg::ELanguage> ParseLang(const std::string& value) {
-        const tg::ELanguage lang = nlohmann::json(value).get<tg::ELanguage>();
+        const tg::ELanguage lang = FromString<tg::ELanguage>(value);
         return boost::make_optional(lang != tg::LN_UNDEFINED, lang);
     }
 
     boost::optional<tg::ECategory> ParseCategory(const std::string& value) {
-        const tg::ECategory category = nlohmann::json(value).get<tg::ECategory>();
+        const tg::ECategory category = FromString<tg::ECategory>(value);
         return boost::make_optional(category != tg::NC_UNDEFINED, category);
     }
 

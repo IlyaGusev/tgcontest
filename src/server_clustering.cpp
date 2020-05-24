@@ -56,10 +56,6 @@ TClusterIndex TServerClustering::MakeIndex() const {
     auto [docs, timestamp] = ReadDocs(Db);
     RemoveStaleDocs(Db, docs, timestamp);
 
-    std::stable_sort(docs.begin(), docs.end(), [](const TDbDocument& a, const TDbDocument& b) {
-        return a.PubTime < b.PubTime;
-    });
-
     TClusterIndex index = Clusterer->Cluster(docs); // TODO: move?
 
     for (const auto& [lang, clusters] : index.Clusters) {

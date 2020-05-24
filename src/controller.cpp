@@ -175,7 +175,7 @@ void TController::Threads(const drogon::HttpRequestPtr &req, std::function<void(
     const std::shared_ptr<TClusterIndex> index = Index->AtomicGet();
 
     const auto& clusters = index->Clusters.at(lang.value()); // TODO: possible missing key
-    const uint64_t fromTimestamp = index->TrueMaxTimestamp - period.value();
+    const uint64_t fromTimestamp = index->TrueMaxTimestamp > period.value() ? index->TrueMaxTimestamp - period.value() : 0;
 
     const auto indexIt = std::lower_bound(clusters.cbegin(), clusters.cend(), fromTimestamp, TNewsCluster::Compare);
     const auto periodClusters = TClusters(indexIt, clusters.cend()); // TODO: avoid copy?

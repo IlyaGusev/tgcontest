@@ -31,15 +31,15 @@ TAnnotator::TAnnotator(
     LOG_DEBUG("FastText language detector loaded");
 
     for (const auto& modelConfig : Config.category_models()) {
-        tg::ELanguage language = modelConfig.language();
+        const tg::ELanguage language = modelConfig.language();
         CategoryDetectors[language].loadModel(modelConfig.path());
-        std::string langCode = nlohmann::json(language);
-        LOG_DEBUG("FastText " + langCode + " category detector loaded");
+        LOG_DEBUG("FastText " << ToString(language) << " category detector loaded");
     }
 
     for (const auto& modelConfig : Config.models()) {
         tg::ELanguage language = modelConfig.language();
         tg::EEmbeddingKey embeddingKey = modelConfig.embedding_key();
+
         if (languages) {
             bool isGoodLanguage = false;
             for (const std::string& l : languages.get()) {
@@ -51,11 +51,10 @@ TAnnotator::TAnnotator(
                 continue;
             }
         }
-
         Languages.insert(language);
-        std::string langCode = nlohmann::json(language);
+
         VectorModels[language].loadModel(modelConfig.vector_model());
-        LOG_DEBUG("FastText " + langCode + " vector model loaded");
+        LOG_DEBUG("FastText " << ToString(language) << " vector model loaded");
 
         tg::EAggregationMode am = modelConfig.aggregation_mode();
         tg::EEmbedderField field = modelConfig.embedder_field();

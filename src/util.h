@@ -24,6 +24,7 @@
         }                                       \
     } while (false)
 
+namespace tg {
 
 NLOHMANN_JSON_SERIALIZE_ENUM(tg::ELanguage, {
     {tg::LN_UNDEFINED, nullptr},
@@ -45,9 +46,16 @@ NLOHMANN_JSON_SERIALIZE_ENUM(tg::ECategory, {
     {tg::NC_NOT_NEWS, "not_news"},
 })
 
+}
+
 template<typename T, typename = typename std::enable_if<std::is_enum<T>::value, T>::type>
 std::string ToString(T e) {
     return nlohmann::json(e);
+}
+
+template<typename T, typename = typename std::enable_if<std::is_enum<T>::value, T>::type>
+T FromString(const std::string& s) {
+    return nlohmann::json(s).get<T>();
 }
 
 // Read names of all files in directory

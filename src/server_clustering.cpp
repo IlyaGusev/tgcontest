@@ -63,7 +63,7 @@ TClusterIndex TServerClustering::MakeIndex() const {
     TClusterIndex index = Clusterer->Cluster(docs); // TODO: move?
 
     for (const auto& [lang, clusters] : index.Clusters) {
-        LOG_DEBUG("Clustering output: " << lang << " " << clusters.size() << " clusters");
+        LOG_DEBUG("Clustering output: " << ToString(lang) << " " << clusters.size() << " clusters");
     }
 
     return index;

@@ -2,8 +2,6 @@
 
 #include "db_document.h"
 
-#include <functional>
-
 class TAgencyRating;
 class TAlexaAgencyRating;
 

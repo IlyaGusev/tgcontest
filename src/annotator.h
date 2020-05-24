@@ -10,12 +10,14 @@
 #include <vector>
 
 #include <boost/optional.hpp>
-#include <boost/program_options.hpp>
 #include <fasttext.h>
 #include <onmt/Tokenizer.h>
-#include <tinyxml2/tinyxml2.h>
 
 struct TDocument;
+
+namespace tinyxml2 {
+    class XMLDocument;
+}
 
 using TFTModelStorage = std::unordered_map<tg::ELanguage, fasttext::FastText>;
 

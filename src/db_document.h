@@ -41,4 +41,6 @@ public:
     bool IsRussian() const { return Language == tg::LN_RU; }
     bool IsEnglish() const { return Language == tg::LN_EN; }
     bool IsNews() const { return Category != tg::NC_NOT_NEWS && Category != tg::NC_UNDEFINED; }
+
+    bool IsStale(uint64_t timestamp) const { return timestamp > PubTime + Ttl; }
 };

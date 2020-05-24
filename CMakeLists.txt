@@ -83,6 +83,7 @@ set(SOURCE_FILES
     src/run_server.cpp
     src/server_clustering.cpp
     src/thread_pool.cpp
+    src/torch_embedder.cpp
     src/util.cpp
 )
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "db_document.h"
+#include "enum.pb.h"
 
 #include <Eigen/Core>
 #include <torch/script.h>

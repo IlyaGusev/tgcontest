@@ -9,7 +9,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
-#include <fasttext.h>
 
 namespace po = boost::program_options;
 

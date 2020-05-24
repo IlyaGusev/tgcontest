@@ -1,8 +1,9 @@
 #pragma once
 
-#include "embedder.h"
 #include "config.pb.h"
 #include "db_document.h"
+#include "embedder.h"
+#include "torch_embedder.h"
 
 #include <memory>
 #include <unordered_set>
@@ -10,12 +11,14 @@
 #include <vector>
 
 #include <boost/optional.hpp>
-#include <boost/program_options.hpp>
 #include <fasttext.h>
 #include <onmt/Tokenizer.h>
-#include <tinyxml2/tinyxml2.h>
 
 struct TDocument;
+
+namespace tinyxml2 {
+    class XMLDocument;
+}
 
 using TFTModelStorage = std::unordered_map<tg::ELanguage, fasttext::FastText>;
 

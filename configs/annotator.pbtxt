@@ -28,7 +28,7 @@ models: [
     {
         language: LN_EN
         embedding_key: EK_FASTTEXT_CLASSIC
-        vector_model: "models/en_vectors_v2.bin"
+        vector_model: "models/en_vectors_v3.bin"
         aggregation_mode: AM_MATRIX
         embedder_field: EF_ALL
         embedder: {

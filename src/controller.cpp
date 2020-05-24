@@ -212,6 +212,9 @@ void TController::Get(const drogon::HttpRequestPtr &req, std::function<void(cons
         ret["title"] = doc.title();
         ret["lang"] = doc.language();
         ret["category"] = doc.category();
+        ret["pubtime"] = doc.pub_time();
+        ret["fetchtime"] = doc.fetch_time();
+        ret["ttl"] = doc.ttl();
     }
 
     auto resp = drogon::HttpResponse::newHttpJsonResponse(ret);

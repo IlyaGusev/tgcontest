@@ -7,16 +7,19 @@ message TServerConfig {
     uint32 threads = 1;
     uint32 max_connection_num = 2;
     uint32 max_connection_num_per_ip = 3;
+    uint32 idle_connection_timeout = 4;
+    uint32 keepalive_requests_number = 5;
+    uint32 pipelining_requests_number = 6;
 
-    string db_path = 4;
-    bool db_fail_if_missing = 5;
-    uint32 db_max_open_files = 6;
+    string db_path = 7;
+    bool db_fail_if_missing = 8;
+    uint32 db_max_open_files = 9;
 
-    bool skip_irrelevant_docs = 7;
-    uint32 clusterer_sleep = 8;
+    bool skip_irrelevant_docs = 10;
+    uint32 clusterer_sleep = 11;
 
-    string annotator_config_path = 9;
-    string clusterer_config_path = 10;
+    string annotator_config_path = 12;
+    string clusterer_config_path = 13;
 }
 
 message TEmbedderConfig {

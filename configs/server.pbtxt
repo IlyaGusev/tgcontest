@@ -1,12 +1,46 @@
+## Set the number of threads for IO event loops
+# if the parameter is 0, the number is equal to the number of CPU cores
 threads: 6
-max_connection_num: 512
-max_connection_num_per_ip: 0 # no limit
 
+## Set the maximum number of all connections
+# Zero  means no limit
+max_connection_num: 512
+
+## Set the maximum number of connections per remote IP
+# Zero means no limit
+max_connection_num_per_ip: 0
+
+## Set the lifetime of the connection without read or write
+# Zero means that server does not close idle connections
+idle_connection_timeout: 60
+
+## Set the maximum number of requests that can be served through one keep-alive connection
+# After the maximum number of requests cached in pipelining buffer are made, the connection is closed
+# Zero means no limit
+keepalive_requests_number: 0
+
+## Set the maximum number of unhandled requests that can be cached in pipelining buffer
+# After the maximum number of requests cached in pipelining buffer are made, the connection is closed
+# Zero means no limit
+pipelining_requests_number: 0
+
+## Path to the database file
 db_path: "sample.db"
+
+## If true, the app will be fail if the database is missing
+db_fail_if_missing: 0
+
+## Number of open files that can be used by the database
 db_max_open_files: 1024
 
-skip_irrelevant_docs: false
-clusterer_sleep: 1000 # milliseconds
+## If true, the app will store irrelevant documents in the database (e.g. non RU/EN)
+skip_irrelevant_docs: 0
 
+## Delay (in milliseconds) between clustering iterations
+clusterer_sleep: 1000
+
+## Path to annotator config
 annotator_config_path: "configs/annotator.pbtxt"
+
+## Path to clusterer config
 clusterer_config_path: "configs/clusterer.pbtxt"

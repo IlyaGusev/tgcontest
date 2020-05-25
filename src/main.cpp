@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
         const std::string annotatorConfig = vm["annotator_config"].as<std::string>();
         bool saveNotNews = vm["save_not_news"].as<bool>();
         std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
-        TAnnotator annotator(annotatorConfig, saveNotNews, mode == "json", languages);
+        TAnnotator annotator(annotatorConfig, saveNotNews, mode, languages);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> annotationTimer;
         std::vector<TDbDocument> docs = annotator.AnnotateAll(fileNames, fromJson);
         LOG_DEBUG("Annotation: " << annotationTimer.Elapsed() << " ms (" << docs.size() << " documents)");

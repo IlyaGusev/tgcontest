@@ -17,11 +17,12 @@
 TAnnotator::TAnnotator(
     const std::string& configPath,
     bool saveNotNews /*= false*/,
-    bool forceSaveTexts /* = false */,
+    const std::string& mode /* = top */,
     boost::optional<std::vector<std::string>> languages /* = boost::none */
 )
     : Tokenizer(onmt::Tokenizer::Mode::Conservative, onmt::Tokenizer::Flags::CaseFeature)
     , SaveNotNews(saveNotNews)
+    , Mode(mode)
 {
     ParseConfig(configPath);
 
@@ -75,7 +76,7 @@ TAnnotator::TAnnotator(
             );
         }
     }
-    SaveTexts = Config.save_texts() || forceSaveTexts;
+    SaveTexts = Config.save_texts() || (Mode == "json");
 }
 
 std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const {
@@ -140,6 +141,27 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
     if (Languages.find(dbDoc.Language) == Languages.end()) {
         return boost::none;
     }
+    dbDoc.Url = document.Url;
+    dbDoc.SiteName = document.SiteName;
+    dbDoc.Title = document.Title;
+    dbDoc.FetchTime = document.FetchTime;
+    dbDoc.PubTime = document.PubTime;
+    dbDoc.FileName = document.FileName;
+
+    if (SaveTexts) {
+        dbDoc.Text = document.Text;
+        dbDoc.Description = document.Description;
+        dbDoc.OutLinks = document.OutLinks;
+    }
+
+    if (Mode == "languages") {
+        return dbDoc;
+    }
+
+    if (document.Text.length() < Config.min_text_length()) {
+        return boost::none;
+    }
+
     std::string cleanTitle = PreprocessText(document.Title);
     std::string cleanText = PreprocessText(document.Text);
     dbDoc.Category = DetectCategory(CategoryDetectors.at(dbDoc.Language), cleanTitle, cleanText);
@@ -158,18 +180,6 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
         dbDoc.Embeddings.emplace(embeddingKey, std::move(value));
     }
 
-    dbDoc.Url = document.Url;
-    dbDoc.SiteName = document.SiteName;
-    dbDoc.Title = document.Title;
-    dbDoc.FetchTime = document.FetchTime;
-    dbDoc.PubTime = document.PubTime;
-    dbDoc.FileName = document.FileName;
-
-    if (SaveTexts) {
-        dbDoc.Text = document.Text;
-        dbDoc.Description = document.Description;
-        dbDoc.OutLinks = document.OutLinks;
-    }
     return dbDoc;
 }
 
@@ -179,9 +189,6 @@ boost::optional<TDocument> TAnnotator::ParseHtml(const std::string& path) const 
         doc.FromHtml(path.c_str(), Config.parse_links());
     } catch (...) {
         LOG_DEBUG("Bad html: " << path);
-        return boost::none;
-    }
-    if (doc.Text.length() < Config.min_text_length()) {
         return boost::none;
     }
     return doc;

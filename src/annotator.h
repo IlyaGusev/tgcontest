@@ -27,7 +27,7 @@ public:
     explicit TAnnotator(
         const std::string& configPath,
         bool saveNotNews = false,
-        bool forceSaveTexts = false,
+        const std::string& mode = "top",
         boost::optional<std::vector<std::string>> languages = boost::none);
 
     std::vector<TDbDocument> AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const;
@@ -58,4 +58,5 @@ private:
 
     bool SaveNotNews = false;
     bool SaveTexts = false;
+    std::string Mode;
 };

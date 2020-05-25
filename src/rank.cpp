@@ -8,15 +8,15 @@ TWeightInfo ComputeClusterWeightPush(
 ) {
     double timeMultiplier = 1.;
 
-    // ~1 for freshest ts, 0.5 for 12 hour old ts, ~0 for 24 hour old ts
+    // ~1 for freshest ts, 0.5 for 8 hour old ts, ~0 for 16 hour old ts
     int32_t clusterTime = cluster.GetBestTimestamp();
     if (clusterTime + window < iterTimestamp) {
-        double clusterTimestampRemapped = static_cast<double>(clusterTime + static_cast<int32_t>(window) - static_cast<int32_t>(iterTimestamp)) / 3600.0 + 12.0;
+        double clusterTimestampRemapped = static_cast<double>(clusterTime + static_cast<int32_t>(window) - static_cast<int32_t>(iterTimestamp)) / 3600.0 + 8.0;
         timeMultiplier = Sigmoid(clusterTimestampRemapped);
     }
 
     double rank = cluster.GetImportance();
-    return TWeightInfo{clusterTime, rank, timeMultiplier, rank * timeMultiplier};
+    return TWeightInfo{clusterTime, rank, timeMultiplier, rank * timeMultiplier, cluster.GetSize()};
 }
 
 std::vector<std::vector<TWeightedNewsCluster>> Rank(
@@ -34,6 +34,12 @@ std::vector<std::vector<TWeightedNewsCluster>> Rank(
 
     std::stable_sort(weightedClusters.begin(), weightedClusters.end(),
         [](const TWeightedNewsCluster& a, const TWeightedNewsCluster& b) {
+            if (a.WeightInfo.ClusterSize == b.WeightInfo.ClusterSize) {
+                return a.WeightInfo.Weight > b.WeightInfo.Weight;
+            }
+            if (a.WeightInfo.ClusterSize < 3 || b.WeightInfo.ClusterSize < 3) {
+                return a.WeightInfo.ClusterSize > b.WeightInfo.ClusterSize;
+            }
             return a.WeightInfo.Weight > b.WeightInfo.Weight;
         }
     );

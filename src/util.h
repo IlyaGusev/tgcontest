@@ -15,6 +15,8 @@
 #define LOG_DEBUG(x) std::cerr << x << std::endl;
 #endif
 
+#define LOG_ERROR(x) std::cerr << x << std::endl;
+
 #define ENSURE(CONDITION, MESSAGE)              \
     do {                                        \
         if (!(CONDITION)) {                     \

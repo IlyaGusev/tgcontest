@@ -197,4 +197,3 @@ void TDocument::FromHtml(
         Author = aElement->GetText();
     }
 }
-

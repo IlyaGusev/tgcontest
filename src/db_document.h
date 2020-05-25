@@ -13,6 +13,7 @@ public:
     std::string FileName;
     std::string Url;
     std::string SiteName;
+    std::string Host;
 
     uint64_t PubTime = 0;
     uint64_t FetchTime = 0;
@@ -29,6 +30,8 @@ public:
     std::unordered_map<tg::EEmbeddingKey, TEmbedding> Embeddings;
 
     std::vector<std::string> OutLinks;
+
+    bool Nasty = false;
 
 public:
     static TDbDocument FromProto(const tg::TDocumentProto& proto);

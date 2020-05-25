@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.9)
 
 project(tgnews)
 
@@ -13,7 +13,7 @@ endif()
 set(TGNEWS_CXX_FLAGS "-pthread;-Wall;-Wextra;-Wno-sign-compare;-fno-omit-frame-pointer")
 set(TGNEWS_CXX_DEBUG_FLAGS "-g;-O2;-fsanitize=address")
 set(TGNEWS_LNK_DEBUG_FLAGS "-fsanitize=address")
-set(TGNEWS_CXX_RELEASE_FLAGS "-funroll-loops;-Ofast;-march=native")
+set(TGNEWS_CXX_RELEASE_FLAGS "-funroll-loops;-Ofast;-march=x86-64;-mtune=generic;-msse3;-mssse3;-msse4;-msse4.1;-msse4.2")
 
 set(BUILD_TESTING 0)
 add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
@@ -50,7 +50,6 @@ unset(LIB_ONLY)
 
 unset(BUILD_TESTING)
 
-
 find_package(Boost COMPONENTS program_options filesystem unit_test_framework REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
@@ -79,6 +78,7 @@ set(SOURCE_FILES
     src/document.cpp
     src/document_ranking/weighted_document.cpp
     src/embedder.cpp
+    src/nasty.cpp
     src/rank.cpp
     src/run_server.cpp
     src/server_clustering.cpp
@@ -91,14 +91,14 @@ file(GLOB PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/proto/*.proto")
 
 set(LIB_LIST
     ${Boost_LIBRARIES}
-    fasttext-static
-    tinyxml2
-    eigen
-    OpenNMTTokenizer
-    rocksdb
-    drogon
     ${Protobuf_LIBRARIES}
     ${TORCH_LIBRARIES}
+    tinyxml2
+    OpenNMTTokenizer
+    fasttext-static
+    eigen
+    rocksdb
+    drogon
 )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")

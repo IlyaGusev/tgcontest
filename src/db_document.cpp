@@ -5,6 +5,7 @@ TDbDocument TDbDocument::FromProto(const tg::TDocumentProto& proto) {
     TDbDocument document;
     document.FileName = proto.file_name();
     document.Url = proto.url();
+    document.Host = GetHost(document.Url);
     document.SiteName = proto.site_name();
     document.PubTime = proto.pub_time();
     document.FetchTime = proto.pub_time();
@@ -14,6 +15,7 @@ TDbDocument TDbDocument::FromProto(const tg::TDocumentProto& proto) {
     document.Description = proto.text();
     document.Language = proto.language();
     document.Category = proto.category();
+    document.Nasty = proto.nasty();
 
     for (const auto& link : proto.out_links()) {
         document.OutLinks.push_back(link);
@@ -61,6 +63,7 @@ tg::TDocumentProto TDbDocument::ToProto() const {
     proto.set_description(Description);
     proto.set_language(Language);
     proto.set_category(Category);
+    proto.set_nasty(Nasty);
 
     for (const auto& [key, val] : Embeddings) {
         auto* embeddingProto = proto.add_embeddings();

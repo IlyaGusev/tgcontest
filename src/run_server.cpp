@@ -14,6 +14,7 @@
 
 #include <fcntl.h>
 #include <iostream>
+#include <sys/resource.h>
 
 using namespace drogon;
 
@@ -32,11 +33,35 @@ namespace {
         return config;
     }
 
+    boost::optional<uint32_t> GetOpenFileLimit() {
+        rlimit limit;
+        if (getrlimit(RLIMIT_NOFILE, &limit) == 0) {
+            return static_cast<uint32_t>(limit.rlim_cur);
+        }
+        return boost::none;
+    }
+
+    void CheckIO(const tg::TServerConfig& config) {
+        const boost::optional<uint32_t> limit = GetOpenFileLimit();
+        if (!limit) {
+            return;
+        }
+
+        if (config.max_connection_num() >= limit.value()) {
+            LOG_ERROR("ulimit -n is smaller than the \"max_connection_num\" option; overflow is possible");
+        }
+
+        if (config.db_max_open_files() >= limit.value()) {
+            LOG_ERROR("ulimit -n is smaller than the \"db_max_open_files\" option; overflow is possible");
+        }
+    }
+
     std::unique_ptr<rocksdb::DB> CreateDatabase(const tg::TServerConfig& config) {
         rocksdb::Options options;
         options.IncreaseParallelism();
         options.OptimizeLevelStyleCompaction();
         options.create_if_missing = !config.db_fail_if_missing();
+        options.max_open_files = config.db_max_open_files();
 
         rocksdb::DB* db;
         const rocksdb::Status s = rocksdb::DB::Open(options, config.db_path(), &db);
@@ -45,11 +70,24 @@ namespace {
         return std::unique_ptr<rocksdb::DB>(db);
     }
 
+    void InitServer(const tg::TServerConfig& config, uint16_t port) {
+        app()
+            .setLogLevel(trantor::Logger::kTrace)
+            .addListener("0.0.0.0", port)
+            .setThreadNum(config.threads())
+            .setMaxConnectionNum(config.max_connection_num())
+            .setMaxConnectionNumPerIP(config.max_connection_num_per_ip())
+            .setIdleConnectionTimeout(config.idle_connection_timeout())
+            .setKeepaliveRequestsNumber(config.keepalive_requests_number())
+            .setPipeliningRequestsNumber(config.pipelining_requests_number());
+    }
+
 }
 
 int RunServer(const std::string& fname, uint16_t port) {
     LOG_DEBUG("Loading server config");
     const auto config = ParseConfig(fname);
+    CheckIO(config);
 
     LOG_DEBUG("Creating database");
     std::unique_ptr<rocksdb::DB> db = CreateDatabase(config);
@@ -63,10 +101,7 @@ int RunServer(const std::string& fname, uint16_t port) {
     TServerClustering serverClustering(std::move(clusterer), db.get());
 
     LOG_DEBUG("Launching server");
-    app()
-        .setLogLevel(trantor::Logger::kTrace)
-        .addListener("0.0.0.0", port)
-        .setThreadNum(config.threads());
+    InitServer(config, port);
 
     auto controllerPtr = std::make_shared<TController>();
     app().registerController(controllerPtr);

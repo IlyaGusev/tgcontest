@@ -27,6 +27,45 @@ boost::optional<std::pair<std::string, double>> RunFasttextClf(
     return std::make_pair(label, probability);
 }
 
+bool TooManyUnknownSymbols(const TDocument& doc) {
+    size_t realSize = 0;
+    size_t badSymb = 0;
+    size_t i = 0;
+
+    while(i < doc.Title.size()) {
+        unsigned char sym = (unsigned char) doc.Title[i];
+        if (sym <= 127) {
+            ++realSize;
+            ++i;
+        } else if (sym >= 240) { // 4 bytes utf
+            ++realSize;
+            ++badSymb;
+            i += 4;
+        } else if (sym >= 220) { // 3 bytes utf
+            ++realSize;
+            ++badSymb;
+            i += 3;
+        } else { // 2 bytes utf. may be ru
+            i += 1;
+            if (i >= doc.Title.size()) break;
+            unsigned char sym2 = (unsigned char) doc.Title[i];
+
+            if (((sym == 208) && (sym2 >= 144)) || ((sym == 209) && (sym2 <= 143))) {
+                ++realSize;
+                i += 1;
+            } else {
+                ++realSize;
+                ++badSymb;
+            }
+        }
+    }
+
+    if (badSymb * 2 > realSize) {
+        return true;
+    }
+    return false;
+}
+
 tg::ELanguage DetectLanguage(const fasttext::FastText& model, const TDocument& document) {
     std::string sample(document.Title + " " + document.Description + " " + document.Text.substr(0, 100));
     auto pair = RunFasttextClf(model, sample, 0.4);
@@ -35,6 +74,11 @@ tg::ELanguage DetectLanguage(const fasttext::FastText& model, const TDocument& d
     }
     const std::string& label = pair->first;
     double probability = pair->second;
+    
+    if (TooManyUnknownSymbols(document)) {
+        return tg::LN_OTHER;
+    }
+
     if (label == "ru" && probability >= 0.6) {
         return tg::LN_RU;
     } else if (label == "en") {

@@ -68,7 +68,6 @@ script:
   - ./build/tgnews categories en_cat_data.json --languages en --from_json --save_not_news > en_cat.json
   - python3 json2html/calc_metrics.py --templates-dir json2html/templates --output-dir output/en --documents-file en_cat_data.json --cat-gold en_cat_target.json --cat-output en_cat.json --language en --date "10 May" --version "3.0.0"
   - php7.4 dc-check.php build/tgnews all 8000 html_sample
-  - python3 scripts/check_server.py html_sample --port 8001
 
 deploy:
   provider: pages

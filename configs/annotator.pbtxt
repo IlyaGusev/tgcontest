@@ -32,7 +32,7 @@ models: [
         aggregation_mode: AM_MATRIX
         embedder_field: EF_ALL
         embedder: {
-            max_words: 250
+            max_words: 150
             path: "models/en_sentence_embedder_v2.pt"
             output_dim: 50
         }

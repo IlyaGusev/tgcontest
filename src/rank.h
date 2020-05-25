@@ -13,6 +13,7 @@ struct TWeightInfo {
     double Importance = 0.;
     double AgePenalty = 1.;
     double Weight = 0.;
+    size_t ClusterSize = 0;
 };
 
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "enum.pb.h"
+
 #include <string>
 #include <unordered_map>
 #include <nlohmann_json/json.hpp>
@@ -33,7 +35,7 @@ public:
     }
 
     void Load(const std::string& fileName);
-    double ScoreUrl(const std::string& host, bool en, ERatingType type, double shift) const;
+    double ScoreUrl(const std::string& host, tg::ELanguage language, ERatingType type, double shift) const;
     double GetRawRating(const std::string& host) const;
     double GetCountryShare(const std::string& host, const std::string& code) const;
 

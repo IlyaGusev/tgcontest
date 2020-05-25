@@ -65,13 +65,18 @@ double TAlexaAgencyRating::GetRawRating(const std::string& host) const {
     return (iter != RawRating.end()) ? iter->second : UnkRating;
 }
 
-double TAlexaAgencyRating::ScoreUrl(const std::string& host, bool en, ERatingType type, double shift) const {
+double TAlexaAgencyRating::ScoreUrl(
+    const std::string& host,
+    tg::ELanguage language,
+    ERatingType type,
+    double shift
+) const {
     if (type == RT_ONE) {
         return 1.;
     }
     double raw = GetRawRating(host);
     double coeff = 0;
-    if (en) {
+    if (language == tg::LN_EN) {
         coeff = (100. - GetCountryShare(host, "US") - GetCountryShare(host, "GB"))/100.;
     } else {
         coeff = GetCountryShare(host, "RU");

@@ -6,6 +6,15 @@
 class TAgencyRating;
 class TAlexaAgencyRating;
 
+struct TSliceFeatures {
+    uint64_t BestTimestamp = 0;
+    double Importance = 0.0;
+    std::vector<double> DocWeights;
+    std::map<std::string, double> CountryShare;
+    std::map<std::string, double> WeightedCountryShare;
+};
+
+
 class TNewsCluster {
 private:
     uint64_t Id = 0;
@@ -27,20 +36,17 @@ public:
     void AddDocument(const TDbDocument& document);
     void Summarize(const TAgencyRating& agencyRating);
 
-    void CalcFeatures(const TAlexaAgencyRating& alexaRating,
+    void CalcFeatures(
+        const TAlexaAgencyRating& alexaRating,
         const std::vector<TDbDocument>& docs);
 
-    void CalcImportance(const TAlexaAgencyRating& alexaRating,
+    TSliceFeatures CalcImportance(
+        const TAlexaAgencyRating& alexaRating,
         const std::vector<TDbDocument>& docs,
-        bool en,
+        tg::ELanguage language,
         ERatingType type,
         double shift,
-        double decay,
-        uint64_t& bestTimestamp,
-        double& importance,
-        std::vector<double>& docWeights,
-        std::map<std::string, double>& countryShare,
-        std::map<std::string, double>& weightedCountryShare);
+        double decay);
 
     void CalcImportance(const TAlexaAgencyRating& alexaRating);
     void CalcCategory();

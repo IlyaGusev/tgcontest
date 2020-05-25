@@ -4,8 +4,6 @@
 
 #include <functional>
 
-bool IsNasty(const TDbDocument& doc);
-
 struct TWeightedDoc {
     TDbDocument Doc;
     double Weight = 0.0;

@@ -29,7 +29,7 @@ std::string GetHost(const std::string& url) {
     std::string output = "";
     // https://stackoverflow.com/questions/2616011/easy-way-to-parse-a-url-in-c-cross-platform
     try {
-        std::regex ex("(http|https)://(?:www\\.)?([^/ :]+):?([^/ ]*)(/?[^ #?]*)\\x3f?([^ #]*)#?([^ ]*)");
+        static std::regex ex("(http|https)://(?:www\\.)?([^/ :]+):?([^/ ]*)(/?[^ #?]*)\\x3f?([^ #]*)#?([^ ]*)");
         std::smatch what;
         if (std::regex_match(url, what, ex) && what.size() >= 3) {
             output = std::string(what[2].first, what[2].second);

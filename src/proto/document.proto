@@ -25,4 +25,6 @@ message TDocumentProto {
 
     repeated string out_links = 12;
     repeated TEmbeddingProto embeddings = 13;
+
+    bool nasty = 14;
 }

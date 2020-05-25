@@ -50,6 +50,9 @@ void TNewsCluster::Summarize(const TAgencyRating& agencyRating) {
         double timeMultiplier = Sigmoid(static_cast<double>(timeDiff) / 3600.0 + 12.0);
         double agencyScore = agencyRating.ScoreUrl(doc.Url);
         double weight = (agencyScore + docRelevance) * timeMultiplier;
+	if (doc.Nasty) {
+            weight *= 0.5;
+        }
         weights.push_back(weight);
     }
     SortByWeights(weights);

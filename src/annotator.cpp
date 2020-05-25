@@ -2,6 +2,7 @@
 #include "detect.h"
 #include "document.h"
 #include "embedder.h"
+#include "nasty.h"
 #include "thread_pool.h"
 #include "timer.h"
 #include "util.h"
@@ -180,6 +181,8 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
         TDbDocument::TEmbedding value = embedder->CalcEmbedding(cleanTitle, cleanText);
         dbDoc.Embeddings.emplace(embeddingKey, std::move(value));
     }
+
+    dbDoc.Nasty = ComputeDocumentNasty(dbDoc);
 
     return dbDoc;
 }

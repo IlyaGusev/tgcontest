@@ -31,6 +31,8 @@ public:
 
     std::vector<std::string> OutLinks;
 
+    bool Nasty = false;
+
 public:
     static TDbDocument FromProto(const tg::TDocumentProto& proto);
     static bool FromProtoString(const std::string& value, TDbDocument* document);

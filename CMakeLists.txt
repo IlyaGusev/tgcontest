@@ -44,12 +44,17 @@ unset(WITH_TOOLS)
 unset(WITH_CORE_TOOLS)
 unset(WITH_BENCHMARK_TOOLS)
 
+set(BUILD_STATIC_LIB ON CACHE BOOL "" FORCE)
+set(USE_OPENMP OFF CACHE BOOL "" FORCE)
+add_subdirectory(thirdparty/xgboost EXCLUDE_FROM_ALL)
+unset(BUILD_STATIC_LIB)
+unset(USE_OPENMP)
+
 set(LIB_ONLY True)
 add_subdirectory(thirdparty/onmt_tokenizer EXCLUDE_FROM_ALL)
 unset(LIB_ONLY)
 
 unset(BUILD_TESTING)
-
 
 find_package(Boost COMPONENTS program_options filesystem unit_test_framework REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
@@ -91,14 +96,15 @@ file(GLOB PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/proto/*.proto")
 
 set(LIB_LIST
     ${Boost_LIBRARIES}
-    fasttext-static
-    tinyxml2
-    eigen
-    OpenNMTTokenizer
-    rocksdb
-    drogon
     ${Protobuf_LIBRARIES}
     ${TORCH_LIBRARIES}
+    tinyxml2
+    OpenNMTTokenizer
+    fasttext-static
+    eigen
+    rocksdb
+    drogon
+    xgboost
 )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")

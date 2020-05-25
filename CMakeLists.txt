@@ -84,6 +84,7 @@ set(SOURCE_FILES
     src/document.cpp
     src/document_ranking/weighted_document.cpp
     src/embedder.cpp
+    src/nasty.cpp
     src/rank.cpp
     src/run_server.cpp
     src/server_clustering.cpp

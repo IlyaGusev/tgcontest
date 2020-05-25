@@ -13,9 +13,5 @@ struct TWeightedDoc {
     TWeightedDoc(const TDbDocument& doc, double weight)
         : Doc(doc)
         , Weight(weight)
-    {
-        if (IsNasty(doc)) {
-            Weight *= 0.5;
-        }
-    }
+    {}
 };

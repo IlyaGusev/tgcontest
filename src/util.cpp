@@ -24,7 +24,7 @@ void ReadFileNames(const std::string& directory, std::vector<std::string>& fileN
     }
 }
 
-static std::regex hostRegex("(http|https)://(?:www\\.)?([^/ :]+):?([^/ ]*)(/?[^ #?]*)\\x3f?([^ #]*)#?([^ ]*)");
+const std::regex hostRegex("(http|https)://(?:www\\.)?([^/ :]+):?([^/ ]*)(/?[^ #?]*)\\x3f?([^ #]*)#?([^ ]*)");
 
 std::string GetHost(const std::string& url) {
     // if u know better way to do it - it would be nice if u rewrite it

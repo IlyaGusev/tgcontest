@@ -13,7 +13,7 @@ endif()
 set(TGNEWS_CXX_FLAGS "-pthread;-Wall;-Wextra;-Wno-sign-compare;-fno-omit-frame-pointer")
 set(TGNEWS_CXX_DEBUG_FLAGS "-g;-O2;-fsanitize=address")
 set(TGNEWS_LNK_DEBUG_FLAGS "-fsanitize=address")
-set(TGNEWS_CXX_RELEASE_FLAGS "-funroll-loops;-Ofast;-march=x86-64;-mtune=generic")
+set(TGNEWS_CXX_RELEASE_FLAGS "-funroll-loops;-Ofast;-march=x86-64;-mtune=generic;-msse3;-mssse3;-msse4;-msse4.1;-msse4.2")
 
 set(BUILD_TESTING 0)
 add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)

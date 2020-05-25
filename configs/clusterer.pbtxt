@@ -14,11 +14,11 @@ clusterings: [
     },
     {
         language: LN_EN
-        small_threshold: 0.015
+        small_threshold: 0.032
         small_cluster_size: 15
-        medium_threshold: 0.01
+        medium_threshold: 0.027
         medium_cluster_size: 50
-        large_threshold: 0.005
+        large_threshold: 0.022
         large_cluster_size: 100
         chunk_size: 10000
         intersection_size: 2000
@@ -28,4 +28,4 @@ clusterings: [
 ]
 iter_timestamp_percentile: 0.99
 hosts_rating: "models/pagerank_rating.txt"
-alexa_rating: "models/alexa_rating_2_fixed.txt"
+alexa_rating: "models/alexa_rating_4_fixed.txt"

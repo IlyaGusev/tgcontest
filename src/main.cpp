@@ -228,13 +228,6 @@ int main(int argc, char** argv) {
                     {"title", cluster.Title},
                     {"category", cluster.Category},
                     {"articles", nlohmann::json::array()},
-                    {"article_weights", nlohmann::json::array()},
-                    {"weight", cluster.WeightInfo.Weight},
-                    {"importance", cluster.WeightInfo.Importance},
-                    {"best_time", cluster.WeightInfo.BestTime},
-                    {"age_penalty", cluster.WeightInfo.AgePenalty},
-                    {"average_us", cluster.Cluster.get().GetCountryShare().at("US")},
-                    {"w_average_us", cluster.Cluster.get().GetWeightedCountryShare().at("US")}
                 };
                 for (const TDbDocument& doc : cluster.Cluster.get().GetDocuments()) {
                     object["articles"].push_back(CleanFileName(doc.FileName));
@@ -245,6 +238,13 @@ int main(int argc, char** argv) {
                     object["importance"] = cluster.WeightInfo.Importance;
                     object["best_time"] = cluster.WeightInfo.BestTime;
                     object["age_penalty"] = cluster.WeightInfo.AgePenalty;
+                    object["average_us"] = cluster.Cluster.get().GetCountryShare().at("US");
+                    object["w_average_us"] = cluster.Cluster.get().GetWeightedCountryShare().at("US");
+                    object["average_gb"] = cluster.Cluster.get().GetCountryShare().at("GB");
+                    object["w_average_gb"] = cluster.Cluster.get().GetWeightedCountryShare().at("GB");
+                    object["average_in"] = cluster.Cluster.get().GetCountryShare().at("IN");
+                    object["w_average_in"] = cluster.Cluster.get().GetWeightedCountryShare().at("IN");
+
                     for (const auto& weight : cluster.DocWeights) {
                         object["article_weights"].push_back(weight);
                     }

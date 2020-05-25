@@ -5,6 +5,7 @@ TDbDocument TDbDocument::FromProto(const tg::TDocumentProto& proto) {
     TDbDocument document;
     document.FileName = proto.file_name();
     document.Url = proto.url();
+    document.Host = GetHost(document.Url);
     document.SiteName = proto.site_name();
     document.PubTime = proto.pub_time();
     document.FetchTime = proto.pub_time();

@@ -13,6 +13,7 @@ public:
     std::string FileName;
     std::string Url;
     std::string SiteName;
+    std::string Host;
 
     uint64_t PubTime = 0;
     uint64_t FetchTime = 0;

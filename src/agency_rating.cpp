@@ -65,8 +65,10 @@ double TAlexaAgencyRating::GetRawRating(const std::string& host) const {
     return (iter != RawRating.end()) ? iter->second : UnkRating;
 }
 
-double TAlexaAgencyRating::ScoreUrl(const std::string& url, bool en, bool lg) const {
-    std::string host = GetHost(url);
+double TAlexaAgencyRating::ScoreUrl(const std::string& host, bool en, int type, double shift) const {
+    if (type == 2) {
+        return 1.;
+    }
     double raw = GetRawRating(host);
     double coeff = 0;
     if (en) {
@@ -74,9 +76,9 @@ double TAlexaAgencyRating::ScoreUrl(const std::string& url, bool en, bool lg) co
     } else {
         coeff = GetCountryShare(host, "RU");
     }
-    if (lg) {
-        return std::max(log(raw * coeff + 1.), 0.3);
-    } else {
+    if (type == 0) {
+        return std::max(log(raw * coeff + shift), 0.3);
+    } else if (type == 1) {
         return raw * coeff;
     }
 }

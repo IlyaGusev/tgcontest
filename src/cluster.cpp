@@ -55,49 +55,104 @@ void TNewsCluster::Summarize(const TAgencyRating& agencyRating) {
     SortByWeights(weights);
 }
 
-void TNewsCluster::CalcImportance(const TAlexaAgencyRating& alexaRating) {
-    auto docs = GetDocuments();
-    std::stable_sort(docs.begin(), docs.end(), [](const TDbDocument& p1, const TDbDocument& p2) {
-        if (p1.FetchTime != p2.FetchTime) {
-            return p1.FetchTime < p2.FetchTime;
+void TNewsCluster::CalcFeatures(const TAlexaAgencyRating& alexaRating,
+    const std::vector<TDbDocument>& docs)
+{
+    Features.reserve(100);
+    for (double shift : {1., 1.3, 1.6}) {
+        for (double decay : {1800., 3600., 7200., 86400.}) {
+            uint64_t bestTimestamp;
+            double importance;
+            std::vector<double> docWeights;
+            std::map<std::string, double> countryShare;
+            std::map<std::string, double> weightedCountryShare;
+            CalcImportance(alexaRating,
+                docs,
+                /*en=*/true,
+                /*type=*/0,
+                shift,
+                decay,
+                bestTimestamp,
+                importance,
+                docWeights,
+                countryShare,
+                weightedCountryShare);
+            Features.push_back(importance);
+            if (decay == 86400.) {
+                for (const std::string& code : {"US", "GB", "IN", "RU", "CA", "AU"}) {
+                    Features.push_back(weightedCountryShare[code]);
+                }
+            }
         }
-        return p1.Url < p2.Url;
-    });
+    }
+    for (int type : {1, 2}) {
+        for (double decay : {1800., 3600., 7200., 86400.}) {
+            uint64_t bestTimestamp;
+            double importance;
+            std::vector<double> docWeights;
+            std::map<std::string, double> countryShare;
+            std::map<std::string, double> weightedCountryShare;
+            CalcImportance(alexaRating,
+                docs,
+                /*en=*/true,
+                type,
+                /*shift=*/0.,
+                decay,
+                bestTimestamp,
+                importance,
+                docWeights,
+                countryShare,
+                weightedCountryShare);
+            Features.push_back(importance);
+            if (decay == 86400.) {
+                for (const std::string& code : {"US", "GB", "IN", "RU", "CA", "AU"}) {
+                    Features.push_back(weightedCountryShare[code]);
+                }
+            }
+        }
+    }
+}
 
-    bool debug = false;
-
+void TNewsCluster::CalcImportance(const TAlexaAgencyRating& alexaRating,
+    const std::vector<TDbDocument>& docs,
+    bool en,
+    bool lg,
+    double shift,
+    double decay,
+    uint64_t& bestTimestamp,
+    double& importance,
+    std::vector<double>& docWeights,
+    std::map<std::string, double>& countryShare,
+    std::map<std::string, double>& weightedCountryShare)
+{
     double count = 0;
     double wCount = 0;
     for (const std::string& code : {"US", "GB", "IN", "RU", "CA", "AU"}) {
-        CountryShare[code] = 0;
-        WeightedCountryShare[code] = 0;
+        countryShare[code] = 0;
+        weightedCountryShare[code] = 0;
     }
 
     DocWeights.reserve(GetSize());
     for (const TDbDocument& doc : Documents) {
-		double agencyWeight = alexaRating.ScoreUrl(doc.Url, true, true);
-        DocWeights.push_back(agencyWeight);
+		double agencyWeight = alexaRating.ScoreUrl(doc.Host, en, lg, shift);
+        docWeights.push_back(agencyWeight);
 
-        const std::string& docHost = GetHost(doc.Url);
+        const std::string& docHost = doc.Host;;
         for (const std::string& code : {"US", "GB", "IN", "RU", "CA", "AU"}) {
             double share = alexaRating.GetCountryShare(docHost, code);
-            CountryShare[code] += share;
-            WeightedCountryShare[code] += share * agencyWeight;
+            countryShare[code] += share;
+            weightedCountryShare[code] += share * agencyWeight;
         }
         count += 1;
         wCount += agencyWeight;
-
-        if (doc.Url == "https://ria.ru/20200508/1571140941.html") {
-            debug = true;
-        }
     }
 
     for (const std::string& code : {"US", "GB", "IN", "RU", "CA", "AU"}) {
         if (count > 0) {
-            CountryShare[code] /= count;
+            countryShare[code] /= count;
         }
         if (wCount > 0) {
-            WeightedCountryShare[code] /= wCount;
+            weightedCountryShare[code] /= wCount;
         }
     }
 
@@ -109,20 +164,42 @@ void TNewsCluster::CalcImportance(const TAlexaAgencyRating& alexaRating) {
         std::set<std::string> seenHosts;
         for (size_t j = i; j < docs.size(); ++j) {
             const TDbDocument& doc = docs[j];
-            const std::string& docHost = GetHost(doc.Url);
+            const std::string& docHost = doc.Host;
             if (seenHosts.insert(docHost).second) {
-                double agencyWeight = alexaRating.ScoreUrl(doc.Url, true, true);
-				double docTimestampRemapped = static_cast<double>(startTime - static_cast<int32_t>(doc.FetchTime)) / 3600;
+                double agencyWeight = alexaRating.ScoreUrl(docHost, en, lg, shift);
+				double docTimestampRemapped = static_cast<double>(startTime - static_cast<int32_t>(doc.FetchTime)) / decay;
                 double timeMultiplier = Sigmoid(std::max(docTimestampRemapped, -15.));
                 double score = agencyWeight * timeMultiplier;
                 rank += score;
             }
         }
-        if (rank > Importance) {
-            Importance = rank;
-            BestTimestamp = startDoc.FetchTime;
+        if (rank > importance) {
+            importance = rank;
+            bestTimestamp = startDoc.FetchTime;
         }
     }
+}
+
+void TNewsCluster::CalcImportance(const TAlexaAgencyRating& alexaRating) {
+    auto docs = GetDocuments();
+    std::stable_sort(docs.begin(), docs.end(), [](const TDbDocument& p1, const TDbDocument& p2) {
+        if (p1.FetchTime != p2.FetchTime) {
+            return p1.FetchTime < p2.FetchTime;
+        }
+        return p1.Url < p2.Url;
+    });
+    CalcFeatures(alexaRating, docs);
+    CalcImportance(alexaRating,
+        docs,
+        /*en=*/true,
+        /*lg=*/0,
+        /*shift=*/1.,
+        /*decay=*/3600,
+        BestTimestamp,
+        Importance,
+        DocWeights,
+        CountryShare,
+        WeightedCountryShare);
 }
 
 void TNewsCluster::CalcCategory() {

@@ -10,26 +10,20 @@ clusterings: [
         chunk_size: 10000
         intersection_size: 2000
         use_timestamp_moving: false
-        ban_same_hosts: true
+        ban_same_hosts: false
     },
     {
         language: LN_EN
-<<<<<<< HEAD
-        small_threshold: 0.032
+        small_threshold: 0.04
         small_cluster_size: 15
-        medium_threshold: 0.027
-=======
-        small_threshold: 0.035
-        small_cluster_size: 15
-        medium_threshold: 0.02
->>>>>>> 52e274d4909d26401736fc2f1e1fd393b31b8f64
+        medium_threshold: 0.032
         medium_cluster_size: 50
-        large_threshold: 0.022
+        large_threshold: 0.025
         large_cluster_size: 100
         chunk_size: 10000
         intersection_size: 2000
         use_timestamp_moving: false
-        ban_same_hosts: true
+        ban_same_hosts: false
     }
 ]
 iter_timestamp_percentile: 0.99

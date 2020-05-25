@@ -69,7 +69,7 @@ void TNewsCluster::CalcFeatures(const TAlexaAgencyRating& alexaRating,
             CalcImportance(alexaRating,
                 docs,
                 /*en=*/true,
-                /*type=*/0,
+                /*type=*/RT_LOG,
                 shift,
                 decay,
                 bestTimestamp,
@@ -85,7 +85,7 @@ void TNewsCluster::CalcFeatures(const TAlexaAgencyRating& alexaRating,
             }
         }
     }
-    for (int type : {1, 2}) {
+    for (ERatingType type : {RT_RAW, RT_ONE}) {
         for (double decay : {1800., 3600., 7200., 86400.}) {
             uint64_t bestTimestamp;
             double importance;
@@ -116,7 +116,7 @@ void TNewsCluster::CalcFeatures(const TAlexaAgencyRating& alexaRating,
 void TNewsCluster::CalcImportance(const TAlexaAgencyRating& alexaRating,
     const std::vector<TDbDocument>& docs,
     bool en,
-    bool lg,
+    ERatingType type,
     double shift,
     double decay,
     uint64_t& bestTimestamp,
@@ -134,7 +134,7 @@ void TNewsCluster::CalcImportance(const TAlexaAgencyRating& alexaRating,
 
     DocWeights.reserve(GetSize());
     for (const TDbDocument& doc : Documents) {
-		double agencyWeight = alexaRating.ScoreUrl(doc.Host, en, lg, shift);
+		double agencyWeight = alexaRating.ScoreUrl(doc.Host, en, type, shift);
         docWeights.push_back(agencyWeight);
 
         const std::string& docHost = doc.Host;;
@@ -166,7 +166,7 @@ void TNewsCluster::CalcImportance(const TAlexaAgencyRating& alexaRating,
             const TDbDocument& doc = docs[j];
             const std::string& docHost = doc.Host;
             if (seenHosts.insert(docHost).second) {
-                double agencyWeight = alexaRating.ScoreUrl(docHost, en, lg, shift);
+                double agencyWeight = alexaRating.ScoreUrl(docHost, en, type, shift);
 				double docTimestampRemapped = static_cast<double>(startTime - static_cast<int32_t>(doc.FetchTime)) / decay;
                 double timeMultiplier = Sigmoid(std::max(docTimestampRemapped, -15.));
                 double score = agencyWeight * timeMultiplier;
@@ -192,7 +192,7 @@ void TNewsCluster::CalcImportance(const TAlexaAgencyRating& alexaRating) {
     CalcImportance(alexaRating,
         docs,
         /*en=*/true,
-        /*lg=*/0,
+        /*type=*/RT_LOG,
         /*shift=*/1.,
         /*decay=*/3600,
         BestTimestamp,

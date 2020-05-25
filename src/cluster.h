@@ -1,6 +1,7 @@
 #pragma once
 
 #include "db_document.h"
+#include "agency_rating.h"
 
 class TAgencyRating;
 class TAlexaAgencyRating;
@@ -32,7 +33,7 @@ public:
     void CalcImportance(const TAlexaAgencyRating& alexaRating,
         const std::vector<TDbDocument>& docs,
         bool en,
-        bool lg,
+        ERatingType type,
         double shift,
         double decay,
         uint64_t& bestTimestamp,

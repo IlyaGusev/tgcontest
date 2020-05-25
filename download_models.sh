@@ -8,6 +8,7 @@ models_list=(
     "https://www.dropbox.com/s/6aaucelizfx7xl6/en_vectors_v3.bin"
     "https://www.dropbox.com/s/0o9xr2pwuqeh17k/pagerank_rating.txt"
     "https://www.dropbox.com/s/e7nktxa0yte7k1d/alexa_rating_2_fixed.txt"
+    "https://www.dropbox.com/s/hoapmnvqlknmu6v/lang_detect_v10.ftz"
 )
 
 mkdir -p models

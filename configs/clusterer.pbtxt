@@ -1,27 +1,27 @@
 clusterings: [
     {
         language: LN_RU
-        small_threshold: 0.025
-        small_cluster_size: 15
-        medium_threshold: 0.015
-        medium_cluster_size: 50
-        large_threshold: 0.005
-        large_cluster_size: 100
-        chunk_size: 10000
-        intersection_size: 2000
+        small_threshold: 0.045
+        small_cluster_size: 10
+        medium_threshold: 0.04
+        medium_cluster_size: 20
+        large_threshold: 0.035
+        large_cluster_size: 30
+        chunk_size: 15000
+        intersection_size: 5000
         use_timestamp_moving: false
         ban_same_hosts: false
     },
     {
         language: LN_EN
-        small_threshold: 0.04
-        small_cluster_size: 15
-        medium_threshold: 0.032
-        medium_cluster_size: 50
-        large_threshold: 0.025
-        large_cluster_size: 100
-        chunk_size: 10000
-        intersection_size: 2000
+        small_threshold: 0.045
+        small_cluster_size: 10
+        medium_threshold: 0.04
+        medium_cluster_size: 20
+        large_threshold: 0.035
+        large_cluster_size: 30
+        chunk_size: 15000
+        intersection_size: 5000
         use_timestamp_moving: false
         ban_same_hosts: false
     }

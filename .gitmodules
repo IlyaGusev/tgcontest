@@ -13,3 +13,6 @@
 [submodule "thirdparty/rocksdb"]
 	path = thirdparty/rocksdb
 	url = https://github.com/facebook/rocksdb.git
+[submodule "thirdparty/xgboost"]
+	path = thirdparty/xgboost
+	url = https://github.com/dmlc/xgboost

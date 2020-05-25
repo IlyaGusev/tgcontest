@@ -16,7 +16,7 @@ TWeightInfo ComputeClusterWeightPush(
     }
 
     double rank = cluster.GetImportance();
-    return TWeightInfo{clusterTime, rank, timeMultiplier, rank * timeMultiplier};
+    return TWeightInfo{clusterTime, rank, timeMultiplier, rank * timeMultiplier, cluster.GetSize()};
 }
 
 std::vector<std::vector<TWeightedNewsCluster>> Rank(
@@ -34,6 +34,12 @@ std::vector<std::vector<TWeightedNewsCluster>> Rank(
 
     std::stable_sort(weightedClusters.begin(), weightedClusters.end(),
         [](const TWeightedNewsCluster& a, const TWeightedNewsCluster& b) {
+            if (a.WeightInfo.ClusterSize == b.WeightInfo.ClusterSize) {
+                return a.WeightInfo.Weight > b.WeightInfo.Weight;
+            }
+            if (a.WeightInfo.ClusterSize < 3 || b.WeightInfo.ClusterSize < 3) {
+                return a.WeightInfo.ClusterSize > b.WeightInfo.ClusterSize;
+            }
             return a.WeightInfo.Weight > b.WeightInfo.Weight;
         }
     );

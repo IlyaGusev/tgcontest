@@ -86,4 +86,5 @@ double TAlexaAgencyRating::ScoreUrl(
     } else if (type == RT_RAW) {
         return raw * coeff;
     }
+    return 1.;
 }

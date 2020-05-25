@@ -29,6 +29,6 @@ make -j4
 cd ..
 chmod +x build/tgnews
 chmod +x tgnews
-zip -r submission.zip src scripts models thirdparty configs test libtorch LICENSE NOTICE README.md CMakeLists.txt deb-packages.txt tgnews build_zip.sh download_data.sh download_models.sh test_canonical.sh
+zip -r submission.zip src scripts models thirdparty configs test libtorch LICENSE NOTICE README.md CMakeLists.txt deb-packages.txt tgnews build_zip.sh download_data.sh download_models.sh test_canonical.sh build/tgnews
 mv submission.zip ../submission.zip && cd ..
 rm -rf temp

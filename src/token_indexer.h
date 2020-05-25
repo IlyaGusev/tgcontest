@@ -30,7 +30,7 @@ public:
         for (size_t i = 0; i < std::min(words.size(), MaxWords); i++) {
             auto it = Vocabulary.find(words[i]);
             if (it != Vocabulary.end()) {
-                inputs[i] = static_cast<long long>(it->second);
+                inputs[i] = static_cast<int>(it->second);
             } else {
                 inputs[i] = 0;
             }

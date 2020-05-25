@@ -1,5 +1,6 @@
 #include "detect.h"
 #include "document.h"
+#include "util.h"
 
 #include <algorithm>
 #include <sstream>
@@ -48,5 +49,5 @@ tg::ECategory DetectCategory(const fasttext::FastText& model, const std::string&
     if (!pair) {
         return tg::NC_UNDEFINED;
     }
-    return nlohmann::json(pair->first);
+    return FromString<tg::ECategory>(pair->first);
 }

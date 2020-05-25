@@ -1,5 +1,9 @@
-port: 1994
-threads: 4
+threads: 6
 
 db_path: "sample.db"
+
+skip_irrelevant_docs: false
+clusterer_sleep: 1000 # milliseconds
+
 annotator_config_path: "configs/annotator.pbtxt"
+clusterer_config_path: "configs/clusterer.pbtxt"

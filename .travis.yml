@@ -28,22 +28,27 @@ env:
   - BUILD_TYPE=Release
 
 before_script:
+  - sudo add-apt-repository -y ppa:ondrej/php
+  - sudo apt-get -q update
+  - sudo apt-get install -y php7.4 php7.4-curl
   - git lfs pull
-  - git submodule init
-  - git submodule update
   - bash download_models.sh
   - wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
   - unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
   - curl -L "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/shunit2/shunit2-2.1.6.tgz" | tar zx
   - wget https://www.dropbox.com/s/y3j9mxzpad8rkku/en_ru_0502_0503.json.tar.gz
-  - wget https://www.dropbox.com/s/p2eg8cuyf8dvez5/ru_cat_v4_test_data.json
-  - wget https://www.dropbox.com/s/ur7jhiyi22tmzxd/ru_cat_v4_test_annot.json
+  - wget https://www.dropbox.com/s/p2eg8cuyf8dvez5/ru_cat_v4_test_data.json -O ru_cat_data.json
+  - wget https://www.dropbox.com/s/ur7jhiyi22tmzxd/ru_cat_v4_test_annot.json -O ru_cat_target.json
+  - wget https://www.dropbox.com/s/qrpguxcqcm5l3hq/en_cat_v3_test_data.json -O en_cat_data.json
+  - wget https://www.dropbox.com/s/q2b5vcoxm8gilma/en_cat_v3_test_annot.json -O en_cat_target.json
   - tar -xzvf en_ru_0502_0503.json.tar.gz
   - mv en_ru_0502_0503.json demo_data.json
-  - mv ru_cat_v4_test_data.json metrics_data.json
-  - mv ru_cat_v4_test_annot.json ru_cat_target.json
   - python3 -m pip install -r json2html/requirements.txt
   - git clone https://github.com/brendangregg/FlameGraph
+  - wget https://data-static.usercontent.dev/dc-check.tar.gz
+  - tar -xzvf dc-check.tar.gz
+  - wget https://www.dropbox.com/s/2ot2qkimp5i2zof/html_sample.tar.gz
+  - tar -xzvf html_sample.tar.gz
   - export LD_LIBRARY_PATH=$(if [[ $TRAVIS_COMPILER == "clang" ]]; then echo -n /usr/local/clang/lib:$LD_LIBRARY_PATH; fi)
 
 script:
@@ -56,10 +61,13 @@ script:
   - bash test_canonical.sh
   - perf record -F 99 -g ./build/tgnews top demo_data.json --from_json --print_top_debug_info > demo_top.json
   - perf script > out.perf
-  - python3 json2html/convert.py --documents-file demo_data.json --tops-file demo_top.json --templates-dir json2html/templates --output-dir output
+  - python3 json2html/convert.py --documents-file demo_data.json --tops-file demo_top.json --templates-dir json2html/templates --output-dir output --version "3.0.0" --date "03 May"
   - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/flamegraph.svg
-  - ./build/tgnews categories metrics_data.json --languages ru --from_json --save_not_news > ru_cat.json
-  - python3 json2html/calc_metrics.py --templates-dir json2html/templates --output-dir output/ru --documents-file metrics_data.json --cat-gold ru_cat_target.json --cat-output ru_cat.json --language ru
+  - ./build/tgnews categories ru_cat_data.json --languages ru --from_json --save_not_news > ru_cat.json
+  - python3 json2html/calc_metrics.py --templates-dir json2html/templates --output-dir output/ru --documents-file ru_cat_data.json --cat-gold ru_cat_target.json --cat-output ru_cat.json --language ru --date "10 May" --version "3.0.0"
+  - ./build/tgnews categories en_cat_data.json --languages en --from_json --save_not_news > en_cat.json
+  - python3 json2html/calc_metrics.py --templates-dir json2html/templates --output-dir output/en --documents-file en_cat_data.json --cat-gold en_cat_target.json --cat-output en_cat.json --language en --date "10 May" --version "3.0.0"
+  - php7.4 dc-check.php build/tgnews all 8000 html_sample
 
 deploy:
   provider: pages

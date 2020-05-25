@@ -18,21 +18,16 @@ struct TWeightInfo {
 
 struct TWeightedNewsCluster {
     std::reference_wrapper<const TNewsCluster> Cluster;
-    tg::ECategory Category;
-    std::string Title;
     TWeightInfo WeightInfo;
-    std::vector<double> DocWeights;
-    TWeightedNewsCluster(const TNewsCluster& cluster, tg::ECategory category, const std::string& title, const TWeightInfo& info, const std::vector<double>& docWeights)
+    TWeightedNewsCluster(const TNewsCluster& cluster, const TWeightInfo& info)
         : Cluster(cluster)
-        , Category(category)
-        , Title(title)
         , WeightInfo(info)
-        , DocWeights(docWeights)
     {}
 };
 
 std::vector<std::vector<TWeightedNewsCluster>> Rank(
-    const TClusters& clusters,
+    TClusters::const_iterator begin,
+    TClusters::const_iterator end,
     uint64_t iterTimestamp,
     uint64_t window
 );

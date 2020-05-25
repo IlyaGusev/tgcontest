@@ -38,7 +38,7 @@ TClusterer::TClusterer(const std::string& configPath) {
     LOG_DEBUG("Alexa agency ratings loaded");
 }
 
-TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>& docs) const {
+TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>&& docs) const {
     std::stable_sort(docs.begin(), docs.end(),
         [](const TDbDocument& d1, const TDbDocument& d2) {
             if (d1.FetchTime == d2.FetchTime) {
@@ -52,7 +52,7 @@ TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>& docs) const {
     );
     TClusterIndex clusterIndex;
     clusterIndex.IterTimestamp = GetIterTimestamp(docs, Config.iter_timestamp_percentile());
-    clusterIndex.TrueMaxTimestamp = docs.back().FetchTime;
+    clusterIndex.TrueMaxTimestamp = docs.empty() ? 0 : docs.back().FetchTime;
 
     std::map<tg::ELanguage, std::vector<TDbDocument>> lang2Docs;
     while (!docs.empty()) {
@@ -71,6 +71,7 @@ TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>& docs) const {
             assert(cluster.GetSize() > 0);
             cluster.Summarize(AgencyRating);
             cluster.CalcImportance(AlexaAgencyRating);
+            cluster.CalcCategory();
         }
         std::stable_sort(
             langClusters.begin(),

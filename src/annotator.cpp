@@ -11,17 +11,18 @@
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <fcntl.h>
-#include <iostream>
+#include <tinyxml2/tinyxml2.h>
 
 
 TAnnotator::TAnnotator(
     const std::string& configPath,
     bool saveNotNews /*= false*/,
-    bool forceSaveTexts /* = false */,
+    const std::string& mode /* = top */,
     boost::optional<std::vector<std::string>> languages /* = boost::none */
 )
     : Tokenizer(onmt::Tokenizer::Mode::Conservative, onmt::Tokenizer::Flags::CaseFeature)
     , SaveNotNews(saveNotNews)
+    , Mode(mode)
 {
     ParseConfig(configPath);
 
@@ -30,8 +31,16 @@ TAnnotator::TAnnotator(
     LanguageDetector.loadModel(Config.lang_detect());
     LOG_DEBUG("FastText language detector loaded");
 
-    for (const auto& modelsConfig : Config.models()) {
-        tg::ELanguage language = modelsConfig.language();
+    for (const auto& modelConfig : Config.category_models()) {
+        const tg::ELanguage language = modelConfig.language();
+        CategoryDetectors[language].loadModel(modelConfig.path());
+        LOG_DEBUG("FastText " << ToString(language) << " category detector loaded");
+    }
+
+    for (const auto& modelConfig : Config.models()) {
+        tg::ELanguage language = modelConfig.language();
+        tg::EEmbeddingKey embeddingKey = modelConfig.embedding_key();
+
         if (languages) {
             bool isGoodLanguage = false;
             for (const std::string& l : languages.get()) {
@@ -43,24 +52,31 @@ TAnnotator::TAnnotator(
                 continue;
             }
         }
-
         Languages.insert(language);
-        std::string langCode = nlohmann::json(language);
 
-        CategoryDetectors[language].loadModel(modelsConfig.cat_detect());
-        LOG_DEBUG("FastText " + langCode + " category detector loaded");
+        VectorModels[language].loadModel(modelConfig.vector_model());
+        LOG_DEBUG("FastText " << ToString(language) << " vector model loaded");
 
-        VectorModels[language].loadModel(modelsConfig.vector_model());
-        LOG_DEBUG("FastText " + langCode + " vector model loaded");
-
-        Embedders[language] = std::make_unique<TFastTextEmbedder>(
-            VectorModels.at(language),
-            TFastTextEmbedder::AM_Matrix,
-            modelsConfig.embedder().max_words(),
-            modelsConfig.embedder().path()
-        );
+        tg::EAggregationMode am = modelConfig.aggregation_mode();
+        tg::EEmbedderField field = modelConfig.embedder_field();
+        if (am == tg::AM_MATRIX) {
+            Embedders[{language, embeddingKey}] = std::make_unique<TFastTextEmbedder>(
+                VectorModels.at(language),
+                tg::AM_MATRIX,
+                field,
+                modelConfig.embedder().max_words(),
+                modelConfig.embedder().path(),
+                modelConfig.embedder().output_dim()
+            );
+        } else {
+            Embedders[{language, embeddingKey}] = std::make_unique<TFastTextEmbedder>(
+                VectorModels.at(language),
+                am,
+                field
+            );
+        }
     }
-    SaveTexts = Config.save_texts() || forceSaveTexts;
+    SaveTexts = Config.save_texts() || (Mode == "json");
 }
 
 std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const {
@@ -125,18 +141,6 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
     if (Languages.find(dbDoc.Language) == Languages.end()) {
         return boost::none;
     }
-    std::string cleanTitle = PreprocessText(document.Title);
-    std::string cleanText = PreprocessText(document.Text);
-    dbDoc.Category = DetectCategory(CategoryDetectors.at(dbDoc.Language), cleanTitle, cleanText);
-    if (dbDoc.Category == tg::NC_UNDEFINED) {
-        return boost::none;
-    }
-    if (!dbDoc.IsNews() && !SaveNotNews) {
-        return boost::none;
-    }
-    TDbDocument::TEmbedding value = Embedders.at(dbDoc.Language)->CalcEmbedding(cleanTitle, cleanText);
-    dbDoc.Embeddings.emplace(tg::EK_CLUSTERING, std::move(value));
-
     dbDoc.Url = document.Url;
     dbDoc.SiteName = document.SiteName;
     dbDoc.Title = document.Title;
@@ -149,6 +153,33 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
         dbDoc.Description = document.Description;
         dbDoc.OutLinks = document.OutLinks;
     }
+
+    if (Mode == "languages") {
+        return dbDoc;
+    }
+
+    if (document.Text.length() < Config.min_text_length()) {
+        return boost::none;
+    }
+
+    std::string cleanTitle = PreprocessText(document.Title);
+    std::string cleanText = PreprocessText(document.Text);
+    dbDoc.Category = DetectCategory(CategoryDetectors.at(dbDoc.Language), cleanTitle, cleanText);
+    if (dbDoc.Category == tg::NC_UNDEFINED) {
+        return boost::none;
+    }
+    if (!dbDoc.IsNews() && !SaveNotNews) {
+        return boost::none;
+    }
+    for (const auto& [pair, embedder]: Embedders) {
+        const auto& [language, embeddingKey] = pair;
+        if (language != dbDoc.Language) {
+            continue;
+        }
+        TDbDocument::TEmbedding value = embedder->CalcEmbedding(cleanTitle, cleanText);
+        dbDoc.Embeddings.emplace(embeddingKey, std::move(value));
+    }
+
     return dbDoc;
 }
 
@@ -158,9 +189,6 @@ boost::optional<TDocument> TAnnotator::ParseHtml(const std::string& path) const 
         doc.FromHtml(path.c_str(), Config.parse_links());
     } catch (...) {
         LOG_DEBUG("Bad html: " << path);
-        return boost::none;
-    }
-    if (doc.Text.length() < Config.min_text_length()) {
         return boost::none;
     }
     return doc;

@@ -6,9 +6,9 @@
 #include "timer.h"
 #include "util.h"
 
+#include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
-#include <fasttext.h>
 
 namespace po = boost::program_options;
 
@@ -63,7 +63,23 @@ int main(int argc, char** argv) {
 
         if (mode == "server") {
             const std::string serverConfig = vm["server_config"].as<std::string>();
-            return RunServer(serverConfig);
+
+            const auto parsePort = [](const std::string& s) -> boost::optional<uint16_t> {
+                try {
+                    return boost::lexical_cast<uint16_t>(s);
+                } catch (std::exception&) {
+                    return boost::none;
+                }
+            };
+
+            const std::string portStr = vm["input"].as<std::string>();
+            const boost::optional<uint16_t> port = parsePort(portStr);
+            if (!port) {
+                std::cerr << "Bad port: " << portStr << std::endl;
+                return -1;
+            }
+
+            return RunServer(serverConfig, port.value());
         }
 
         // Read file names
@@ -85,7 +101,7 @@ int main(int argc, char** argv) {
         const std::string annotatorConfig = vm["annotator_config"].as<std::string>();
         bool saveNotNews = vm["save_not_news"].as<bool>();
         std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
-        TAnnotator annotator(annotatorConfig, saveNotNews, mode == "json", languages);
+        TAnnotator annotator(annotatorConfig, saveNotNews, mode, languages);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> annotationTimer;
         std::vector<TDbDocument> docs = annotator.AnnotateAll(fileNames, fromJson);
         LOG_DEBUG("Annotation: " << annotationTimer.Elapsed() << " ms (" << docs.size() << " documents)");
@@ -161,7 +177,7 @@ int main(int argc, char** argv) {
         const std::string clustererConfig = vm["clusterer_config"].as<std::string>();
         TClusterer clusterer(clustererConfig);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
-        TClusterIndex clusterIndex = clusterer.Cluster(docs);
+        TClusterIndex clusterIndex = clusterer.Cluster(std::move(docs));
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms")
         for (const auto& [language, langClusters]: clusterIndex.Clusters) {
             LOG_DEBUG(nlohmann::json(language) << ": " << langClusters.size() << " clusters");
@@ -208,7 +224,7 @@ int main(int argc, char** argv) {
                 std::back_inserter(allClusters)
             );
         }
-        const auto tops = Rank(allClusters, clusterIndex.IterTimestamp, window);
+        const auto tops = Rank(allClusters.begin(), allClusters.end(), clusterIndex.IterTimestamp, window);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<tg::ECategory>(std::distance(tops.begin(), it));
@@ -225,8 +241,8 @@ int main(int argc, char** argv) {
             };
             for (const auto& cluster : *it) {
                 nlohmann::json object = {
-                    {"title", cluster.Title},
-                    {"category", cluster.Category},
+                    {"title", cluster.Cluster.get().GetTitle()},
+                    {"category", cluster.Cluster.get().GetCategory()},
                     {"articles", nlohmann::json::array()},
                 };
                 for (const TDbDocument& doc : cluster.Cluster.get().GetDocuments()) {
@@ -238,7 +254,7 @@ int main(int argc, char** argv) {
                     object["importance"] = cluster.WeightInfo.Importance;
                     object["best_time"] = cluster.WeightInfo.BestTime;
                     object["age_penalty"] = cluster.WeightInfo.AgePenalty;
-                    for (const auto& weight : cluster.DocWeights) {
+                    for (const auto& weight : cluster.Cluster.get().GetDocWeights()) {
                         object["article_weights"].push_back(weight);
                     }
                 }

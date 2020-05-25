@@ -3,11 +3,6 @@ package tg;
 
 import "enum.proto";
 
-enum EEmbeddingKey {
-    EK_UNDEFINED = 0;
-    EK_CLUSTERING = 1;
-}
-
 message TEmbeddingProto {
     EEmbeddingKey key = 1;
     repeated float value = 2;
@@ -17,8 +12,8 @@ message TDocumentProto {
     string file_name = 1;
     string url = 2;
     string site_name = 3;
-    uint32 pub_time = 4;
-    uint32 fetch_time = 5;
+    uint64 pub_time = 4;
+    uint64 fetch_time = 5;
     uint32 ttl = 6;
 
     string title = 7;

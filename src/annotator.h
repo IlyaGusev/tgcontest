@@ -1,8 +1,9 @@
 #pragma once
 
-#include "embedder.h"
 #include "config.pb.h"
 #include "db_document.h"
+#include "embedder.h"
+#include "torch_embedder.h"
 
 #include <memory>
 #include <unordered_set>
@@ -10,21 +11,23 @@
 #include <vector>
 
 #include <boost/optional.hpp>
-#include <boost/program_options.hpp>
 #include <fasttext.h>
 #include <onmt/Tokenizer.h>
-#include <tinyxml2/tinyxml2.h>
 
 struct TDocument;
+
+namespace tinyxml2 {
+    class XMLDocument;
+}
 
 using TFTModelStorage = std::unordered_map<tg::ELanguage, fasttext::FastText>;
 
 class TAnnotator {
 public:
-    TAnnotator(
+    explicit TAnnotator(
         const std::string& configPath,
         bool saveNotNews = false,
-        bool forceSaveTexts = false,
+        const std::string& mode = "top",
         boost::optional<std::vector<std::string>> languages = boost::none);
 
     std::vector<TDbDocument> AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const;
@@ -51,8 +54,9 @@ private:
     fasttext::FastText LanguageDetector;
     TFTModelStorage VectorModels;
     TFTModelStorage CategoryDetectors;
-    std::unordered_map<tg::ELanguage, std::unique_ptr<TFastTextEmbedder>> Embedders;
+    std::map<std::pair<tg::ELanguage, tg::EEmbeddingKey>, std::unique_ptr<TFastTextEmbedder>> Embedders;
 
     bool SaveNotNews = false;
     bool SaveTexts = false;
+    std::string Mode;
 };

@@ -11,7 +11,6 @@ models_list=(
     "https://www.dropbox.com/s/hoapmnvqlknmu6v/lang_detect_v10.ftz"
 )
 
-mkdir -p models
 cd models
 for url in ${models_list[@]}; do
     echo $url

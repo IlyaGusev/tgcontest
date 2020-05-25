@@ -182,9 +182,14 @@ void TController::Threads(const drogon::HttpRequestPtr &req, std::function<void(
     const auto& categoryClusters = weightedClusters.at(category.value());
 
     Json::Value threads(Json::arrayValue);
+    int limit = 1000;
     for (const auto& weightedCluster : categoryClusters) {
+        if (limit <= 0) {
+            break;
+        }
         const TNewsCluster& cluster = weightedCluster.Cluster.get();
         threads.append(ToJson(cluster));
+        --limit;
     }
 
     Json::Value json(Json::objectValue);

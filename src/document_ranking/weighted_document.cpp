@@ -1,6 +1,6 @@
 #include "weighted_document.h"
 
-bool ComputeDocumentNasty(const TDbDocument& doc) {
+bool IsNasty(const TDbDocument& doc) {
     if ((doc.Language == tg::LN_EN) && (doc.Title.size() < 16)) {
         return true;
     }

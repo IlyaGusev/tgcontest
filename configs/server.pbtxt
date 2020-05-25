@@ -1,4 +1,6 @@
 threads: 6
+max_connection_num: 512
+max_connection_num_per_ip: 0 # no limit
 
 db_path: "sample.db"
 db_max_open_files: 1024

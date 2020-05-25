@@ -5,16 +5,18 @@ import "enum.proto";
 
 message TServerConfig {
     uint32 threads = 1;
+    uint32 max_connection_num = 2;
+    uint32 max_connection_num_per_ip = 3;
 
-    string db_path = 2;
-    bool db_fail_if_missing = 3;
-    uint32 db_max_open_files = 4;
+    string db_path = 4;
+    bool db_fail_if_missing = 5;
+    uint32 db_max_open_files = 6;
 
-    bool skip_irrelevant_docs = 5;
-    uint32 clusterer_sleep = 6;
+    bool skip_irrelevant_docs = 7;
+    uint32 clusterer_sleep = 8;
 
-    string annotator_config_path = 7;
-    string clusterer_config_path = 8;
+    string annotator_config_path = 9;
+    string clusterer_config_path = 10;
 }
 
 message TEmbedderConfig {

@@ -67,7 +67,9 @@ int RunServer(const std::string& fname, uint16_t port) {
     app()
         .setLogLevel(trantor::Logger::kTrace)
         .addListener("0.0.0.0", port)
-        .setThreadNum(config.threads());
+        .setThreadNum(config.threads())
+        .setMaxConnectionNum(config.max_connection_num())
+        .setMaxConnectionNumPerIP(config.max_connection_num_per_ip());
 
     auto controllerPtr = std::make_shared<TController>();
     app().registerController(controllerPtr);

@@ -143,6 +143,7 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
         return boost::none;
     }
     dbDoc.Url = document.Url;
+    dbDoc.Host = GetHost(dbDoc.Url);
     dbDoc.SiteName = document.SiteName;
     dbDoc.Title = document.Title;
     dbDoc.FetchTime = document.FetchTime;

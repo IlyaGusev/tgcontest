@@ -1,9 +1,19 @@
 #pragma once
 
 #include "db_document.h"
+#include "agency_rating.h"
 
 class TAgencyRating;
 class TAlexaAgencyRating;
+
+struct TSliceFeatures {
+    uint64_t BestTimestamp = 0;
+    double Importance = 0.0;
+    std::vector<double> DocWeights;
+    std::map<std::string, double> CountryShare;
+    std::map<std::string, double> WeightedCountryShare;
+};
+
 
 class TNewsCluster {
 private:
@@ -13,7 +23,10 @@ private:
     tg::ECategory Category = tg::NC_UNDEFINED;
     uint64_t BestTimestamp = 0;
     double Importance = 0.0;
+    std::vector<double> Features;
     std::vector<double> DocWeights;
+    std::map<std::string, double> CountryShare;
+    std::map<std::string, double> WeightedCountryShare;
 
     std::vector<TDbDocument> Documents;
 
@@ -22,6 +35,19 @@ public:
 
     void AddDocument(const TDbDocument& document);
     void Summarize(const TAgencyRating& agencyRating);
+
+    void CalcFeatures(
+        const TAlexaAgencyRating& alexaRating,
+        const std::vector<TDbDocument>& docs);
+
+    TSliceFeatures CalcImportance(
+        const TAlexaAgencyRating& alexaRating,
+        const std::vector<TDbDocument>& docs,
+        tg::ELanguage language,
+        ERatingType type,
+        double shift,
+        double decay);
+
     void CalcImportance(const TAlexaAgencyRating& alexaRating);
     void CalcCategory();
 
@@ -39,7 +65,9 @@ public:
     double GetImportance() const { return Importance; }
     uint64_t GetBestTimestamp() const { return BestTimestamp; }
     const std::vector<double>& GetDocWeights() const { return DocWeights; }
-
+    const std::vector<double>& GetFeatures() const { return Features; }
+    const std::map<std::string, double>& GetCountryShare() const { return CountryShare; }
+    const std::map<std::string, double>& GetWeightedCountryShare() const { return WeightedCountryShare; }
 private:
     void SortByWeights(const std::vector<double>& weights);
 };

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "enum.pb.h"
+
 #include <string>
 #include <unordered_map>
 #include <nlohmann_json/json.hpp>
@@ -19,6 +21,12 @@ private:
      double UnkRating = 0.000015;
 };
 
+enum ERatingType {
+    RT_LOG = 0,
+    RT_RAW = 1,
+    RT_ONE = 2
+};
+
 class TAlexaAgencyRating {
 public:
     TAlexaAgencyRating() = default;
@@ -27,7 +35,7 @@ public:
     }
 
     void Load(const std::string& fileName);
-    double ScoreUrl(const std::string& url, bool en) const;
+    double ScoreUrl(const std::string& host, tg::ELanguage language, ERatingType type, double shift) const;
     double GetRawRating(const std::string& host) const;
     double GetCountryShare(const std::string& host, const std::string& code) const;
 

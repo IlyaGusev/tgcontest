@@ -250,13 +250,25 @@ int main(int argc, char** argv) {
                 }
                 if (printTopDebugInfo) {
                     object["article_weights"] = nlohmann::json::array();
+                    object["features"] = nlohmann::json::array();
                     object["weight"] = cluster.WeightInfo.Weight;
                     object["importance"] = cluster.WeightInfo.Importance;
                     object["best_time"] = cluster.WeightInfo.BestTime;
                     object["age_penalty"] = cluster.WeightInfo.AgePenalty;
+                    object["average_us"] = cluster.Cluster.get().GetCountryShare().at("US");
+                    object["w_average_us"] = cluster.Cluster.get().GetWeightedCountryShare().at("US");
+                    object["average_gb"] = cluster.Cluster.get().GetCountryShare().at("GB");
+                    object["w_average_gb"] = cluster.Cluster.get().GetWeightedCountryShare().at("GB");
+                    object["average_in"] = cluster.Cluster.get().GetCountryShare().at("IN");
+                    object["w_average_in"] = cluster.Cluster.get().GetWeightedCountryShare().at("IN");
+
                     for (const auto& weight : cluster.Cluster.get().GetDocWeights()) {
                         object["article_weights"].push_back(weight);
                     }
+                    for (const auto& feature : cluster.Cluster.get().GetFeatures()) {
+                        object["features"].push_back(feature);
+                    }
+
                 }
                 rubricTop["threads"].push_back(object);
             }

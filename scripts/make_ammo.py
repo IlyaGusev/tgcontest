@@ -98,7 +98,7 @@ if __name__ == "__main__":
     if args.lang_file:
         lang_files = read_lang_file(args.lang_file)
 
-    with tqdm.tqdm(total=n) as pbar:
+    with tqdm.tqdm(total = n) as pbar:
         for path, _, files in os.walk(args.dir):
             for name in files:
                 if not name.endswith('.html'):

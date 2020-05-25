@@ -21,3 +21,24 @@ enum ECategory {
     NC_OTHER = 8;
     NC_NOT_NEWS = 9;
 }
+
+enum EEmbeddingKey {
+    EK_UNDEFINED = 0;
+    EK_FASTTEXT_CLASSIC = 1;
+    EK_FASTTEXT_TITLE = 2;
+}
+
+enum EAggregationMode {
+    AM_UNDEFINED = 0;
+    AM_AVG = 1;
+    AM_MAX = 2;
+    AM_MIN = 3;
+    AM_MATRIX = 4;
+};
+
+enum EEmbedderField {
+    EF_UNDEFINED = 0;
+    EF_TITLE = 1;
+    EF_TEXT = 2;
+    EF_ALL = 3;
+};

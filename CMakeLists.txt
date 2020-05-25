@@ -81,28 +81,10 @@ set(SOURCE_FILES
     src/embedder.cpp
     src/rank.cpp
     src/run_server.cpp
+    src/server_clustering.cpp
     src/thread_pool.cpp
+    src/torch_embedder.cpp
     src/util.cpp
-)
-
-set(HEADER_FILES
-    src/agency_rating.h
-    src/annotator.h
-    src/cluster.h
-    src/clusterer.h
-    src/clustering/clustering.h
-    src/clustering/slink.h
-    src/controller.h
-    src/db_document.h
-    src/detect.h
-    src/document.h
-    src/document_ranking/weighted_document.h
-    src/embedder.h
-    src/rank.h
-    src/run_server.h
-    src/thread_pool.h
-    src/timer.h
-    src/util.h
 )
 
 file(GLOB PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/proto/*.proto")

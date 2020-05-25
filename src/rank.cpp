@@ -16,21 +16,20 @@ TWeightInfo ComputeClusterWeightPush(
     }
 
     double rank = cluster.GetImportance();
-    TWeightInfo info{clusterTime, rank, timeMultiplier, rank * timeMultiplier};
-    return info;
+    return TWeightInfo{clusterTime, rank, timeMultiplier, rank * timeMultiplier};
 }
 
 std::vector<std::vector<TWeightedNewsCluster>> Rank(
-    const TClusters& clusters,
+    TClusters::const_iterator begin,
+    TClusters::const_iterator end,
     uint64_t iterTimestamp,
     uint64_t window
 ) {
     std::vector<TWeightedNewsCluster> weightedClusters;
-    for (const TNewsCluster& cluster : clusters) {
-        tg::ECategory clusterCategory = cluster.GetCategory();
-        const std::string& title = cluster.GetTitle();
+    for (TClusters::const_iterator it = begin; it != end; it++) {
+        const TNewsCluster& cluster = *it;
         const TWeightInfo weight = ComputeClusterWeightPush(cluster, iterTimestamp, window);
-        weightedClusters.emplace_back(cluster, clusterCategory, title, weight, cluster.GetDocWeights());
+        weightedClusters.emplace_back(cluster, std::move(weight));
     }
 
     std::stable_sort(weightedClusters.begin(), weightedClusters.end(),
@@ -41,8 +40,9 @@ std::vector<std::vector<TWeightedNewsCluster>> Rank(
 
     std::vector<std::vector<TWeightedNewsCluster>> output(tg::ECategory_ARRAYSIZE);
     for (const TWeightedNewsCluster& cluster : weightedClusters) {
-        assert(cluster.Category != tg::NC_UNDEFINED);
-        output[static_cast<size_t>(cluster.Category)].push_back(cluster);
+        auto category = cluster.Cluster.get().GetCategory();
+        assert(category != tg::NC_UNDEFINED && category != tg::NC_ANY);
+        output[static_cast<size_t>(category)].push_back(cluster);
         output[static_cast<size_t>(tg::NC_ANY)].push_back(cluster);
     }
 

@@ -2,11 +2,18 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import json
+import os
 import random
 import requests
-import os
+import tqdm
 
 from collections import deque
+
+
+PERIOD_RANGE = (300, 86400)
+LANGS = ['ru', 'en']
+CATEGORIES = ['society', 'economy', 'technology', 'sports', 'entertainment', 'science', 'other']
 
 
 def print_request(request):
@@ -41,6 +48,27 @@ def make_delete(protocol, host, file_name):
     return print_request(prepared)
 
 
+def make_threads(protocol, host, period, lang_code, category):
+    req = requests.Request(
+        'GET',
+        '{}://{}/threads'.format(protocol, host),
+        params = { 'period': period, 'lang_code': lang_code, 'category': category }
+    )
+    prepared = req.prepare()
+    return print_request(prepared)
+
+
+def read_lang_file(lang_file):
+    with open(lang_file, 'r') as f:
+        data = json.load(f)
+    files = set()
+    for lang in data:
+        if lang['lang_code'] not in ('ru', 'en'):
+            continue
+        for name in lang['articles']:
+            files.add(name)
+    return files
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -50,7 +78,9 @@ def parse_args():
     parser.add_argument('--protocol', default='http')
     parser.add_argument('--port', type=int, default=None)
     parser.add_argument('--mode', choices=['put', 'mix'], default='put')
-    parser.add_argument('--prob', type=float, default=0.05)
+    parser.add_argument('--delete_prob', type=float, default=0.05)
+    parser.add_argument('--threads_prob', type=float, default=0.05)
+    parser.add_argument('--lang_file', default=None)
     return parser.parse_args()
 
 
@@ -64,16 +94,33 @@ if __name__ == "__main__":
     n = args.count
     put_names = deque()
 
-    for path, _, files in os.walk(args.dir):
-        for name in files:
-            if n <= 0:
-                exit()
-            ttl = random.randint(5*60, 30*24*60*60)
-            with open(os.path.join(path, name), 'r') as f:
-                content = f.read()
-            print(make_put(args.protocol, host, name, ttl, content))
-            if args.mode == 'mix':
-                put_names.append(name)
-                if random.random() < args.prob and len(put_names):
-                    print(make_delete(args.protocol, host, put_names.popleft()))
-            n = n - 1
+    lang_files = None
+    if args.lang_file:
+        lang_files = read_lang_file(args.lang_file)
+
+    with tqdm.tqdm(total=n) as pbar:
+        for path, _, files in os.walk(args.dir):
+            for name in files:
+                if not name.endswith('.html'):
+                    continue
+                if lang_files and not name in lang_files:
+                    continue
+                if n <= 0:
+                    exit()
+                ttl = random.randint(5*60, 30*24*60*60)
+                with open(os.path.join(path, name), 'r') as f:
+                    content = f.read().strip()
+                print(make_put(args.protocol, host, name, ttl, content))
+
+                if args.mode == 'mix':
+                    put_names.append(name)
+                    if random.random() < args.delete_prob and len(put_names):
+                        print(make_delete(args.protocol, host, put_names.popleft()))
+                    if random.random() < args.threads_prob:
+                        period = random.randint(PERIOD_RANGE[0], PERIOD_RANGE[1])
+                        lang = random.choice(LANGS)
+                        category = random.choice(CATEGORIES)
+                        print(make_threads(args.protocol, host, period, lang, category))
+                pbar.update(1)
+                n = n - 1
+    print('Total files: ', args.count - n)

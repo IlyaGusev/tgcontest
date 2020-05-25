@@ -2,8 +2,6 @@
 
 #include "db_document.h"
 
-#include <functional>
-
 class TAgencyRating;
 class TAlexaAgencyRating;
 
@@ -12,6 +10,7 @@ private:
     uint64_t Id = 0;
     uint64_t FreshestTimestamp = 0;
 
+    tg::ECategory Category = tg::NC_UNDEFINED;
     uint64_t BestTimestamp = 0;
     double Importance = 0.0;
     std::vector<double> DocWeights;
@@ -21,21 +20,24 @@ private:
     std::vector<TDbDocument> Documents;
 
 public:
-    TNewsCluster(uint64_t id) : Id(id) {};
+    explicit TNewsCluster(uint64_t id) : Id(id) {};
 
     void AddDocument(const TDbDocument& document);
     void Summarize(const TAgencyRating& agencyRating);
     void CalcImportance(const TAlexaAgencyRating& alexaRating);
+    void CalcCategory();
+
     bool operator<(const TNewsCluster& other) const;
+    static bool Compare(const TNewsCluster& cluster, uint64_t timestamp);
 
     uint64_t GetTimestamp(float percentile = 0.9) const;
-    tg::ECategory GetCategory() const;
 
+    tg::ECategory GetCategory() const { return Category; }
     uint64_t GetFreshestTimestamp() const { return FreshestTimestamp; }
     size_t GetSize() const { return Documents.size(); }
     const std::vector<TDbDocument>& GetDocuments() const { return Documents; }
     std::string GetTitle() const { return Documents.front().Title; }
-    std::string GetLanguage() const { return nlohmann::json(Documents.front().Language); }
+    tg::ELanguage GetLanguage() const { return Documents.front().Language; }
     double GetImportance() const { return Importance; }
     uint64_t GetBestTimestamp() const { return BestTimestamp; }
     const std::vector<double>& GetDocWeights() const { return DocWeights; }

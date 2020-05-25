@@ -7,7 +7,7 @@
 class TAgencyRating {
 public:
     TAgencyRating() = default;
-    TAgencyRating(const std::string& fileName, bool setMinAsUnk = false) {
+    explicit TAgencyRating(const std::string& fileName, bool setMinAsUnk = false) {
         Load(fileName, setMinAsUnk);
     }
 
@@ -22,7 +22,7 @@ private:
 class TAlexaAgencyRating {
 public:
     TAlexaAgencyRating() = default;
-    TAlexaAgencyRating(const std::string& fileName) {
+    explicit TAlexaAgencyRating(const std::string& fileName) {
         Load(fileName);
     }
 

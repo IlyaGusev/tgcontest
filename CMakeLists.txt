@@ -13,7 +13,7 @@ endif()
 set(TGNEWS_CXX_FLAGS "-pthread;-Wall;-Wextra;-Wno-sign-compare;-fno-omit-frame-pointer")
 set(TGNEWS_CXX_DEBUG_FLAGS "-g;-O2;-fsanitize=address")
 set(TGNEWS_LNK_DEBUG_FLAGS "-fsanitize=address")
-set(TGNEWS_CXX_RELEASE_FLAGS "-funroll-loops;-Ofast;-march=native")
+set(TGNEWS_CXX_RELEASE_FLAGS "-funroll-loops;-Ofast;-march=x86-64;-mtune=generic")
 
 set(BUILD_TESTING 0)
 add_subdirectory(thirdparty/fasttext EXCLUDE_FROM_ALL)
@@ -43,12 +43,6 @@ unset(WITH_TESTS)
 unset(WITH_TOOLS)
 unset(WITH_CORE_TOOLS)
 unset(WITH_BENCHMARK_TOOLS)
-
-set(BUILD_STATIC_LIB ON CACHE BOOL "" FORCE)
-set(USE_OPENMP OFF CACHE BOOL "" FORCE)
-add_subdirectory(thirdparty/xgboost EXCLUDE_FROM_ALL)
-unset(BUILD_STATIC_LIB)
-unset(USE_OPENMP)
 
 set(LIB_ONLY True)
 add_subdirectory(thirdparty/onmt_tokenizer EXCLUDE_FROM_ALL)
@@ -104,7 +98,6 @@ set(LIB_LIST
     eigen
     rocksdb
     drogon
-    xgboost
 )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty")

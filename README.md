@@ -81,12 +81,13 @@ Run on sample:
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1G-1GWGsfL5ariy_87FhadMUPDi9OkX_B)
 
 ## Models
-* Language detection model: [lang_detect.ftz](https://www.dropbox.com/s/qq970kin8zagql7/lang_detect.ftz)
-* Russian FastText vectors: [ru_vectors_v2.bin](https://www.dropbox.com/s/2nx97d8nzbzusee/ru_vectors_v2.bin)
-* Russian categories detection model: [ru_cat_v2.ftz](https://www.dropbox.com/s/55vonqnblz6ng28/ru_cat_v2.ftz)
-* English FastText vectors: [en_vectors_v2.bin](https://www.dropbox.com/s/no7x1n8acl5ykif/en_vectors_v2.bin)
-* English categories detection model: [en_cat_v2.ftz](https://www.dropbox.com/s/z5szjputp35a6yu/en_cat_v2.ftz)
+* Language detection model (2 round): [lang_detect_v10.ftz](https://www.dropbox.com/s/hoapmnvqlknmu6v/lang_detect_v10.ftz)
+* Russian FastText vectors (2 round): [ru_vectors_v3.bin](https://www.dropbox.com/s/vttjivmmxw7leea/ru_vectors_v3.bin)
+* Russian categories detection model (2 round): [ru_cat_v5.ftz](https://www.dropbox.com/s/luh60dd0uw8p9ar/en_cat_v5.ftz)
+* English FastText vectors (2 round): [en_vectors_v3.bin](https://www.dropbox.com/s/6aaucelizfx7xl6/en_vectors_v3.bin)
+* English categories detection model (2 round): [en_cat_v5.ftz](https://www.dropbox.com/s/luh60dd0uw8p9ar/en_cat_v5.ftz)
 * PageRank-based agency rating: [pagerank_rating.txt](https://www.dropbox.com/s/0o9xr2pwuqeh17k/pagerank_rating.txt)
+* Alexa agency rating: [alexa_rating_4_fixed.txt](https://www.dropbox.com/s/fry1gsd1mans9jm/alexa_rating_4_fixed.txt)
 
 ## Data
 * Russian news from 0107 and 0817 archives: [ru_tg_train.tar.gz](https://www.dropbox.com/s/1ecl9orr2tagcgi/ru_tg_train.tar.gz)
@@ -97,18 +98,17 @@ Run on sample:
 * Data for training English vectors: [en_unsupervised_train.tar.gz](https://www.dropbox.com/s/7c8ey9sqomiqsas/en_unsupervised_train.tar.gz)
 
 ## Markup
-* Russian categories train markup: [ru_cat_train_raw_markup.tsv](https://www.dropbox.com/s/amua7p1rt1dcvy0/ru_cat_train_raw_markup.tsv)
-* Russian categories test markup: [ru_cat_test_raw_markup.tsv](https://www.dropbox.com/s/xia50d1h28e87x4/ru_cat_test_raw_markup.tsv)
-* Russian not_news additional markup: [ru_not_news.txt](https://www.dropbox.com/s/wwptzqhgxvtjhbd/ru_not_news.txt)
+* Russian categories raw train markup: [ru_cat_v4_train_raw_markup.tsv](https://www.dropbox.com/s/24rsyxxp00kxjzr/ru_cat_v4_train_raw_markup.tsv)
+* Russian categories aggregated train markup: [ru_cat_v4_train_annot.json](https://www.dropbox.com/s/2rpsabep7tstmkq/ru_cat_v4_train_annot.json)
+* Russian categories aggregated train markup in fastText format: [ru_cat_v4_train_annot_ft.txt](https://www.dropbox.com/s/pyy2yvveub7ddth/ru_cat_v4_train_annot_ft.txt)
+* Russian categories manual train markup: [ru_cat_v4_train_manual_annot.json](https://www.dropbox.com/s/fibw7remhk2bodl/ru_cat_v4_train_manual_annot.json)
+* Russian categoreis manual train markup in fastText format: [ru_cat_v4_train_manual_annot_ft.txt](https://www.dropbox.com/s/vj88qodc8qwpsj9/ru_cat_v4_train_manual_annot_ft.txt)
+* Russian categoreis raw test markup: [ru_cat_v4_test_raw_markup.tsv](https://www.dropbox.com/s/9cbubupcht00kqn/ru_cat_v4_test_raw_markup.tsv)
+* Russian categories aggregated test markup: [ru_cat_v4_test_annot.json](https://www.dropbox.com/s/ur7jhiyi22tmzxd/ru_cat_v4_test_annot.json)
+* Russian categories aggregated test markup in fastText format: [ru_cat_v4_test_annot_ft.txt](https://www.dropbox.com/s/h4yv8m8otkexgay/ru_cat_v4_test_annot_ft.txt)
+
 * English categories train markup: [en_cat_train_raw_markup.tsv](https://www.dropbox.com/s/7qpfgf8bz77h2ss/en_cat_train_raw_markup.tsv)
 * English categories test markup: [en_cat_test_raw_markup.tsv](https://www.dropbox.com/s/bszwshgwbrt328k/en_cat_test_raw_markup.tsv)
 
 ## Misc
 * Flamegraph: https://ilyagusev.github.io/tgcontest/flamegraph.svg
-
-## TODO:
-* Framework for complex NN
-* Proper clustering markup
-* Error analysis for categories classifiers
-* Alternatives for PageRank
-* "Ugly" titles

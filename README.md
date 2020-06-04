@@ -106,7 +106,6 @@ Run on sample:
 * Russian categoreis raw test markup: [ru_cat_v4_test_raw_markup.tsv](https://www.dropbox.com/s/9cbubupcht00kqn/ru_cat_v4_test_raw_markup.tsv)
 * Russian categories aggregated test markup: [ru_cat_v4_test_annot.json](https://www.dropbox.com/s/ur7jhiyi22tmzxd/ru_cat_v4_test_annot.json)
 * Russian categories aggregated test markup in fastText format: [ru_cat_v4_test_annot_ft.txt](https://www.dropbox.com/s/h4yv8m8otkexgay/ru_cat_v4_test_annot_ft.txt)
-
 * English categories train markup: [en_cat_train_raw_markup.tsv](https://www.dropbox.com/s/7qpfgf8bz77h2ss/en_cat_train_raw_markup.tsv)
 * English categories test markup: [en_cat_test_raw_markup.tsv](https://www.dropbox.com/s/bszwshgwbrt328k/en_cat_test_raw_markup.tsv)
 

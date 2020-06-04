@@ -7,8 +7,8 @@
 * Description in Russian: https://habr.com/ru/post/487324/
 
 ## Demo
-* Russian: [https://ilyagusev.github.io/tgcontest2/ru/main.html](https://ilyagusev.github.io/tgcontest2/ru/main.html)
-* English: [https://ilyagusev.github.io/tgcontest2/en/main.html](https://ilyagusev.github.io/tgcontest2/en/main.html)
+* Russian: [https://ilyagusev.github.io/tgcontest/ru/main.html](https://ilyagusev.github.io/tgcontest/ru/main.html)
+* English: [https://ilyagusev.github.io/tgcontest/en/main.html](https://ilyagusev.github.io/tgcontest/en/main.html)
 
 ## Install
 Prerequisites: CMake, Boost
@@ -26,8 +26,8 @@ If you got zip archive, just go to building binary
 
 To download code and models:
 ```
-$ git clone https://github.com/IlyaGusev/tgcontest2
-$ cd tgcontest2
+$ git clone https://github.com/IlyaGusev/tgcontest
+$ cd tgcontest
 $ git submodule update --init --recursive
 $ bash download_models.sh
 $ wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
@@ -36,9 +36,9 @@ $ unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
 
 For MacOS use https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.5.0.zip
 
-To build binary (in "tgcontest2" dir):
+To build binary (in "tgcontest" dir):
 ```
-$ mkdir build && cd build && Torch_DIR="../libtorch" cmake -DCMAKE_BUILD_TYPE=Release .. && make
+$ mkdir build && cd build && Torch_DIR="../libtorch" cmake -DCMAKE_BUILD_TYPE=Release .. && make -j4
 ```
 
 To download datasets:

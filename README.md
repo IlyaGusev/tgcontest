@@ -110,6 +110,8 @@ Run on sample:
 * English categories aggregated train markup in fastText format: [en_cat_v4_train_annot_ft.json](https://www.dropbox.com/s/sugrux6mc7knvg2/en_cat_v4_train_annot_ft.json)
 * English categories aggregated test markup: [en_cat_v4_test_annot.json](https://www.dropbox.com/s/ucwzhucwgtuy8k1/en_cat_v4_test_annot.json)
 * English categories aggregated test markup in fastText format: [en_cat_v4_test_annot_ft.json](https://www.dropbox.com/s/g2u3tqlow7ikjpy/en_cat_v4_test_annot_ft.json)
+* Russian clustering pairs: [ru_pairs_raw_markup.tsv](https://www.dropbox.com/s/jugcl80vfd4wg0h/ru_pairs_raw_markup.tsv)
+* English clustering pairs: [en_pairs_raw_markup.tsv](https://www.dropbox.com/s/1zs05c3frm8cygq/en_pairs_raw_markup.tsv)
 
 ## Misc
 * Flamegraph: https://ilyagusev.github.io/tgcontest/flamegraph.svg

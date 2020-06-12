@@ -1,0 +1,24 @@
+<div class="tsk-block obj-text">
+    <table style="width:100%">
+    <tr>
+        <td class=article-block>
+            <h3>{{{first_title}}}</h3>
+            <p class="block-with-text">{{{first_text}}}</p>
+            <p><a href="{{{first_url}}}">Читать полностью.</a></p>
+        </td>
+        <td class=article-block>
+            <h3>{{{second_title}}}</h3>
+            <p class="block-with-text">{{{second_text}}}</p>
+            <p><a href="{{{second_url}}}">Читать полностью.</a></p>
+        </td>
+    </tr>
+    </table>
+</div>
+
+<div class="tsk-block">
+    <fieldset>
+        <legend>Принадлежат ли данные новости одному сюжету?</legend>
+        {{field type="radio" name="quality" value="OK" size="L" label="Один сюжет" hotkey="1" class="yes"}}
+        {{field type="radio" name="quality" value="BAD" size="L" label="Разные сюжеты" hotkey="2" class="no"}}
+    </fieldset>
+</div>

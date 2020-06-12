@@ -1,0 +1,63 @@
+<table border=0 width=100% table-layout=fixed validation-show="right-top">
+  <tr>
+    <td class="cell"><div class="title">{{title}}</div></td>
+  </tr>
+  <tr>
+    <td class="cell">
+      <a href="{{url}}" target="_blank">
+        <div class="url">{{url}}</div>
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td class="cell">
+      <div class="text">
+        <div class="longtext">
+            {{text}}
+        </div>
+      </div>
+    </td>
+  </tr>
+  <tr><td class="cell">Выберете подходящую категорию:</td></tr>
+  <tr><td class="list_cell">
+    <table table-layout=fixed>
+      <tr>
+        <td>
+          {{field type="radio" name="res" label="Не русский язык" value="bad_language" hotkey="q"}}
+        </td>
+        <td>
+          {{field type="radio" name="res" label="Не новостная статья (записи в блогах, статьи на общие темы, справочные материалы и т.д.)" value="not_news" hotkey="w"}}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          {{field type="radio" name="res" label="Общество (политика, выборы, законы, происшествия, криминал и т.д.)" value="society" hotkey="1"}}
+        </td>
+        <td>
+          {{field type="radio" name="res" label="Экономика (бизнес, инвестиции, финансы, биржевые новости и т.д.)" value="economy" hotkey="2"}}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          {{field type="radio" name="res" label="Технологии (гаджеты, автомобили, интернет, приложения и т.д.)" value="technology" hotkey="3"}}
+        </td>
+        <td>
+          {{field type="radio" name="res" label="Спорт (в т.ч. киберспорт)" value="sports" hotkey="4"}}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          {{field type="radio" name="res" label="Культура и развлечения (кино, музыка, книги, игры, искусство, знаменитости)" value="entertainment" hotkey="5"}}
+        </td>
+        <td>
+          {{field type="radio" name="res" label="Наука" value="science" hotkey="6"}}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          {{field type="radio" name="res" label="Прочее (новости, не попадающие под категории выше)" value="other" hotkey="7"}}
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+</table>

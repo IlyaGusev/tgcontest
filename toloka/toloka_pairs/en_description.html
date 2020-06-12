@@ -1,0 +1,138 @@
+<head>
+
+<style>
+/* Задание на странице */
+.task {
+    border: 1px solid #ccc;
+    width: 700px;
+    display: inline-block;
+}
+
+.tsk-block {
+    border-radius: 3px;
+}
+
+.article-block {
+    width: 300px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+.obj-text {
+    border: 1px solid #ccc;
+    position: relative;
+    background-color: #e6f7dc;
+}
+
+.tsk-block fieldset {
+    padding: 5px 5px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+    margin: 0;
+}
+
+.tsk-block legend {
+    font-weight: bold;
+    padding: 0 6px;
+}
+
+/* styles for '...' */
+.block-with-text {
+  /* hide text if it more than N lines  */
+  overflow: hidden;
+  /* for set '...' in absolute position */
+  position: relative;
+  /* use this value to count block height */
+  line-height: 1.2em;
+  /* max-height = line-height (1.2) * lines max number (3) */
+  max-height: 3.6em;
+  /* fix problem when last visible word doesn't adjoin right side  */
+  text-align: justify;
+  /* place for '...' */
+  margin-right: -1em;
+  padding-right: 1em;
+}
+/* create the ... */
+.block-with-text:before {
+  /* points in the end */
+  content: '...';
+  /* absolute position */
+  position: absolute;
+  /* set position to right bottom corner of block */
+  right: 0;
+  bottom: 0;
+}
+/* hide ... if we have text, which is less than or equal to max lines */
+.block-with-text:after {
+  /* points in the end */
+  content: '';
+  /* absolute position */
+  position: absolute;
+  /* set position to right bottom corner of text */
+  right: 0;
+  /* set width and height */
+  width: 1em;
+  height: 1em;
+  margin-top: 0.2em;
+  /* bg color = bg color under block */
+  background: white;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<h2>Description</h2>
+<p>In this task, you have to decide whether a pair of news corresponds to the same thread.</p>
+<p>Threads are sets of articles about the same event or topic, revealing very similar information.</p>
+<p>Generally, it should be enough for the reader to read one article from a thread to learn everything (or nearly everything) from that thread. But to learn everything about the topic – they’ll need to read several threads.</p>
+
+<h2>Criteria</h2>
+<p>Two news correspond to the same thread when:</p>
+<ul>
+    <li>They happened at the same time.</li>
+    <li>They provide the same data, like a stock price or a number of casualties.</li>
+    <li>They occurred in the same place.</li>
+    <li>Their titles are interchangeable: you can switch them, and no one will see the difference.</li>
+</ul>
+<p>Two news do NOT correspond to the same thread when:</p>
+<ul>
+    <li>They contain different facts.</li>
+    <li>One news describes some event (or preparation to it), while other reports a result of the event.</li>
+    <li>One news describes an event, while other reports a comment of any involved person on the event.</li>
+</ul>
+
+<h2>Interface</h2>
+<p>The task interface looks this way:</p>
+<div class="tsk-block obj-text">
+    <table style="width:100%">
+    <tr>
+        <td class=article-block>
+            <h4>White House: Trump having tests as part of medical checkup</h4>
+            <p class="block-with-text"><small>President Donald Trump was at Walter Reed National Medical Center on Saturday for what the White House said were medical tests as part of his annual physical. The appointment wasn’t on his weekend public schedule that was released Friday night, and his last physical was in February. Press secretary Stephanie Grisham said the 73-year-old Trump was “anticipating a very busy 2020” and wanted to take advantage of “a free weekend” in Washington to begin “portions of his routine” checkup. She was not more specific about the testing. The February checkup showed he had put on some pounds and was now officially considered obese. His Body Mass Index was 30.4. His weight was 243 pounds and he was 6 feet, 3 inches tall. Mr. Trump spent more than four hours at Walter Reed on Feb. 8 for his most recent checkup, supervised by Dr. Sean P Conley, his physician, and involving a panel of 11 specialists. “I am happy to announce the President of the United States is in very good health and I anticipate he will remain so for the duration of his Presidency, and beyond,” Dr. Conley wrote afterward. Test results came out six days later, showing that he weighed 243 pounds, compared with 236 pounds in September 2016 before he became President. An index rating of 30 is the level at which doctors consider someone obese under the commonly used formula. About 40 percent of Americans are obese. That raises their risk for heart disease, diabetes, stroke and some forms of cancer. Mr. Trump doesn’t drink alcohol or smoke. His primary form of exercise is golf.</small></p>
+            <p><a href="https://www.thehindu.com/news/international/white-house-trump-having-tests-as-part-of-medical-checkup/article29995883.ece"><small>Open the full version.</small></a></p>
+        </td>
+        <td class=article-block>
+            <h4>Donald Trump undergoes health check-up</h4>
+            <p class="block-with-text"><small>White House: Trump having tests as part of medical checkup	US President Donald Trump is undergoing medical tests as part of what the White House said was his annual check-up. The appointment at Walter Reed National Medical Centre was not on Mr Trump’s weekend public schedule that was released on Friday night, and his last physical exam was in February. Press secretary Stephanie Grisham said the 73-year-old is “anticipating a very busy 2020” and wanted to take advantage of “a free weekend” in Washington to begin “portions of his routine” check-up. No details of what tests will be carried out were released. His check-up in February revealed he had put on weight and was officially considered obese, with a body mass index of 30.4. Mr Trump spent more than four hours at Walter Reed on February 8 for his most recent check-up, supervised by Dr Sean Conley and involving a panel of 11 specialists. At the time, White House staff said Mr Trump was in “very good health and I anticipate he will remain so for the duration of his presidency”. Test results which came out six days later showed he is obese under the commonly used BMI formula. About 40% of Americans are obese, which raises their risk of heart disease, diabetes, stroke and some forms of cancer. Mr Trump does not drink alcohol or smoke. His primary form of exercise is golf. His latest check-up comes as House investigators on Capitol Hill interviewed a White House budget official as part of the impeachment inquiry. Prince Andrew could not have slept with accuser ‘because he was at Pizza Express’</small></p>
+            <p><a href="https://vc.ru/finance/91438-akcii-uber-podesheveli-do-rekordnogo-minimuma-na-fone-snyatiya-ogranicheniy-na-ih-prodazhu"><small>Open the full version.</small></a></p>
+        </td>
+    </tr>
+    </table>
+</div>
+<p>You are given two article titles, their first few lines and a link to the original articles. You can find out the publication date or some number from those original articles. Using this information, you should be able to determine correspondence of the news to a single thread.</p>
+
+<h2>Examples</h2>
+<p>1. Articles “<em>The World Health Organization declared a global emergency over the new coronavirus.</em>” and&nbsp;“<em>Coronavirus declared global health emergency by WHO</em>” correspond to the <strong>same thread</strong>.</p>
+<p>While news&nbsp;“<em>WHO declares coronavirus outbreak a global health emergency</em>” and&nbsp;“<em>Nations should avoid overreacting on coronavirus, says China as WHO declares global emergency.</em>” correspond to <strong>different threads</strong>.</p>
+<p>2. News “<em>The UK has confirmed four cases of the virus.</em>” and “<em>Coronavirus: Four cases confirmed in UK.</em>” correspond to the <strong>same thread</strong>.</p>
+<p>While articles&nbsp;“<em>The UK has confirmed four cases of the virus.</em>” and “<em>Coronavirus: number of confirmed UK cases rises to eight.</em>” correspond to <strong>different threads</strong>.</p>
+<p>3. Articles&nbsp;“<em>Japan may call off Tokyo Olympics over coronavirus fears.</em>” and “<em>Tokyo Olympic organisers emphasise the Games will go ahead despite coronavirus.</em>” correspond to <strong>different threads</strong>, because the information differes.</p>
+<p>4. News&nbsp;“<em>NASA astronauts Christina Koch and Jessica Meir prepare for a spacewalk</em>” and “<em>NASA Astronauts Complete the First All-Female Spacewalk</em>” correspond to <strong>different threads</strong>, because the second news describes the result of the event announced in the first one.</p>
+
+</body>

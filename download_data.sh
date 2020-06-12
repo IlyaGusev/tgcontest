@@ -14,6 +14,7 @@ data_train_list=(
 
 data_test_list=(
     "https://data-static.usercontent.dev/DataClusteringSample0410.tar.gz"
+    "https://data-static.usercontent.dev/DataClusteringSample1117.tar.gz"
 )
 
 mkdir data

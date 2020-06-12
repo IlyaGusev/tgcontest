@@ -1,0 +1,18 @@
+{
+  "res": {
+    "type": "string",
+    "hidden": false,
+    "required": true,
+    "allowed_values": [
+      "society",
+      "sports",
+      "economy",
+      "technology",
+      "entertainment",
+      "science",
+      "other",
+      "not_news",
+      "bad_language"
+    ]
+  }
+}

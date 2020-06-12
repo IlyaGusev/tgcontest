@@ -1,0 +1,17 @@
+{
+  "url": {
+    "type": "string",
+    "hidden": false,
+    "required": true
+  },
+  "text": {
+    "type": "string",
+    "hidden": false,
+    "required": true
+  },
+  "title": {
+    "type": "string",
+    "hidden": false,
+    "required": true
+  }
+}

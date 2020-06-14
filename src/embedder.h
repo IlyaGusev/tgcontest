@@ -2,7 +2,6 @@
 
 #include "enum.pb.h"
 
-#include <Eigen/Core>
 #include <torch/script.h>
 
 struct TDocument;
@@ -30,8 +29,6 @@ private:
     tg::EAggregationMode Mode;
     tg::EEmbedderField Field;
     size_t MaxWords;
-    Eigen::MatrixXf Matrix;
-    Eigen::VectorXf Bias;
     mutable torch::jit::script::Module TorchModel;
     std::string TorchModelPath;
     size_t OutputDim;

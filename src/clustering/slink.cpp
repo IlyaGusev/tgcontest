@@ -11,13 +11,14 @@
 namespace {
 
 using TClusterSiteNames = std::unordered_set<std::string>;
+using namespace torch::indexing;
 
 constexpr float INF_DISTANCE = 1.0f;
 
 void ApplyTimePenalty(
     const std::vector<TDbDocument>::const_iterator begin,
     size_t docSize,
-    Eigen::MatrixXf& distances
+    torch::Tensor& distances
 ) {
     std::vector<TDbDocument>::const_iterator iIt = begin;
     std::vector<TDbDocument>::const_iterator jIt = begin + 1;
@@ -32,8 +33,8 @@ void ApplyTimePenalty(
             if (diffHours >= 24.0f) {
                 penalty = diffHours / 24.0f;
             }
-            distances(i, j) = std::min(penalty * distances(i, j), INF_DISTANCE);
-            distances(j, i) = distances(i, j);
+            distances[i][j] = std::min(penalty * distances[i][j].item<float>(), INF_DISTANCE);
+            distances[j][i] = distances[i][j];
         }
     }
 }
@@ -154,19 +155,23 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
     tg::EEmbeddingKey embeddingKey
 ) {
     const size_t docSize = std::distance(begin, end);
-    assert(docSize != 0);
     const size_t embSize = begin->Embeddings.at(embeddingKey).size();
+    assert(docSize != 0 && embSize != 0);
 
-    Eigen::MatrixXf points(docSize, embSize);
+    auto pointsSizes = {static_cast<long int>(docSize), static_cast<long int>(embSize)};
+    auto distancesSizes = {static_cast<long int>(docSize), static_cast<long int>(docSize)};
+    auto embSizes = {static_cast<long int>(embSize)};
+
+    auto points = torch::zeros(pointsSizes, torch::requires_grad(false));
     std::vector<TDbDocument>::const_iterator docsIt = begin;
     for (size_t i = 0; i < docSize; ++i) {
-        std::vector<float> embedding = docsIt->Embeddings.at(embeddingKey);
-        Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
-        points.row(i) = eigenVector / eigenVector.norm();
+        const std::vector<float>& embedding = docsIt->Embeddings.at(embeddingKey);
+        // UNSAFE: undefined behavior, const_cast on originally const data
+        points[i] = torch::from_blob(const_cast<float*>(embedding.data()), embSizes);
         docsIt++;
     }
 
-    Eigen::MatrixXf distances(points.rows(), points.rows());
+    auto distances = torch::zeros(distancesSizes, torch::requires_grad(false));
     FillDistanceMatrix(points, distances);
 
     if (Config.use_timestamp_moving()) {
@@ -181,8 +186,8 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
     std::vector<size_t> nn(docSize);
     std::vector<float> nnDistances(docSize);
     for (size_t i = 0; i < docSize; i++) {
-        Eigen::Index minJ;
-        nnDistances[i] = distances.row(i).minCoeff(&minJ);
+        size_t minJ = static_cast<size_t>(distances[i].argmin().item<long int>());
+        nnDistances[i] = distances[i][minJ].item<float>();
         nn[i] = minJ;
     }
 
@@ -238,13 +243,13 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
 
         // Update distance matrix and nearest neighbors
         nnDistances[minI] = INF_DISTANCE;
-        for (size_t k = 0; k < static_cast<size_t>(distances.rows()); k++) {
+        for (size_t k = 0; k < docSize; k++) {
             if (k == minI || k == minJ) {
                 continue;
             }
-            float newDistance = std::min(distances(minJ, k), distances(minI, k));
-            distances(minI, k) = newDistance;
-            distances(k, minI) = newDistance;
+            float newDistance = std::min(distances[minJ][k].item<float>(), distances[minI][k].item<float>());
+            distances[minI][k] = newDistance;
+            distances[k][minI] = newDistance;
             if (newDistance < nnDistances[minI]) {
                 nnDistances[minI] = newDistance;
                 nn[minI] = k;
@@ -253,18 +258,18 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
 
         // Remove minJ row and column from distance matrix
         nnDistances[minJ] = INF_DISTANCE;
-        for (size_t i = 0; i < static_cast<size_t>(distances.rows()); i++) {
-            distances(minJ, i) = INF_DISTANCE;
-            distances(i, minJ) = INF_DISTANCE;
+        for (size_t i = 0; i < docSize; i++) {
+            distances[minJ][i] = INF_DISTANCE;
+            distances[i][minJ] = INF_DISTANCE;
         }
     }
 
     return labels;
 }
 
-void TSlinkClustering::FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const {
+void TSlinkClustering::FillDistanceMatrix(const torch::Tensor& points, torch::Tensor& distances) const {
     // Assuming points are on unit sphere
     // Normalize to [0.0, 1.0]
-    distances = -((points * points.transpose()).array() + 1.0f) / 2.0f + 1.0f;
-    distances += distances.Identity(distances.rows(), distances.cols());
+    distances = -((torch::matmul(points, points.transpose(0, 1))) + 1.0f) / 2.0f + 1.0f;
+    distances += torch::eye(distances.size(0), distances.size(1));
 }

@@ -91,6 +91,7 @@ std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& title, co
     inputs.emplace_back(tensor.unsqueeze(0));
 
     at::Tensor outputTensor = TorchModel.forward(inputs).toTensor().squeeze(0).contiguous();
+    outputTensor.div_(outputTensor.norm(2));
     float* outputTensorPtr = outputTensor.data_ptr<float>();
     std::vector<float> resultVector(OutputDim);
     for (size_t i = 0; i < OutputDim; i++) {

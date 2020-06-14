@@ -5,7 +5,7 @@
 #include "util.h"
 
 #include <boost/range/algorithm/nth_element.hpp>
-#include <Eigen/Core>
+#include <torch/script.h>
 
 #include <cassert>
 #include <cmath>
@@ -31,26 +31,26 @@ uint64_t TNewsCluster::GetTimestamp(float percentile) const {
 
 void TNewsCluster::Summarize(const TAgencyRating& agencyRating) {
     assert(GetSize() != 0);
-    const size_t embeddingSize = Documents.back().Embeddings.at(tg::EK_FASTTEXT_CLASSIC).size();
-    Eigen::MatrixXf points(GetSize(), embeddingSize);
-    for (size_t i = 0; i < GetSize(); i++) {
-        auto embedding = Documents[i].Embeddings.at(tg::EK_FASTTEXT_CLASSIC);
-        Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
-        points.row(i) = eigenVector / eigenVector.norm();
+    const long int documentsCount = GetSize();
+    const long int embeddingSize = Documents.back().Embeddings.at(tg::EK_FASTTEXT_CLASSIC).size();
+    auto points = torch::zeros({documentsCount, embeddingSize}, torch::requires_grad(false));
+    for (size_t i = 0; i < static_cast<size_t>(documentsCount); i++) {
+        std::vector<float>& embedding = Documents[i].Embeddings.at(tg::EK_FASTTEXT_CLASSIC);
+        points[i] = torch::from_blob(embedding.data(), {embeddingSize});
     }
-    Eigen::MatrixXf docsCosine = points * points.transpose();
+    auto docsCosine = torch::matmul(points, points.transpose(0, 1));
 
     std::vector<double> weights;
     weights.reserve(GetSize());
     uint64_t freshestTimestamp = GetFreshestTimestamp();
     for (size_t i = 0; i < GetSize(); ++i) {
         const TDbDocument& doc = Documents[i];
-        double docRelevance = docsCosine.row(i).mean();
+        double docRelevance = static_cast<double>(docsCosine[i].mean().item<float>());
         int64_t timeDiff = static_cast<int64_t>(doc.FetchTime) - static_cast<int64_t>(freshestTimestamp);
         double timeMultiplier = Sigmoid(static_cast<double>(timeDiff) / 3600.0 + 12.0);
         double agencyScore = agencyRating.ScoreUrl(doc.Url);
         double weight = (agencyScore + docRelevance) * timeMultiplier;
-	if (doc.Nasty) {
+        if (doc.Nasty) {
             weight *= 0.5;
         }
         weights.push_back(weight);

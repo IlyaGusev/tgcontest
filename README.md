@@ -90,9 +90,8 @@ Run on sample:
 * Alexa agency rating: [alexa_rating_4_fixed.txt](https://www.dropbox.com/s/fry1gsd1mans9jm/alexa_rating_4_fixed.txt)
 
 ## Data
-* Russian news from 0107 and 0817 archives: [ru_tg_train.tar.gz](https://www.dropbox.com/s/1ecl9orr2tagcgi/ru_tg_train.tar.gz)
-* English news from 0107 and 0817 archives: [en_tg_train.tar.gz](https://www.dropbox.com/s/umd8tyx4wz1wquq/en_tg_train.tar.gz)
-* Russian news from 1821, 2225, 29 and 09 archives: [ru_tg_test.tar.gz](https://www.dropbox.com/s/gvfk6t4g7kxw9ae/ru_tg_test.tar.gz)
+* Russian news from all archives, except 1117: [ru_tg_1101_0510.jsonl.tar.gz](https://www.dropbox.com/s/r8iqi6h6x1w0pzv/ru_tg_1101_0510.jsonl.tar.gz)
+* Russian news from 1117 archive: [ru_tg_0511_0517.jsonl.tar.gz](https://www.dropbox.com/s/zvv1qvm1yidvc2p/ru_tg_0511_0517.jsonl.tar.gz)
 * English news from 1821, 2225, 29 and 09 archives: [en_tg_test.tar.gz](https://www.dropbox.com/s/rw674iic8x5udb3/en_tg_test.tar.gz)
 * Data for training Russian vectors: [ru_unsupervised_train.tar.gz](https://www.dropbox.com/s/gsn9fire2hdaz81/ru_unsupervised_train.tar.gz)
 * Data for training English vectors: [en_unsupervised_train.tar.gz](https://www.dropbox.com/s/7c8ey9sqomiqsas/en_unsupervised_train.tar.gz)

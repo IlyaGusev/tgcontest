@@ -2,8 +2,7 @@
 
 #include "config.pb.h"
 #include "db_document.h"
-#include "embedder.h"
-#include "torch_embedder.h"
+#include "embedders/embedder.h"
 
 #include <memory>
 #include <unordered_set>
@@ -52,11 +51,11 @@ private:
     onmt::Tokenizer Tokenizer;
 
     fasttext::FastText LanguageDetector;
-    TFTModelStorage VectorModels;
     TFTModelStorage CategoryDetectors;
-    std::map<std::pair<tg::ELanguage, tg::EEmbeddingKey>, std::unique_ptr<TFastTextEmbedder>> Embedders;
+    std::map<std::pair<tg::ELanguage, tg::EEmbeddingKey>, std::unique_ptr<TEmbedder>> Embedders;
 
     bool SaveNotNews = false;
     bool SaveTexts = false;
+    bool ComputeNasty = false;
     std::string Mode;
 };

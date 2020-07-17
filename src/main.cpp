@@ -1,4 +1,3 @@
-#include "agency_rating.h"
 #include "annotator.h"
 #include "clusterer.h"
 #include "rank.h"
@@ -98,10 +97,10 @@ int main(int argc, char** argv) {
         }
 
         // Parse files and annotate with classifiers
-        const std::string annotatorConfig = vm["annotator_config"].as<std::string>();
+        const std::string annotatorConfigPath = vm["annotator_config"].as<std::string>();
         bool saveNotNews = vm["save_not_news"].as<bool>();
         std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
-        TAnnotator annotator(annotatorConfig, saveNotNews, mode, languages);
+        TAnnotator annotator(annotatorConfigPath, saveNotNews, mode, languages);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> annotationTimer;
         std::vector<TDbDocument> docs = annotator.AnnotateAll(fileNames, fromJson);
         LOG_DEBUG("Annotation: " << annotationTimer.Elapsed() << " ms (" << docs.size() << " documents)");
@@ -174,8 +173,8 @@ int main(int argc, char** argv) {
         }
 
         // Clustering
-        const std::string clustererConfig = vm["clusterer_config"].as<std::string>();
-        TClusterer clusterer(clustererConfig);
+        const std::string clustererConfigPath = vm["clusterer_config"].as<std::string>();
+        TClusterer clusterer(clustererConfigPath);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
         TClusterIndex clusterIndex = clusterer.Cluster(std::move(docs));
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms")

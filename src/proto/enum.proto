@@ -22,6 +22,12 @@ enum ECategory {
     NC_NOT_NEWS = 9;
 }
 
+enum EEmbedderType {
+    ET_UNDEFINED = 0;
+    ET_FASTTEXT = 1;
+    ET_TORCH = 2;
+}
+
 enum EEmbeddingKey {
     EK_UNDEFINED = 0;
     EK_FASTTEXT_CLASSIC = 1;

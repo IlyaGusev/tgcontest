@@ -1,7 +1,8 @@
 #include "annotator.h"
 #include "detect.h"
 #include "document.h"
-#include "embedder.h"
+#include "embedders/ft_embedder.h"
+#include "embedders/torch_embedder.h"
 #include "nasty.h"
 #include "thread_pool.h"
 #include "timer.h"
@@ -14,6 +15,15 @@
 #include <fcntl.h>
 #include <tinyxml2/tinyxml2.h>
 
+static std::unique_ptr<TEmbedder> LoadEmbedder(tg::TEmbedderConfig config) {
+    if (config.type() == tg::ET_FASTTEXT) {
+        return std::make_unique<TFastTextEmbedder>(config);
+    } else if (config.type() == tg::ET_TORCH) {
+        return std::make_unique<TTorchEmbedder>(config);
+    } else {
+        ENSURE(false, "Bad embedder type");
+    }
+}
 
 TAnnotator::TAnnotator(
     const std::string& configPath,
@@ -26,58 +36,37 @@ TAnnotator::TAnnotator(
     , Mode(mode)
 {
     ParseConfig(configPath);
+    SaveTexts = Config.save_texts() || (Mode == "json");
+    ComputeNasty = Config.compute_nasty();
 
     LOG_DEBUG("Loading models...");
 
     LanguageDetector.loadModel(Config.lang_detect());
     LOG_DEBUG("FastText language detector loaded");
 
+    for (const std::string& l : languages.get()) {
+        tg::ELanguage language = FromString<tg::ELanguage>(l);
+        Languages.insert(language);
+    }
+
     for (const auto& modelConfig : Config.category_models()) {
         const tg::ELanguage language = modelConfig.language();
+        // Do not load models for languages that are not presented in CLI param
+        if (Languages.find(language) == Languages.end()) {
+            continue;
+        }
         CategoryDetectors[language].loadModel(modelConfig.path());
         LOG_DEBUG("FastText " << ToString(language) << " category detector loaded");
     }
 
-    for (const auto& modelConfig : Config.models()) {
-        tg::ELanguage language = modelConfig.language();
-        tg::EEmbeddingKey embeddingKey = modelConfig.embedding_key();
-
-        if (languages) {
-            bool isGoodLanguage = false;
-            for (const std::string& l : languages.get()) {
-                if (nlohmann::json(l) == nlohmann::json(language)) {
-                    isGoodLanguage = true;
-                }
-            }
-            if (!isGoodLanguage) {
-                continue;
-            }
+    for (const auto& embedderConfig : Config.embedders()) {
+        tg::ELanguage language = embedderConfig.language();
+        if (Languages.find(language) == Languages.end()) {
+            continue;
         }
-        Languages.insert(language);
-
-        VectorModels[language].loadModel(modelConfig.vector_model());
-        LOG_DEBUG("FastText " << ToString(language) << " vector model loaded");
-
-        tg::EAggregationMode am = modelConfig.aggregation_mode();
-        tg::EEmbedderField field = modelConfig.embedder_field();
-        if (am == tg::AM_MATRIX) {
-            Embedders[{language, embeddingKey}] = std::make_unique<TFastTextEmbedder>(
-                VectorModels.at(language),
-                tg::AM_MATRIX,
-                field,
-                modelConfig.embedder().max_words(),
-                modelConfig.embedder().path(),
-                modelConfig.embedder().output_dim()
-            );
-        } else {
-            Embedders[{language, embeddingKey}] = std::make_unique<TFastTextEmbedder>(
-                VectorModels.at(language),
-                am,
-                field
-            );
-        }
+        tg::EEmbeddingKey embeddingKey = embedderConfig.embedding_key();
+        Embedders[{language, embeddingKey}] = LoadEmbedder(embedderConfig);
     }
-    SaveTexts = Config.save_texts() || (Mode == "json");
 }
 
 std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const {
@@ -181,8 +170,9 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
         TDbDocument::TEmbedding value = embedder->CalcEmbedding(cleanTitle, cleanText);
         dbDoc.Embeddings.emplace(embeddingKey, std::move(value));
     }
-
-    dbDoc.Nasty = ComputeDocumentNasty(dbDoc);
+    if (ComputeNasty) {
+        dbDoc.Nasty = ComputeDocumentNasty(dbDoc);
+    }
 
     return dbDoc;
 }

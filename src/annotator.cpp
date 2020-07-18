@@ -9,10 +9,10 @@
 #include "util.h"
 
 #include <boost/algorithm/string/join.hpp>
-#include <boost/optional.hpp>
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <fcntl.h>
+#include <optional>
 #include <tinyxml2/tinyxml2.h>
 
 static std::unique_ptr<TEmbedder> LoadEmbedder(tg::TEmbedderConfig config) {
@@ -27,9 +27,9 @@ static std::unique_ptr<TEmbedder> LoadEmbedder(tg::TEmbedderConfig config) {
 
 TAnnotator::TAnnotator(
     const std::string& configPath,
+    const std::vector<std::string>& languages,
     bool saveNotNews /*= false*/,
-    const std::string& mode /* = top */,
-    boost::optional<std::vector<std::string>> languages /* = boost::none */
+    const std::string& mode /* = top */
 )
     : Tokenizer(onmt::Tokenizer::Mode::Conservative, onmt::Tokenizer::Flags::CaseFeature)
     , SaveNotNews(saveNotNews)
@@ -44,7 +44,7 @@ TAnnotator::TAnnotator(
     LanguageDetector.loadModel(Config.lang_detect());
     LOG_DEBUG("FastText language detector loaded");
 
-    for (const std::string& l : languages.get()) {
+    for (const std::string& l : languages) {
         tg::ELanguage language = FromString<tg::ELanguage>(l);
         Languages.insert(language);
     }
@@ -72,12 +72,12 @@ TAnnotator::TAnnotator(
 std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const {
     TThreadPool threadPool;
     std::vector<TDbDocument> docs;
-    std::vector<std::future<boost::optional<TDbDocument>>> futures;
+    std::vector<std::future<std::optional<TDbDocument>>> futures;
     if (!fromJson) {
         docs.reserve(fileNames.size());
         futures.reserve(fileNames.size());
         for (const std::string& path: fileNames) {
-            using TFunc = boost::optional<TDbDocument>(TAnnotator::*)(const std::string&) const;
+            using TFunc = std::optional<TDbDocument>(TAnnotator::*)(const std::string&) const;
             futures.push_back(threadPool.enqueue<TFunc>(&TAnnotator::AnnotateHtml, this, path));
         }
     } else {
@@ -98,38 +98,38 @@ std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>&
         }
     }
     for (auto& futureDoc : futures) {
-        boost::optional<TDbDocument> doc = futureDoc.get();
+        std::optional<TDbDocument> doc = futureDoc.get();
         if (!doc) {
             continue;
         }
-        docs.push_back(std::move(doc.get()));
+        docs.push_back(std::move(doc.value()));
     }
     futures.clear();
     docs.shrink_to_fit();
     return docs;
 }
 
-boost::optional<TDbDocument> TAnnotator::AnnotateHtml(const std::string& path) const {
-    boost::optional<TDocument> parsedDoc = ParseHtml(path);
+std::optional<TDbDocument> TAnnotator::AnnotateHtml(const std::string& path) const {
+    std::optional<TDocument> parsedDoc = ParseHtml(path);
     if (!parsedDoc) {
-        return boost::none;
+        return std::nullopt;
     }
     return AnnotateDocument(*parsedDoc);
 }
 
-boost::optional<TDbDocument> TAnnotator::AnnotateHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const {
-    boost::optional<TDocument> parsedDoc = ParseHtml(html, fileName);
+std::optional<TDbDocument> TAnnotator::AnnotateHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const {
+    std::optional<TDocument> parsedDoc = ParseHtml(html, fileName);
     if (!parsedDoc) {
-        return boost::none;
+        return std::nullopt;
     }
     return AnnotateDocument(*parsedDoc);
 }
 
-boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& document) const {
+std::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& document) const {
     TDbDocument dbDoc;
     dbDoc.Language = DetectLanguage(LanguageDetector, document);
     if (Languages.find(dbDoc.Language) == Languages.end()) {
-        return boost::none;
+        return std::nullopt;
     }
     dbDoc.Url = document.Url;
     dbDoc.Host = GetHost(dbDoc.Url);
@@ -150,17 +150,17 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
     }
 
     if (document.Text.length() < Config.min_text_length()) {
-        return boost::none;
+        return std::nullopt;
     }
 
     std::string cleanTitle = PreprocessText(document.Title);
     std::string cleanText = PreprocessText(document.Text);
     dbDoc.Category = DetectCategory(CategoryDetectors.at(dbDoc.Language), cleanTitle, cleanText);
     if (dbDoc.Category == tg::NC_UNDEFINED) {
-        return boost::none;
+        return std::nullopt;
     }
     if (!dbDoc.IsNews() && !SaveNotNews) {
-        return boost::none;
+        return std::nullopt;
     }
     for (const auto& [pair, embedder]: Embedders) {
         const auto& [language, embeddingKey] = pair;
@@ -177,27 +177,27 @@ boost::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& docum
     return dbDoc;
 }
 
-boost::optional<TDocument> TAnnotator::ParseHtml(const std::string& path) const {
+std::optional<TDocument> TAnnotator::ParseHtml(const std::string& path) const {
     TDocument doc;
     try {
         doc.FromHtml(path.c_str(), Config.parse_links());
     } catch (...) {
         LOG_DEBUG("Bad html: " << path);
-        return boost::none;
+        return std::nullopt;
     }
     return doc;
 }
 
-boost::optional<TDocument> TAnnotator::ParseHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const {
+std::optional<TDocument> TAnnotator::ParseHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const {
     TDocument doc;
     try {
         doc.FromHtml(html, fileName, Config.parse_links());
     } catch (...) {
         LOG_DEBUG("Bad html: " << fileName);
-        return boost::none;
+        return std::nullopt;
     }
     if (doc.Text.length() < Config.min_text_length()) {
-        return boost::none;
+        return std::nullopt;
     }
     return doc;
 }

@@ -5,7 +5,7 @@
 #include "rank.h"
 #include "util.h"
 
-#include <boost/optional.hpp>
+#include <optional>
 #include <tinyxml2/tinyxml2.h>
 
 void TController::Init(
@@ -42,11 +42,11 @@ bool TController::IsNotReady(std::function<void(const drogon::HttpResponsePtr&)>
 
 namespace {
 
-    boost::optional<uint64_t> ParseTtlHeader(const std::string& value) try {
+    std::optional<uint64_t> ParseTtlHeader(const std::string& value) try {
         static constexpr size_t PREFIX_LEN = std::char_traits<char>::length("max-age=");
         return static_cast<uint64_t>(std::stoi(value.substr(PREFIX_LEN)));
     } catch (const std::exception& e) {
-        return boost::none;
+        return std::nullopt;
     }
 
 }
@@ -56,7 +56,7 @@ void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(cons
         return;
     }
 
-    const boost::optional<uint64_t> ttl = ParseTtlHeader(req->getHeader("Cache-Control"));
+    const std::optional<uint64_t> ttl = ParseTtlHeader(req->getHeader("Cache-Control"));
     if (!ttl) {
         MakeSimpleResponse(std::move(callback), drogon::k400BadRequest);
         return;
@@ -77,7 +77,7 @@ void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(cons
     };
 
     // TODO: return 400 if bad XML
-    boost::optional<TDbDocument> dbDoc = Annotator->AnnotateHtml(html, fname);
+    std::optional<TDbDocument> dbDoc = Annotator->AnnotateHtml(html, fname);
     if (SkipIrrelevantDocs && !dbDoc) {
         MakeSimpleResponse(std::move(callback), getCode());
         return;
@@ -127,20 +127,20 @@ void TController::Delete(const drogon::HttpRequestPtr &req, std::function<void(c
 
 namespace {
 
-    boost::optional<uint64_t> ParsePeriod(const std::string& value) try {
+    std::optional<uint64_t> ParsePeriod(const std::string& value) try {
         return static_cast<uint64_t>(std::stoi(value));
     } catch (const std::exception& e) {
-        return boost::none;
+        return std::nullopt;
     }
 
-    boost::optional<tg::ELanguage> ParseLang(const std::string& value) {
+    std::optional<tg::ELanguage> ParseLang(const std::string& value) {
         const tg::ELanguage lang = FromString<tg::ELanguage>(value);
-        return boost::make_optional(lang != tg::LN_UNDEFINED, lang);
+        return lang != tg::LN_UNDEFINED ? std::make_optional(lang) : std::nullopt;
     }
 
-    boost::optional<tg::ECategory> ParseCategory(const std::string& value) {
+    std::optional<tg::ECategory> ParseCategory(const std::string& value) {
         const tg::ECategory category = FromString<tg::ECategory>(value);
-        return boost::make_optional(category != tg::NC_UNDEFINED, category);
+        return category != tg::NC_UNDEFINED ? std::make_optional(category) : std::nullopt;
     }
 
     Json::Value ToJson(const TNewsCluster& cluster) {
@@ -163,9 +163,9 @@ void TController::Threads(const drogon::HttpRequestPtr &req, std::function<void(
         return;
     }
 
-    const boost::optional<uint64_t> period = ParsePeriod(req->getParameter("period"));
-    const boost::optional<tg::ELanguage> lang = ParseLang(req->getParameter("lang_code"));
-    const boost::optional<tg::ECategory> category = ParseCategory(req->getParameter("category"));
+    const std::optional<uint64_t> period = ParsePeriod(req->getParameter("period"));
+    const std::optional<tg::ELanguage> lang = ParseLang(req->getParameter("lang_code"));
+    const std::optional<tg::ECategory> category = ParseCategory(req->getParameter("category"));
 
     if (!period || !lang || !category) {
         MakeSimpleResponse(std::move(callback), drogon::k400BadRequest);

@@ -3,12 +3,12 @@
 #include "util.h"
 
 #include <algorithm>
+#include <optional>
 #include <sstream>
 
-#include <boost/optional.hpp>
 #include <fasttext.h>
 
-boost::optional<std::pair<std::string, double>> RunFasttextClf(
+std::optional<std::pair<std::string, double>> RunFasttextClf(
     const fasttext::FastText& model,
     const std::string& originalText,
     double border)
@@ -19,7 +19,7 @@ boost::optional<std::pair<std::string, double>> RunFasttextClf(
     std::vector<std::pair<fasttext::real, std::string>> predictions;
     model.predictLine(ifs, predictions, 1, border);
     if (predictions.empty()) {
-        return boost::none;
+        return std::nullopt;
     }
     double probability = predictions[0].first;
     const size_t FT_PREFIX_LENGTH = 9; // __label__
@@ -74,7 +74,7 @@ tg::ELanguage DetectLanguage(const fasttext::FastText& model, const TDocument& d
     }
     const std::string& label = pair->first;
     double probability = pair->second;
-    
+
     if (TooManyUnknownSymbols(document)) {
         return tg::LN_OTHER;
     }

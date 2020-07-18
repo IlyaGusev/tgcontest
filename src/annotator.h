@@ -5,11 +5,11 @@
 #include "embedders/embedder.h"
 
 #include <memory>
+#include <optional>
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
 
-#include <boost/optional.hpp>
 #include <fasttext.h>
 #include <onmt/Tokenizer.h>
 
@@ -25,20 +25,20 @@ class TAnnotator {
 public:
     explicit TAnnotator(
         const std::string& configPath,
+        const std::vector<std::string>& languages,
         bool saveNotNews = false,
-        const std::string& mode = "top",
-        boost::optional<std::vector<std::string>> languages = boost::none);
+        const std::string& mode = "top");
 
     std::vector<TDbDocument> AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const;
 
-    boost::optional<TDbDocument> AnnotateHtml(const std::string& path) const;
-    boost::optional<TDbDocument> AnnotateHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const;
+    std::optional<TDbDocument> AnnotateHtml(const std::string& path) const;
+    std::optional<TDbDocument> AnnotateHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const;
 
 private:
-    boost::optional<TDbDocument> AnnotateDocument(const TDocument& document) const;
+    std::optional<TDbDocument> AnnotateDocument(const TDocument& document) const;
 
-    boost::optional<TDocument> ParseHtml(const std::string& path) const;
-    boost::optional<TDocument> ParseHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const;
+    std::optional<TDocument> ParseHtml(const std::string& path) const;
+    std::optional<TDocument> ParseHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const;
 
     std::string PreprocessText(const std::string& text) const;
 

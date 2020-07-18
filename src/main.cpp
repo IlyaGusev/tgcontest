@@ -6,7 +6,6 @@
 #include "util.h"
 
 #include <boost/lexical_cast.hpp>
-#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
@@ -63,16 +62,16 @@ int main(int argc, char** argv) {
         if (mode == "server") {
             const std::string serverConfig = vm["server_config"].as<std::string>();
 
-            const auto parsePort = [](const std::string& s) -> boost::optional<uint16_t> {
+            const auto parsePort = [](const std::string& s) -> std::optional<uint16_t> {
                 try {
                     return boost::lexical_cast<uint16_t>(s);
                 } catch (std::exception&) {
-                    return boost::none;
+                    return std::nullopt;
                 }
             };
 
             const std::string portStr = vm["input"].as<std::string>();
-            const boost::optional<uint16_t> port = parsePort(portStr);
+            const std::optional<uint16_t> port = parsePort(portStr);
             if (!port) {
                 std::cerr << "Bad port: " << portStr << std::endl;
                 return -1;
@@ -100,7 +99,7 @@ int main(int argc, char** argv) {
         const std::string annotatorConfigPath = vm["annotator_config"].as<std::string>();
         bool saveNotNews = vm["save_not_news"].as<bool>();
         std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
-        TAnnotator annotator(annotatorConfigPath, saveNotNews, mode, languages);
+        TAnnotator annotator(annotatorConfigPath, languages, saveNotNews, mode);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> annotationTimer;
         std::vector<TDbDocument> docs = annotator.AnnotateAll(fileNames, fromJson);
         LOG_DEBUG("Annotation: " << annotationTimer.Elapsed() << " ms (" << docs.size() << " documents)");

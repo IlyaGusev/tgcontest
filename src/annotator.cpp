@@ -111,18 +111,12 @@ std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>&
 
 std::optional<TDbDocument> TAnnotator::AnnotateHtml(const std::string& path) const {
     std::optional<TDocument> parsedDoc = ParseHtml(path);
-    if (!parsedDoc) {
-        return std::nullopt;
-    }
-    return AnnotateDocument(*parsedDoc);
+    return parsedDoc ? AnnotateDocument(*parsedDoc) : std::nullopt;
 }
 
 std::optional<TDbDocument> TAnnotator::AnnotateHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const {
     std::optional<TDocument> parsedDoc = ParseHtml(html, fileName);
-    if (!parsedDoc) {
-        return std::nullopt;
-    }
-    return AnnotateDocument(*parsedDoc);
+    return parsedDoc ? AnnotateDocument(*parsedDoc) : std::nullopt;
 }
 
 std::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& document) const {

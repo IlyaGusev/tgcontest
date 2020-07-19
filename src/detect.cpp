@@ -23,7 +23,7 @@ std::optional<std::pair<std::string, double>> RunFasttextClf(
     }
     double probability = predictions[0].first;
     const size_t FT_PREFIX_LENGTH = 9; // __label__
-    std::string label = predictions[0].second.substr(FT_PREFIX_LENGTH);
+    const std::string label = predictions[0].second.substr(FT_PREFIX_LENGTH);
     return std::make_pair(label, probability);
 }
 
@@ -90,8 +90,5 @@ tg::ELanguage DetectLanguage(const fasttext::FastText& model, const TDocument& d
 tg::ECategory DetectCategory(const fasttext::FastText& model, const std::string& title, const std::string& text) {
     std::string sample(title + " " + text);
     auto pair = RunFasttextClf(model, sample, 0.0);
-    if (!pair) {
-        return tg::NC_UNDEFINED;
-    }
-    return FromString<tg::ECategory>(pair->first);
+    return pair ? FromString<tg::ECategory>(pair->first) : tg::NC_UNDEFINED;
 }

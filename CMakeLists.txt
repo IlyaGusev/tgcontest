@@ -76,7 +76,6 @@ set(SOURCE_FILES
     src/db_document.cpp
     src/detect.cpp
     src/document.cpp
-    src/document_ranking/weighted_document.cpp
     src/embedders/ft_embedder.cpp
     src/embedders/torch_embedder.cpp
     src/nasty.cpp

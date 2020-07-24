@@ -5,6 +5,7 @@
 #include "timer.h"
 #include "util.h"
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
@@ -20,7 +21,6 @@ int main(int argc, char** argv) {
             ("annotator_config", po::value<std::string>()->default_value("configs/annotator.pbtxt"), "annotator_config")
             ("clusterer_config", po::value<std::string>()->default_value("configs/clusterer.pbtxt"), "clusterer_config")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
-            ("from_json", po::bool_switch()->default_value(false), "from_json")
             ("save_not_news", po::bool_switch()->default_value(false), "save_not_news")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
             ("window_size", po::value<uint64_t>()->default_value(3600*8), "window_size")
@@ -82,17 +82,22 @@ int main(int argc, char** argv) {
 
         // Read file names
         LOG_DEBUG("Reading file names...");
-        int nDocs = vm["ndocs"].as<int>();
-        bool fromJson = vm["from_json"].as<bool>();
+        std::string input = vm["input"].as<std::string>();
+        tg::EInputFormat inputFormat = tg::IF_UNDEFINED;
         std::vector<std::string> fileNames;
-        if (!fromJson) {
-            std::string sourceDir = vm["input"].as<std::string>();
-            ReadFileNames(sourceDir, fileNames, nDocs);
-            LOG_DEBUG("Files count: " << fileNames.size());
-        } else {
-            std::string fileName = vm["input"].as<std::string>();
-            fileNames.push_back(fileName);
+        if (boost::algorithm::ends_with(input, ".json")) {
+            inputFormat = tg::IF_JSON;
+            fileNames.push_back(input);
             LOG_DEBUG("JSON file as input");
+        } else if (boost::algorithm::ends_with(input, ".jsonl")) {
+            inputFormat = tg::IF_JSONL;
+            fileNames.push_back(input);
+            LOG_DEBUG("JSONL file as input");
+        } else {
+            inputFormat = tg::IF_HTML;
+            int nDocs = vm["ndocs"].as<int>();
+            ReadFileNames(input, fileNames, nDocs);
+            LOG_DEBUG("Files count: " << fileNames.size());
         }
 
         // Parse files and annotate with classifiers
@@ -101,7 +106,7 @@ int main(int argc, char** argv) {
         std::vector<std::string> languages = vm["languages"].as<std::vector<std::string>>();
         TAnnotator annotator(annotatorConfigPath, languages, saveNotNews, mode);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> annotationTimer;
-        std::vector<TDbDocument> docs = annotator.AnnotateAll(fileNames, fromJson);
+        std::vector<TDbDocument> docs = annotator.AnnotateAll(fileNames, inputFormat);
         LOG_DEBUG("Annotation: " << annotationTimer.Elapsed() << " ms (" << docs.size() << " documents)");
 
         // Output

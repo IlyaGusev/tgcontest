@@ -69,18 +69,14 @@ TAnnotator::TAnnotator(
     }
 }
 
-std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const {
+std::vector<TDbDocument> TAnnotator::AnnotateAll(
+    const std::vector<std::string>& fileNames,
+    tg::EInputFormat inputFormat) const
+{
     TThreadPool threadPool;
     std::vector<TDbDocument> docs;
     std::vector<std::future<std::optional<TDbDocument>>> futures;
-    if (!fromJson) {
-        docs.reserve(fileNames.size());
-        futures.reserve(fileNames.size());
-        for (const std::string& path: fileNames) {
-            using TFunc = std::optional<TDbDocument>(TAnnotator::*)(const std::string&) const;
-            futures.push_back(threadPool.enqueue<TFunc>(&TAnnotator::AnnotateHtml, this, path));
-        }
-    } else {
+    if (inputFormat == tg::IF_JSON) {
         std::vector<TDocument> parsedDocs;
         for (const std::string& path: fileNames) {
             std::ifstream fileStream(path);
@@ -96,6 +92,30 @@ std::vector<TDbDocument> TAnnotator::AnnotateAll(const std::vector<std::string>&
         for (const TDocument& parsedDoc: parsedDocs) {
             futures.push_back(threadPool.enqueue(&TAnnotator::AnnotateDocument, this, parsedDoc));
         }
+    } else if (inputFormat == tg::IF_JSONL) {
+        std::vector<TDocument> parsedDocs;
+        for (const std::string& path: fileNames) {
+            std::ifstream fileStream(path);
+            std::string record;
+            while (std::getline(fileStream, record)) {
+                parsedDocs.emplace_back(nlohmann::json::parse(record));
+            }
+        }
+        parsedDocs.shrink_to_fit();
+        docs.reserve(parsedDocs.size());
+        futures.reserve(parsedDocs.size());
+        for (const TDocument& parsedDoc: parsedDocs) {
+            futures.push_back(threadPool.enqueue(&TAnnotator::AnnotateDocument, this, parsedDoc));
+        }
+    } else if (inputFormat == tg::IF_HTML) {
+        docs.reserve(fileNames.size());
+        futures.reserve(fileNames.size());
+        for (const std::string& path: fileNames) {
+            using TFunc = std::optional<TDbDocument>(TAnnotator::*)(const std::string&) const;
+            futures.push_back(threadPool.enqueue<TFunc>(&TAnnotator::AnnotateHtml, this, path));
+        }
+    } else {
+        ENSURE(false, "Bad input format");
     }
     for (auto& futureDoc : futures) {
         std::optional<TDbDocument> doc = futureDoc.get();

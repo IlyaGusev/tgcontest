@@ -40,11 +40,18 @@ enum EAggregationMode {
     AM_MAX = 2;
     AM_MIN = 3;
     AM_MATRIX = 4;
-};
+}
 
 enum EEmbedderField {
     EF_UNDEFINED = 0;
     EF_TITLE = 1;
     EF_TEXT = 2;
     EF_ALL = 3;
-};
+}
+
+enum EInputFormat {
+    IF_UNDEFINED = 0;
+    IF_HTML = 1;
+    IF_JSON = 2;
+    IF_JSONL = 3;
+}

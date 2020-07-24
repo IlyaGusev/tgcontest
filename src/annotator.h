@@ -29,7 +29,7 @@ public:
         bool saveNotNews = false,
         const std::string& mode = "top");
 
-    std::vector<TDbDocument> AnnotateAll(const std::vector<std::string>& fileNames, bool fromJson) const;
+    std::vector<TDbDocument> AnnotateAll(const std::vector<std::string>& fileNames, tg::EInputFormat inputFormat) const;
 
     std::optional<TDbDocument> AnnotateHtml(const std::string& path) const;
     std::optional<TDbDocument> AnnotateHtml(const tinyxml2::XMLDocument& html, const std::string& fileName) const;

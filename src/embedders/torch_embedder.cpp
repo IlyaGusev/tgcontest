@@ -22,7 +22,7 @@ TTorchEmbedder::TTorchEmbedder(tg::TEmbedderConfig config) : TTorchEmbedder(
 ) {}
 
 std::vector<float> TTorchEmbedder::CalcEmbedding(const std::string& input) const {
-    auto tensor = TokenIndexer.Index(input);
+    auto tensor = TokenIndexer.IndexTorch(input);
     std::vector<torch::jit::IValue> inputs;
     inputs.emplace_back(tensor.unsqueeze(0));
     at::Tensor outputTensor = Model.forward(inputs).toTensor().squeeze(0).contiguous();

@@ -70,9 +70,9 @@ TSlinkClustering::TSlinkClustering(const tg::TClusteringConfig& config)
 }
 
 TClusters TSlinkClustering::Cluster(
-    const std::vector<TDbDocument>& docs,
-    tg::EEmbeddingKey embeddingKey
+    const std::vector<TDbDocument>& docs
 ) {
+    tg::EEmbeddingKey embeddingKey = Config.embedding_key();
     const size_t docSize = docs.size();
     std::vector<size_t> labels;
     labels.reserve(docSize);

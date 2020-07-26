@@ -61,6 +61,7 @@ message TClusteringConfig {
     uint64 intersection_size = 9;
     bool use_timestamp_moving = 10;
     bool ban_same_hosts = 11;
+    EEmbeddingKey embedding_key = 12;
 }
 
 message TClustererConfig {

@@ -121,8 +121,8 @@ def main(answers_file_name, original_json, honey_output_file_name, ft_output_fil
         tokenizer = pyonmttok.Tokenizer("conservative")
         with open(ft_output_file_name, "w") as w:
             for d in data.values():
-                text = preprocess(d["text"], tokenizer)
-                title = preprocess(d["title"], tokenizer)
+                text = preprocess(d["text"].lower(), tokenizer)
+                title = preprocess(d["title"].lower(), tokenizer)
                 w.write("__label__{} {} {}\n".format(d["res"], title, text))
 
     if target_file_name:

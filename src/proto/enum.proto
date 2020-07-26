@@ -26,12 +26,14 @@ enum EEmbedderType {
     ET_UNDEFINED = 0;
     ET_FASTTEXT = 1;
     ET_TORCH = 2;
+    ET_TFIDF = 3;
 }
 
 enum EEmbeddingKey {
     EK_UNDEFINED = 0;
     EK_FASTTEXT_CLASSIC = 1;
     EK_FASTTEXT_TITLE = 2;
+    EK_TFIDF = 3;
 }
 
 enum EAggregationMode {

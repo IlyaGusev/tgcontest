@@ -10,8 +10,7 @@ public:
     explicit TSlinkClustering(const tg::TClusteringConfig& config);
 
     TClusters Cluster(
-        const std::vector<TDbDocument>& docs,
-        tg::EEmbeddingKey embeddingKey = tg::EK_FASTTEXT_CLASSIC
+        const std::vector<TDbDocument>& docs
     ) override;
 
 private:
@@ -22,7 +21,7 @@ private:
     std::vector<size_t> ClusterBatch(
         const std::vector<TDbDocument>::const_iterator begin,
         const std::vector<TDbDocument>::const_iterator end,
-        tg::EEmbeddingKey embeddingKey = tg::EK_FASTTEXT_CLASSIC
+        tg::EEmbeddingKey embeddingKey
     );
 
 private:

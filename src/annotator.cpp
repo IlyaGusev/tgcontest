@@ -2,6 +2,7 @@
 #include "detect.h"
 #include "document.h"
 #include "embedders/ft_embedder.h"
+#include "embedders/tfidf_embedder.h"
 #include "embedders/torch_embedder.h"
 #include "nasty.h"
 #include "thread_pool.h"
@@ -20,6 +21,8 @@ static std::unique_ptr<TEmbedder> LoadEmbedder(tg::TEmbedderConfig config) {
         return std::make_unique<TFastTextEmbedder>(config);
     } else if (config.type() == tg::ET_TORCH) {
         return std::make_unique<TTorchEmbedder>(config);
+    } else if (config.type() == tg::ET_TFIDF) {
+        return std::make_unique<TTfIdfEmbedder>(config);
     } else {
         ENSURE(false, "Bad embedder type");
     }

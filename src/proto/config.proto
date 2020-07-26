@@ -22,33 +22,31 @@ message TServerConfig {
     string clusterer_config_path = 13;
 }
 
-message TEmbedderConfig {
-    uint32 max_words = 1;
-    string path = 2;
-    uint32 output_dim = 3;
-}
-
 message TCategoryModelConfig{
     ELanguage language = 1;
     string path = 2;
 }
 
-message TModelConfig {
-    ELanguage language = 1;
-    EEmbeddingKey embedding_key = 2;
-    EEmbedderField embedder_field = 3;
-    EAggregationMode aggregation_mode = 4;
-    string vector_model = 5;
-    TEmbedderConfig embedder = 6;
+message TEmbedderConfig {
+    EEmbedderType type = 1;
+    ELanguage language = 2;
+    EEmbeddingKey embedding_key = 3;
+    EEmbedderField embedder_field = 4;
+    EAggregationMode aggregation_mode = 5;
+    uint32 max_words = 6;
+    string model_path = 7;
+    string vector_model_path = 8;
+    string vocabulary_path = 9;
 }
 
 message TAnnotatorConfig {
     string lang_detect = 1;
     repeated TCategoryModelConfig category_models = 2;
-    repeated TModelConfig models = 3;
+    repeated TEmbedderConfig embedders = 3;
     uint32 min_text_length = 4;
     bool parse_links = 5;
     bool save_texts = 6;
+    bool compute_nasty = 7;
 }
 
 message TClusteringConfig {

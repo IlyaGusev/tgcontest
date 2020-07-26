@@ -1,4 +1,5 @@
 #include "torch_embedder.h"
+#include "../util.h"
 
 TTorchEmbedder::TTorchEmbedder(
     const std::string& modelPath,
@@ -6,23 +7,21 @@ TTorchEmbedder::TTorchEmbedder(
     tg::EEmbedderField field,
     size_t maxWords
 )
-    : ModelPath(modelPath)
+    : TEmbedder(field)
     , TokenIndexer(vocabularyPath, maxWords)
-    , Field(field)
 {
-    assert(!ModelPath.empty());
-    Model = torch::jit::load(ModelPath);
+    ENSURE(!modelPath.empty(), "Empty model path for Torch embedder!");
+    Model = torch::jit::load(modelPath);
 }
 
-std::vector<float> TTorchEmbedder::CalcEmbedding(const std::string& title, const std::string& text) const {
-    std::string input;
-    if (Field == tg::EF_ALL) {
-        input = title + " " + text;
-    } else if (Field == tg::EF_TITLE) {
-        input = title;
-    } else if (Field == tg::EF_TEXT) {
-        input = text;
-    }
+TTorchEmbedder::TTorchEmbedder(tg::TEmbedderConfig config) : TTorchEmbedder(
+    config.model_path(),
+    config.vocabulary_path(),
+    config.embedder_field(),
+    config.max_words()
+) {}
+
+std::vector<float> TTorchEmbedder::CalcEmbedding(const std::string& input) const {
     auto tensor = TokenIndexer.Index(input);
     std::vector<torch::jit::IValue> inputs;
     inputs.emplace_back(tensor.unsqueeze(0));

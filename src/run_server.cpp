@@ -33,16 +33,16 @@ namespace {
         return config;
     }
 
-    boost::optional<uint32_t> GetOpenFileLimit() {
+    std::optional<uint32_t> GetOpenFileLimit() {
         rlimit limit;
         if (getrlimit(RLIMIT_NOFILE, &limit) == 0) {
             return static_cast<uint32_t>(limit.rlim_cur);
         }
-        return boost::none;
+        return std::nullopt;
     }
 
     void CheckIO(const tg::TServerConfig& config) {
-        const boost::optional<uint32_t> limit = GetOpenFileLimit();
+        const std::optional<uint32_t> limit = GetOpenFileLimit();
         if (!limit) {
             return;
         }
@@ -93,7 +93,8 @@ int RunServer(const std::string& fname, uint16_t port) {
     std::unique_ptr<rocksdb::DB> db = CreateDatabase(config);
 
     LOG_DEBUG("Creating annotator");
-    std::unique_ptr<TAnnotator> annotator = std::make_unique<TAnnotator>(config.annotator_config_path());
+    std::vector<std::string> languages = {"ru", "en"};
+    std::unique_ptr<TAnnotator> annotator = std::make_unique<TAnnotator>(config.annotator_config_path(), languages);
 
     LOG_DEBUG("Creating clusterer");
     std::unique_ptr<TClusterer> clusterer = std::make_unique<TClusterer>(config.clusterer_config_path());

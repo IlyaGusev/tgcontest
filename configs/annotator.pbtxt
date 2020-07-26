@@ -2,6 +2,7 @@ lang_detect: "models/lang_detect_v10.ftz"
 min_text_length: 20
 parse_links: false
 save_texts: false
+compute_nasty: true
 category_models: [
     {
         language: LN_RU
@@ -12,29 +13,25 @@ category_models: [
         path: "models/en_cat_v5.ftz"
     }
 ]
-models: [
+embedders: [
     {
+        type: ET_FASTTEXT
         language: LN_RU
         embedding_key: EK_FASTTEXT_CLASSIC
-        vector_model: "models/ru_vectors_v3.bin"
+        vector_model_path: "models/ru_vectors_v3.bin"
         aggregation_mode: AM_MATRIX
         embedder_field: EF_ALL
-        embedder: {
-            max_words: 150
-            path: "models/ru_sentence_embedder_v2.pt"
-            output_dim: 50
-        }
+        max_words: 150
+        model_path: "models/ru_sentence_embedder_v2.pt"
     },
     {
+        type: ET_FASTTEXT
         language: LN_EN
         embedding_key: EK_FASTTEXT_CLASSIC
-        vector_model: "models/en_vectors_v3.bin"
+        vector_model_path: "models/en_vectors_v3.bin"
         aggregation_mode: AM_MATRIX
         embedder_field: EF_ALL
-        embedder: {
-            max_words: 150
-            path: "models/en_sentence_embedder_v2.pt"
-            output_dim: 50
-        }
+        max_words: 150
+        model_path: "models/en_sentence_embedder_v2.pt"
     }
 ]

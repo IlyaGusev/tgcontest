@@ -1,56 +1,54 @@
-#include "embedder.h"
+#include "ft_embedder.h"
+#include "../util.h"
 
 #include <sstream>
 #include <cassert>
 
 #include <onmt/Tokenizer.h>
-#include <fasttext.h>
 
 TFastTextEmbedder::TFastTextEmbedder(
-    fasttext::FastText& model
-    , tg::EAggregationMode mode
+    const std::string& vectorModelPath
     , tg::EEmbedderField field
+    , tg::EAggregationMode mode
     , size_t maxWords
     , const std::string& modelPath
-    , size_t outputDim
 )
-    : Model(model)
+    : TEmbedder(field)
     , Mode(mode)
-    , Field(field)
     , MaxWords(maxWords)
-    , TorchModelPath(modelPath)
-    , OutputDim(outputDim)
 {
-    if (!TorchModelPath.empty()) {
-        TorchModel = torch::jit::load(TorchModelPath);
+    assert(!vectorModelPath.empty());
+    VectorModel.loadModel(vectorModelPath);
+    LOG_DEBUG("FastText " << vectorModelPath << " vector model loaded");
+
+    if (!modelPath.empty()) {
+        Model = torch::jit::load(modelPath);
+        LOG_DEBUG("Torch " << modelPath << " model loaded");
     }
 }
 
-size_t TFastTextEmbedder::GetEmbeddingSize() const {
-    return Model.getDimension();
-}
+TFastTextEmbedder::TFastTextEmbedder(tg::TEmbedderConfig config) : TFastTextEmbedder(
+    config.vector_model_path(),
+    config.embedder_field(),
+    config.aggregation_mode(),
+    config.max_words() != 0 ? config.max_words() : 100,
+    config.model_path()
+) {}
 
-std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& title, const std::string& text) const {
-    std::string input;
-    if (Field == tg::EF_ALL) {
-        input = title + " " + text;
-    } else if (Field == tg::EF_TITLE) {
-        input = title;
-    } else if (Field == tg::EF_TEXT) {
-        input = text;
-    }
+std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& input) const {
     std::istringstream ss(input);
-    fasttext::Vector wordVector(GetEmbeddingSize());
-    fasttext::Vector avgVector(GetEmbeddingSize());
-    fasttext::Vector maxVector(GetEmbeddingSize());
-    fasttext::Vector minVector(GetEmbeddingSize());
+    size_t vectorSize = VectorModel.getDimension();
+    fasttext::Vector wordVector(vectorSize);
+    fasttext::Vector avgVector(vectorSize);
+    fasttext::Vector maxVector(vectorSize);
+    fasttext::Vector minVector(vectorSize);
     std::string word;
     size_t count = 0;
     while (ss >> word) {
         if (count > MaxWords) {
             break;
         }
-        Model.getWordVector(wordVector, word);
+        VectorModel.getWordVector(wordVector, word);
         float norm = wordVector.norm();
         if (norm < 0.0001f) {
             continue;
@@ -62,7 +60,7 @@ std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& title, co
             maxVector = wordVector;
             minVector = wordVector;
         } else {
-            for (size_t i = 0; i < GetEmbeddingSize(); i++) {
+            for (size_t i = 0; i < vectorSize; i++) {
                 maxVector[i] = std::max(maxVector[i], wordVector[i]);
                 minVector[i] = std::min(minVector[i], wordVector[i]);
             }
@@ -81,7 +79,7 @@ std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& title, co
     }
     assert(Mode == tg::AM_MATRIX);
 
-    int dim = static_cast<int>(GetEmbeddingSize());
+    int dim = static_cast<int>(vectorSize);
     auto tensor = torch::zeros({dim * 3}, torch::requires_grad(false));
     tensor.slice(0, 0, dim) = torch::from_blob(avgVector.data(), {dim});
     tensor.slice(0, dim, 2 * dim) = torch::from_blob(maxVector.data(), {dim});
@@ -90,10 +88,11 @@ std::vector<float> TFastTextEmbedder::CalcEmbedding(const std::string& title, co
     std::vector<torch::jit::IValue> inputs;
     inputs.emplace_back(tensor.unsqueeze(0));
 
-    at::Tensor outputTensor = TorchModel.forward(inputs).toTensor().squeeze(0).contiguous();
+    at::Tensor outputTensor = Model.forward(inputs).toTensor().squeeze(0).contiguous();
     float* outputTensorPtr = outputTensor.data_ptr<float>();
-    std::vector<float> resultVector(OutputDim);
-    for (size_t i = 0; i < OutputDim; i++) {
+    size_t outputDim = outputTensor.size(0);
+    std::vector<float> resultVector(outputDim);
+    for (size_t i = 0; i < outputDim; i++) {
         resultVector[i] = outputTensorPtr[i];
     }
     return resultVector;

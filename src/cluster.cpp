@@ -1,7 +1,6 @@
 #include "cluster.h"
 
 #include "agency_rating.h"
-#include "document_ranking/weighted_document.h"
 #include "util.h"
 
 #include <boost/range/algorithm/nth_element.hpp>
@@ -50,7 +49,7 @@ void TNewsCluster::Summarize(const TAgencyRating& agencyRating) {
         double timeMultiplier = Sigmoid(static_cast<double>(timeDiff) / 3600.0 + 12.0);
         double agencyScore = agencyRating.ScoreUrl(doc.Url);
         double weight = (agencyScore + docRelevance) * timeMultiplier;
-	if (doc.Nasty) {
+        if (doc.Nasty) {
             weight *= 0.5;
         }
         weights.push_back(weight);
@@ -188,20 +187,23 @@ void TNewsCluster::CalcCategory() {
 }
 
 void TNewsCluster::SortByWeights(const std::vector<double>& weights) {
-    std::vector<TWeightedDoc> weightedDocs;
+    std::vector<std::pair<TDbDocument, double>> weightedDocs;
     weightedDocs.reserve(Documents.size());
     for (size_t i = 0; i < Documents.size(); i++) {
-        weightedDocs.emplace_back(Documents[i], weights[i]);
+        weightedDocs.emplace_back(std::move(Documents[i]), weights[i]);
     }
-    std::stable_sort(weightedDocs.begin(), weightedDocs.end(), [](const TWeightedDoc& a, const TWeightedDoc& b) {
-        if (std::abs(a.Weight - b.Weight) < 0.000001) {
-            return a.Doc.Title < b.Doc.Title;
-        }
-        return a.Weight > b.Weight;
-    });
     Documents.clear();
-    for (const TWeightedDoc& elem : weightedDocs) {
-        AddDocument(elem.Doc);
+    std::stable_sort(weightedDocs.begin(), weightedDocs.end(), [](
+        const std::pair<TDbDocument, double>& a,
+        const std::pair<TDbDocument, double>& b)
+    {
+        if (std::abs(a.second - b.second) < 0.000001) {
+            return a.first.Title < b.first.Title;
+        }
+        return a.second > b.second;
+    });
+    for (const auto& [doc, _] : weightedDocs) {
+        AddDocument(doc);
     }
 }
 

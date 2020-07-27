@@ -14,14 +14,15 @@ public:
     ) override;
 
 private:
-    void FillDistanceMatrix(
-        const Eigen::MatrixXf& points,
-        Eigen::MatrixXf& distances
+    Eigen::MatrixXf CalcDistances(
+        const std::vector<TDbDocument>::const_iterator begin,
+        const std::vector<TDbDocument>::const_iterator end,
+        const std::unordered_map<tg::EEmbeddingKey, float>& embeddingKeysWeights
     ) const;
     std::vector<size_t> ClusterBatch(
         const std::vector<TDbDocument>::const_iterator begin,
         const std::vector<TDbDocument>::const_iterator end,
-        tg::EEmbeddingKey embeddingKey
+        const std::unordered_map<tg::EEmbeddingKey, float>& embeddingKeysWeights
     );
 
 private:

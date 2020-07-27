@@ -72,7 +72,10 @@ TSlinkClustering::TSlinkClustering(const tg::TClusteringConfig& config)
 TClusters TSlinkClustering::Cluster(
     const std::vector<TDbDocument>& docs
 ) {
-    tg::EEmbeddingKey embeddingKey = Config.embedding_key();
+    std::unordered_map<tg::EEmbeddingKey, float> embeddingKeysWeights;
+    for (const auto& embeddingKeyWeight : Config.embedding_keys_weights()) {
+        embeddingKeysWeights[embeddingKeyWeight.embedding_key()] = embeddingKeyWeight.weight();
+    }
     const size_t docSize = docs.size();
     std::vector<size_t> labels;
     labels.reserve(docSize);
@@ -87,7 +90,7 @@ TClusters TSlinkClustering::Cluster(
         size_t batchSize = std::min(remainingDocsCount, static_cast<size_t>(Config.chunk_size()));
         std::vector<TDbDocument>::const_iterator end = begin + batchSize;
 
-        std::vector<size_t> newLabels = ClusterBatch(begin, end, embeddingKey);
+        std::vector<size_t> newLabels = ClusterBatch(begin, end, embeddingKeysWeights);
         size_t newMaxLabel = maxLabel;
         for (auto& label : newLabels) {
             label += maxLabel;
@@ -151,23 +154,12 @@ TClusters TSlinkClustering::Cluster(
 std::vector<size_t> TSlinkClustering::ClusterBatch(
     const std::vector<TDbDocument>::const_iterator begin,
     const std::vector<TDbDocument>::const_iterator end,
-    tg::EEmbeddingKey embeddingKey
+    const std::unordered_map<tg::EEmbeddingKey, float>& embeddingKeysWeights
 ) {
     const size_t docSize = std::distance(begin, end);
     assert(docSize != 0);
-    const size_t embSize = begin->Embeddings.at(embeddingKey).size();
 
-    Eigen::MatrixXf points(docSize, embSize);
-    std::vector<TDbDocument>::const_iterator docsIt = begin;
-    for (size_t i = 0; i < docSize; ++i) {
-        std::vector<float> embedding = docsIt->Embeddings.at(embeddingKey);
-        Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
-        points.row(i) = eigenVector / eigenVector.norm();
-        docsIt++;
-    }
-
-    Eigen::MatrixXf distances(points.rows(), points.rows());
-    FillDistanceMatrix(points, distances);
+    Eigen::MatrixXf distances = CalcDistances(begin, end, embeddingKeysWeights);
 
     if (Config.use_timestamp_moving()) {
         ApplyTimePenalty(begin, docSize, distances);
@@ -262,9 +254,32 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
     return labels;
 }
 
-void TSlinkClustering::FillDistanceMatrix(const Eigen::MatrixXf& points, Eigen::MatrixXf& distances) const {
-    // Assuming points are on unit sphere
-    // Normalize to [0.0, 1.0]
-    distances = -((points * points.transpose()).array() + 1.0f) / 2.0f + 1.0f;
-    distances += distances.Identity(distances.rows(), distances.cols());
+Eigen::MatrixXf TSlinkClustering::CalcDistances(
+    const std::vector<TDbDocument>::const_iterator begin,
+    const std::vector<TDbDocument>::const_iterator end,
+    const std::unordered_map<tg::EEmbeddingKey, float>& embeddingKeysWeights) const
+{
+    const size_t docSize = std::distance(begin, end);
+    assert(docSize != 0);
+
+    Eigen::MatrixXf finalDistances(docSize, docSize);
+    for (const auto& [embeddingKey, weight] : embeddingKeysWeights) {
+        const size_t embSize = begin->Embeddings.at(embeddingKey).size();
+        Eigen::MatrixXf points(docSize, embSize);
+        std::vector<TDbDocument>::const_iterator docsIt = begin;
+        for (size_t i = 0; i < docSize; ++i) {
+            std::vector<float> embedding = docsIt->Embeddings.at(embeddingKey);
+            Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
+            points.row(i) = eigenVector / eigenVector.norm();
+            docsIt++;
+        }
+
+        // Assuming points are on unit sphere
+        // Normalize to [0.0, 1.0]
+        Eigen::MatrixXf distances(docSize, docSize);
+        distances = (-((points * points.transpose()).array() + 1.0f) / 2.0f + 1.0f) * weight;
+        distances += finalDistances.Identity(docSize, docSize) * weight;
+        finalDistances += distances;
+    }
+    return finalDistances;
 }

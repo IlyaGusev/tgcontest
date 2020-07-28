@@ -218,12 +218,18 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
 
         // Link minJ to minI
         for (size_t i = 0; i < docSize; i++) {
-            if (labels[i] == minJ) {
+            if (labels[i] == minJ || labels[i] == labels[minJ]) {
                 labels[i] = minI;
+            }
+        }
+        for (size_t& value : nn) {
+            if (value == minJ) {
+                value = minI;
             }
         }
 
         clusterSizes[minI] = newClusterSize;
+        clusterSizes[minJ] = newClusterSize;
         if (Config.ban_same_hosts()) {
             firstClusterSiteNames->insert(secondClusterSiteNames->begin(), secondClusterSiteNames->end());
         }
@@ -262,7 +268,7 @@ Eigen::MatrixXf TSlinkClustering::CalcDistances(
     const size_t docSize = std::distance(begin, end);
     assert(docSize != 0);
 
-    Eigen::MatrixXf finalDistances(docSize, docSize);
+    Eigen::MatrixXf finalDistances = Eigen::MatrixXf::Zero(docSize, docSize);
     for (const auto& [embeddingKey, weight] : embeddingKeysWeights) {
         const size_t embSize = begin->Embeddings.at(embeddingKey).size();
         Eigen::MatrixXf points(docSize, embSize);
@@ -270,7 +276,9 @@ Eigen::MatrixXf TSlinkClustering::CalcDistances(
         for (size_t i = 0; i < docSize; ++i) {
             std::vector<float> embedding = docsIt->Embeddings.at(embeddingKey);
             Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
-            points.row(i) = eigenVector / eigenVector.norm();
+            if (std::abs(eigenVector.norm() - 0.0) > 0.000000001) {
+                points.row(i) = eigenVector / eigenVector.norm();
+            }
             docsIt++;
         }
 
@@ -278,7 +286,7 @@ Eigen::MatrixXf TSlinkClustering::CalcDistances(
         // Normalize to [0.0, 1.0]
         Eigen::MatrixXf distances(docSize, docSize);
         distances = (-((points * points.transpose()).array() + 1.0f) / 2.0f + 1.0f) * weight;
-        distances += finalDistances.Identity(docSize, docSize) * weight;
+        distances += distances.Identity(docSize, docSize) * weight;
         finalDistances += distances;
     }
     return finalDistances;

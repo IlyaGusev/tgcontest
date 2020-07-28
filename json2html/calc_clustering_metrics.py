@@ -26,10 +26,7 @@ def main(clustering_markup, original_jsonl, threads_json):
             filename2url[record["file_name"]] = record["url"]
     with open(threads_json, "r") as r:
         threads = json.load(r)
-        any_category = threads[0]
-        assert any_category["category"] == "any"
-        any_category_threads = any_category["threads"]
-        for thread in any_category_threads:
+        for thread in threads:
             thread_urls = {filename2url[filename] for filename in thread["articles"]}
             for url in thread_urls:
                 for second_url in markup.get(url, []):
@@ -42,7 +39,10 @@ def main(clustering_markup, original_jsonl, threads_json):
     for first_url, d in markup.items():
         for second_url, res in d.items():
             target = res["target"]
-            prediction = res.get("prediction", 0)
+            if "prediction" not in res:
+                count_bad += 1
+                continue
+            prediction = res["prediction"]
             targets.append(target)
             predictions.append(prediction)
             if target == prediction:

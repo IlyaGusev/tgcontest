@@ -6,9 +6,10 @@
 class TTfIdfEmbedder : public TEmbedder {
 public:
     TTfIdfEmbedder(
-        const std::string& modelPath,
+        const std::string& vocabularyPath,
         tg::EEmbedderField field,
-        size_t maxWords);
+        size_t maxWords,
+        const std::string& modelPath);
 
     explicit TTfIdfEmbedder(tg::TEmbedderConfig config);
 
@@ -17,4 +18,6 @@ public:
 private:
     TTokenIndexer TokenIndexer;
     std::vector<float> Idfs;
+    bool UseMatrix;
+    mutable torch::jit::script::Module SVDMatrix;
 };

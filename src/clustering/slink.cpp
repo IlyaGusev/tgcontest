@@ -2,6 +2,7 @@
 #include "../util.h"
 
 #include <algorithm>
+#include <fstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -272,12 +273,15 @@ Eigen::MatrixXf TSlinkClustering::CalcDistances(
     for (const auto& [embeddingKey, weight] : embeddingKeysWeights) {
         const size_t embSize = begin->Embeddings.at(embeddingKey).size();
         Eigen::MatrixXf points(docSize, embSize);
+        std::vector<size_t> badPoints;
         std::vector<TDbDocument>::const_iterator docsIt = begin;
         for (size_t i = 0; i < docSize; ++i) {
             std::vector<float> embedding = docsIt->Embeddings.at(embeddingKey);
-            Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
-            if (std::abs(eigenVector.norm() - 0.0) > 0.000000001) {
-                points.row(i) = eigenVector / eigenVector.norm();
+            Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> docVector(embedding.data(), embedding.size());
+            if (std::abs(docVector.norm() - 0.0) > 0.00000001) {
+                points.row(i) = docVector / docVector.norm();
+            } else {
+                badPoints.push_back(i);
             }
             docsIt++;
         }
@@ -287,7 +291,12 @@ Eigen::MatrixXf TSlinkClustering::CalcDistances(
         Eigen::MatrixXf distances(docSize, docSize);
         distances = (-((points * points.transpose()).array() + 1.0f) / 2.0f + 1.0f) * weight;
         distances += distances.Identity(docSize, docSize) * weight;
+        for (size_t index : badPoints) {
+            distances.row(index) = Eigen::VectorXf::Ones(docSize) * weight;
+            distances.col(index) = Eigen::VectorXf::Ones(docSize) * weight;
+        }
         finalDistances += distances;
     }
+
     return finalDistances;
 }

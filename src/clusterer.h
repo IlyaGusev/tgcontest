@@ -17,7 +17,7 @@ struct TClusterIndex {
 
 class TClusterer {
 public:
-    explicit TClusterer(const std::string& configPath);
+    TClusterer(const std::string& configPath, bool isSummarizing);
 
     TClusterIndex Cluster(std::vector<TDbDocument>&& docs) const;
 
@@ -31,4 +31,5 @@ private:
     std::unordered_map<tg::ELanguage, std::unique_ptr<TClustering>> Clusterings;
     TAgencyRating AgencyRating;
     TAlexaAgencyRating AlexaAgencyRating;
+    bool IsSummarizing;
 };

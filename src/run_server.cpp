@@ -97,7 +97,7 @@ int RunServer(const std::string& fname, uint16_t port) {
     std::unique_ptr<TAnnotator> annotator = std::make_unique<TAnnotator>(config.annotator_config_path(), languages);
 
     LOG_DEBUG("Creating clusterer");
-    std::unique_ptr<TClusterer> clusterer = std::make_unique<TClusterer>(config.clusterer_config_path());
+    std::unique_ptr<TClusterer> clusterer = std::make_unique<TClusterer>(config.clusterer_config_path(), true);
 
     TServerClustering serverClustering(std::move(clusterer), db.get());
 

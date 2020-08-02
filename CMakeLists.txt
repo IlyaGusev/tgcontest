@@ -76,7 +76,9 @@ set(SOURCE_FILES
     src/db_document.cpp
     src/detect.cpp
     src/document.cpp
+    src/embedders/tfidf_embedder.cpp
     src/embedders/ft_embedder.cpp
+    src/embedders/token_indexer.cpp
     src/embedders/torch_embedder.cpp
     src/nasty.cpp
     src/rank.cpp

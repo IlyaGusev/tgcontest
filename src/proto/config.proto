@@ -49,6 +49,11 @@ message TAnnotatorConfig {
     bool compute_nasty = 7;
 }
 
+message TClusteringEmbeddingKeyWeight {
+    EEmbeddingKey embedding_key = 1;
+    float weight = 2;
+}
+
 message TClusteringConfig {
     ELanguage language = 1;
     float small_threshold = 2;
@@ -61,6 +66,7 @@ message TClusteringConfig {
     uint64 intersection_size = 9;
     bool use_timestamp_moving = 10;
     bool ban_same_hosts = 11;
+    repeated TClusteringEmbeddingKeyWeight embedding_keys_weights = 12;
 }
 
 message TClustererConfig {

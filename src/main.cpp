@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
 
         // Clustering
         const std::string clustererConfigPath = vm["clusterer_config"].as<std::string>();
-        TClusterer clusterer(clustererConfigPath);
+        TClusterer clusterer(clustererConfigPath, mode != "threads");
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
         TClusterIndex clusterIndex = clusterer.Cluster(std::move(docs));
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms")

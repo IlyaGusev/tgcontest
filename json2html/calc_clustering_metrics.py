@@ -26,10 +26,7 @@ def main(clustering_markup, original_jsonl, threads_json):
             filename2url[record["file_name"]] = record["url"]
     with open(threads_json, "r") as r:
         threads = json.load(r)
-        any_category = threads[0]
-        assert any_category["category"] == "any"
-        any_category_threads = any_category["threads"]
-        for thread in any_category_threads:
+        for thread in threads:
             thread_urls = {filename2url[filename] for filename in thread["articles"]}
             for url in thread_urls:
                 for second_url in markup.get(url, []):
@@ -42,20 +39,29 @@ def main(clustering_markup, original_jsonl, threads_json):
     for first_url, d in markup.items():
         for second_url, res in d.items():
             target = res["target"]
-            prediction = res.get("prediction", 0)
+            if "prediction" not in res:
+                count_bad += 1
+                continue
+            prediction = res["prediction"]
+            first = url2record.get(first_url, {"title": None})
+            second = url2record.get(second_url, {"title": None})
+            if not first["title"] or not second["title"]:
+                continue
             targets.append(target)
             predictions.append(prediction)
             if target == prediction:
                 continue
-            first = url2record.get(first_url, {"title": None})
-            second = url2record.get(second_url, {"title": None})
             errors.append({
                 "target": target,
                 "prediction": prediction,
                 "first_url": first_url,
                 "second_url": second_url,
+                "first_file_name": first["file_name"],
+                "second_file_name": second["file_name"],
                 "first_title": first["title"],
-                "second_title": second["title"]
+                "second_title": second["title"],
+                "first_text": first["text"],
+                "second_text": second["text"]
             })
     for error in errors:
         print(error["target"], error["prediction"], " ||| ", error["first_title"], " ||| ", error["second_title"])

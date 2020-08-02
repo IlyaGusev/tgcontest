@@ -9,6 +9,8 @@ models_list=(
     "https://www.dropbox.com/s/0o9xr2pwuqeh17k/pagerank_rating.txt"
     "https://www.dropbox.com/s/fry1gsd1mans9jm/alexa_rating_4_fixed.txt"
     "https://www.dropbox.com/s/hoapmnvqlknmu6v/lang_detect_v10.ftz"
+    "https://www.dropbox.com/s/5r1mhplhnnfr9xh/ru_idfs.txt"
+    "https://www.dropbox.com/s/0up3us2ey999mgc/ru_tfidf_tsvd_embedder.pt"
 )
 
 cd models

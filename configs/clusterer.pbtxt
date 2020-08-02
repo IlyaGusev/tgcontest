@@ -11,6 +11,12 @@ clusterings: [
         intersection_size: 5000
         use_timestamp_moving: false
         ban_same_hosts: false
+        embedding_keys_weights: [
+            {
+                embedding_key: EK_FASTTEXT_CLASSIC
+                weight: 1.0
+            }
+        ]
     },
     {
         language: LN_EN
@@ -24,6 +30,12 @@ clusterings: [
         intersection_size: 5000
         use_timestamp_moving: false
         ban_same_hosts: false
+        embedding_keys_weights: [
+            {
+                embedding_key: EK_FASTTEXT_CLASSIC
+                weight: 1.0
+            }
+        ]
     }
 ]
 iter_timestamp_percentile: 0.99

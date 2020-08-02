@@ -22,7 +22,9 @@ uint64_t GetIterTimestamp(const std::vector<TDbDocument>& documents, double perc
     return documents[index].FetchTime;
 }
 
-TClusterer::TClusterer(const std::string& configPath) {
+TClusterer::TClusterer(const std::string& configPath, bool isSummarizing)
+    : IsSummarizing(isSummarizing)
+{
     ParseConfig(configPath);
     for (const tg::TClusteringConfig& config: Config.clusterings()) {
         Clusterings[config.language()] = std::make_unique<TSlinkClustering>(config);
@@ -67,11 +69,13 @@ TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>&& docs) const {
 
     for (const auto& [language, clustering] : Clusterings) {
         TClusters langClusters = clustering->Cluster(lang2Docs[language]);
-        for (TNewsCluster& cluster: langClusters) {
-            assert(cluster.GetSize() > 0);
-            cluster.Summarize(AgencyRating);
-            cluster.CalcImportance(AlexaAgencyRating);
-            cluster.CalcCategory();
+        if (IsSummarizing) {
+            for (TNewsCluster& cluster: langClusters) {
+                assert(cluster.GetSize() > 0);
+                cluster.Summarize(AgencyRating);
+                cluster.CalcImportance(AlexaAgencyRating);
+                cluster.CalcCategory();
+            }
         }
         std::stable_sort(
             langClusters.begin(),

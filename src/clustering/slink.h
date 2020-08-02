@@ -10,19 +10,19 @@ public:
     explicit TSlinkClustering(const tg::TClusteringConfig& config);
 
     TClusters Cluster(
-        const std::vector<TDbDocument>& docs,
-        tg::EEmbeddingKey embeddingKey = tg::EK_FASTTEXT_CLASSIC
+        const std::vector<TDbDocument>& docs
     ) override;
 
 private:
-    void FillDistanceMatrix(
-        const Eigen::MatrixXf& points,
-        Eigen::MatrixXf& distances
+    Eigen::MatrixXf CalcDistances(
+        const std::vector<TDbDocument>::const_iterator begin,
+        const std::vector<TDbDocument>::const_iterator end,
+        const std::unordered_map<tg::EEmbeddingKey, float>& embeddingKeysWeights
     ) const;
     std::vector<size_t> ClusterBatch(
         const std::vector<TDbDocument>::const_iterator begin,
         const std::vector<TDbDocument>::const_iterator end,
-        tg::EEmbeddingKey embeddingKey = tg::EK_FASTTEXT_CLASSIC
+        const std::unordered_map<tg::EEmbeddingKey, float>& embeddingKeysWeights
     );
 
 private:

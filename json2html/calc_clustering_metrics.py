@@ -43,19 +43,25 @@ def main(clustering_markup, original_jsonl, threads_json):
                 count_bad += 1
                 continue
             prediction = res["prediction"]
+            first = url2record.get(first_url, {"title": None})
+            second = url2record.get(second_url, {"title": None})
+            if not first["title"] or not second["title"]:
+                continue
             targets.append(target)
             predictions.append(prediction)
             if target == prediction:
                 continue
-            first = url2record.get(first_url, {"title": None})
-            second = url2record.get(second_url, {"title": None})
             errors.append({
                 "target": target,
                 "prediction": prediction,
                 "first_url": first_url,
                 "second_url": second_url,
+                "first_file_name": first["file_name"],
+                "second_file_name": second["file_name"],
                 "first_title": first["title"],
-                "second_title": second["title"]
+                "second_title": second["title"],
+                "first_text": first["text"],
+                "second_text": second["text"]
             })
     for error in errors:
         print(error["target"], error["prediction"], " ||| ", error["first_title"], " ||| ", error["second_title"])

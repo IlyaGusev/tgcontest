@@ -58,10 +58,11 @@ script:
   - bash test_canonical.sh
   - perf record -F 99 -g ./build/tgnews top demo_data.json --print_top_debug_info > demo_top.json
   - perf script > out.perf
-  - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/flamegraph.svg
   - ./build/tgnews categories ru_cat_data.json --languages ru --save_not_news > ru_cat.json
   - ./build/tgnews categories en_cat_data.json --languages en --save_not_news > en_cat.json
   - ./build/tgnews threads ru_clustering_data.jsonl --languages ru > ru_clustering.json
+  - mkdir output
+  - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/flamegraph.svg
   - python3 json2html/convert.py --documents-file demo_data.json --tops-file demo_top.json --templates-dir json2html/templates --output-dir output --version "3.0.0" --date "03 May"
   - python3 json2html/calc_metrics.py --templates-dir json2html/templates --output-dir output/ru --documents-file ru_cat_data.json --cat-gold ru_cat_target.json --cat-output ru_cat.json --language ru --date "10 May" --version "3.0.0"
   - python3 json2html/calc_metrics.py --templates-dir json2html/templates --output-dir output/en --documents-file en_cat_data.json --cat-gold en_cat_target.json --cat-output en_cat.json --language en --date "10 May" --version "3.0.0"

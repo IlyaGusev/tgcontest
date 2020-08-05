@@ -43,6 +43,7 @@ before_script:
   - wget https://www.dropbox.com/s/ur7jhiyi22tmzxd/ru_cat_v4_test_annot.json -O ru_cat_target.json
   - wget https://www.dropbox.com/s/qrpguxcqcm5l3hq/en_cat_v3_test_data.json -O en_cat_data.json
   - wget https://www.dropbox.com/s/q2b5vcoxm8gilma/en_cat_v3_test_annot.json -O en_cat_target.json
+  - wget https://www.dropbox.com/s/ngv74138xj85xn1/ru_clustering_0517.tsv -O ru_threads_target.tsv
   - wget https://www.dropbox.com/s/y3j9mxzpad8rkku/en_ru_0502_0503.json.tar.gz -O - | tar -xz --to-stdout en_ru_0502_0503.json > demo_data.json
   - wget https://www.dropbox.com/s/a9b7rcxnfbmvhej/ru_tg_0517.jsonl.tar.gz -O - | tar -xz --to-stdout ru_tg_0517.jsonl > ru_clustering_data.jsonl
   - wget https://www.dropbox.com/s/2ot2qkimp5i2zof/html_sample.tar.gz -O - | tar -xz
@@ -58,14 +59,9 @@ script:
   - bash test_canonical.sh
   - perf record -F 99 -g ./build/tgnews top demo_data.json --print_top_debug_info > demo_top.json
   - perf script > out.perf
-  - ./build/tgnews categories ru_cat_data.json --languages ru --save_not_news > ru_cat.json
-  - ./build/tgnews categories en_cat_data.json --languages en --save_not_news > en_cat.json
-  - ./build/tgnews threads ru_clustering_data.jsonl --languages ru > ru_clustering.json
   - mkdir output
   - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/flamegraph.svg
-  - python3 viewer/convert.py --documents-file demo_data.json --tops-file demo_top.json --templates-dir viewer/templates --output-dir output --version "3.0.0" --date "03 May"
-  - python3 viewer/calc_metrics.py --templates-dir viewer/templates --output-dir output/ru --documents-file ru_cat_data.json --cat-gold ru_cat_target.json --cat-output ru_cat.json --language ru --date "10 May" --version "3.0.0"
-  - python3 viewer/calc_metrics.py --templates-dir viewer/templates --output-dir output/en --documents-file en_cat_data.json --cat-gold en_cat_target.json --cat-output en_cat.json --language en --date "10 May" --version "3.0.0"
+  - bash build_viewer.sh viewer/templates output "03 May" demo_data.json ru_cat_data.json ru_cat_target.json en_cat_data.json en_cat_target.json ru_clustering_data.jsonl ru_threads_target.tsv
   - php7.4 dc-check.php build/tgnews all 8000 html_sample
 
 deploy:

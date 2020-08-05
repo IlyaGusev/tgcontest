@@ -1,22 +1,10 @@
-import os
 import json
 import argparse
 
-from jinja2 import Environment, FileSystemLoader
 from sklearn.metrics import classification_report
 
-def calc_metrics(
-    templates_dir,
-    output_dir,
-    documents_file,
-    cat_gold,
-    cat_output,
-    threads_gold,
-    threads_output,
-    language,
-    version,
-    date
-):
+
+def calc_categories_metrics(documents_file, cat_gold, cat_output, output_json):
     with open(documents_file, "r") as r:
         orig_records = json.load(r)
         assert orig_records
@@ -48,15 +36,19 @@ def calc_metrics(
                 if rec["url"] in cat_gold_records:
                     cat_output_records[rec["url"]] = category
         assert len(cat_output_records) == len(cat_gold_records)
+
     cat_output_records = list(sorted(cat_output_records.items()))
     predicted_cats = [v for k, v in cat_output_records]
     target_cats = [v for k, v in sorted(cat_gold_records.items())]
-    cat2label = {cat: i for i, cat in enumerate(list(set(predicted_cats).union(set(target_cats))))}
+
+    unique_cats = list(set(predicted_cats).union(set(target_cats)))
+    cat2label = {cat: i for i, cat in enumerate(unique_cats)}
     label2cat = {label: cat for cat, label in cat2label.items()}
+
     predicted_labels = [cat2label[cat] for cat in predicted_cats]
     target_labels = [cat2label[cat] for cat in target_cats]
-    cat_metrics = classification_report(target_labels, predicted_labels, output_dict=True)
 
+    cat_metrics = classification_report(target_labels, predicted_labels, output_dict=True)
     cat_metrics["categories"] = []
     for label, cat in sorted(label2cat.items(), key=lambda x: -cat_metrics[str(x[0])]["support"]):
         cat_metrics["categories"].append((label2cat[int(label)], cat_metrics.pop(str(label))))
@@ -73,31 +65,18 @@ def calc_metrics(
             "target": label2cat[target]
         })
 
-    file_loader = FileSystemLoader(templates_dir)
-    env = Environment(loader=file_loader)
-    metrics_template = env.get_template("metrics.html")
-    with open(os.path.join(output_dir, "metrics.html"), "w", encoding="utf-8") as w:
-         w.write(metrics_template.render(
-            cat_metrics=cat_metrics,
-            cat_errors=cat_errors,
-            language=language,
-            current_page="metrics.html",
-            version=version,
-            date=date
-         ))
+    with open(output_json, "w") as w:
+        json.dump({
+            "categories_metrics": cat_metrics,
+            "categories_errors": cat_errors
+        }, w, ensure_ascii=False, indent=4)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--templates-dir", type=str, default="templates")
-    parser.add_argument("--output-dir", type=str, default="output")
     parser.add_argument("--documents-file", type=str, required=True)
     parser.add_argument("--cat-gold", type=str, required=True)
     parser.add_argument("--cat-output", type=str, required=True)
-    parser.add_argument("--threads-gold", type=str, default=None)
-    parser.add_argument("--threads-output", type=str, default=None)
-    parser.add_argument('--version', type=str, default="3.0.0")
-    parser.add_argument('--date', type=str, default="03 May")
-    parser.add_argument("--language", type=str, required=True)
+    parser.add_argument("--output-json", type=str, required=True)
     args = parser.parse_args()
-    calc_metrics(**vars(args))
+    calc_categories_metrics(**vars(args))

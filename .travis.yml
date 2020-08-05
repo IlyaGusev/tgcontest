@@ -33,7 +33,7 @@ before_script:
   - sudo apt-get install -y php7.4 php7.4-curl
   - git clone https://github.com/brendangregg/FlameGraph
   - git lfs pull
-  - python3 -m pip install -r json2html/requirements.txt
+  - python3 -m pip install -r viewer/requirements.txt
   - wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
   - unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
   - bash download_models.sh
@@ -63,9 +63,9 @@ script:
   - ./build/tgnews threads ru_clustering_data.jsonl --languages ru > ru_clustering.json
   - mkdir output
   - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/flamegraph.svg
-  - python3 json2html/convert.py --documents-file demo_data.json --tops-file demo_top.json --templates-dir json2html/templates --output-dir output --version "3.0.0" --date "03 May"
-  - python3 json2html/calc_metrics.py --templates-dir json2html/templates --output-dir output/ru --documents-file ru_cat_data.json --cat-gold ru_cat_target.json --cat-output ru_cat.json --language ru --date "10 May" --version "3.0.0"
-  - python3 json2html/calc_metrics.py --templates-dir json2html/templates --output-dir output/en --documents-file en_cat_data.json --cat-gold en_cat_target.json --cat-output en_cat.json --language en --date "10 May" --version "3.0.0"
+  - python3 viewer/convert.py --documents-file demo_data.json --tops-file demo_top.json --templates-dir viewer/templates --output-dir output --version "3.0.0" --date "03 May"
+  - python3 viewer/calc_metrics.py --templates-dir viewer/templates --output-dir output/ru --documents-file ru_cat_data.json --cat-gold ru_cat_target.json --cat-output ru_cat.json --language ru --date "10 May" --version "3.0.0"
+  - python3 viewer/calc_metrics.py --templates-dir viewer/templates --output-dir output/en --documents-file en_cat_data.json --cat-gold en_cat_target.json --cat-output en_cat.json --language en --date "10 May" --version "3.0.0"
   - php7.4 dc-check.php build/tgnews all 8000 html_sample
 
 deploy:

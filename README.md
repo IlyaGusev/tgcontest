@@ -116,5 +116,21 @@ Run on sample:
 ## Misc
 * Flamegraph: https://ilyagusev.github.io/tgcontest/flamegraph.svg
 
+## Other contestants
+* Swift Skunk, Round 2, II place: https://github.com/sorrge/tg_news_cluster
+* Bossy Gnu, Round 2, IV place: https://github.com/maxoodf/tgnews
+* Large Crab, Round 2, bonus place: https://github.com/ilya-ustinov/tgcontest
+* Kooky Dragon, Round 1, III place: https://github.com/nick-baliesnyi/tgnews
+* Sharp Sloth, Round 1, IV place: https://github.com/thehemen/telegram-data-clustering
+* Desert Python, Round 1: https://github.com/crazyleg/telegram_data_clustering_2019
+* Funky Peacock, Round 1: https://github.com/Stepka/telegram_clustering_contest
+* Unknown animal, Round 1: https://github.com/roman-rybalko/telegram-data-clustering-contest
+* Unknown animal, Round 1: https://github.com/MarcoBuster/data-clustering-contest
+* Unknown animal, Round 1: https://github.com/sudevschiz/tgnews
+* Unknown animal, Round 1: https://github.com/crazyleg/telegram_data_clustering_2019
+* Unknown animal, Round 1: https://github.com/77ph/tgnews
+* Unknown animal, Round 1: https://github.com/akash-joshi/telegram-cluster
+* Unknown animal, Round 1: https://github.com/dremovd/telegram-clustering
+
 ## Contacts
 * Telegram: [@YallenGusev](https://t.me/YallenGusev)

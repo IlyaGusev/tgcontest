@@ -76,11 +76,12 @@ def calc_threads_metrics(clustering_markup, original_jsonl, threads_json, errors
     for error in errors:
         print(error["target"], error["prediction"], " ||| ", error["first_title"], " ||| ", error["second_title"])
     metrics = classification_report(targets, predictions, output_dict=True)
+    metrics["categories"] = [(0, metrics.pop("0")), (1, metrics.pop("1"))]
 
     with open(output_json, "w") as w:
-        json.dump({"ru": {
+        json.dump({
             "threads_metrics": metrics,
-            "threads_errors": errors}
+            "threads_errors": errors
         }, w, ensure_ascii=False, indent=4)
 
     if errors_tsv:

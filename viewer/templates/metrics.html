@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% if cat_metrics %}
 <h1>Categories</h1>
 <div>
 <table class="table">
@@ -40,6 +41,8 @@
   </tbody>
 </table>
 </div>
+{% endif %}
+{% if cat_errors %}
 <details>
 <summary>Errors</summary>
 <table class="table">
@@ -61,4 +64,72 @@
   </tbody>
 </table>
 </details>
+{% endif %}
+<br/>
+{% if threads_metrics %}
+<h1>Threads</h1>
+<div>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Category</th>
+      <th scope="col">Precision</th>
+      <th scope="col">Recall</th>
+      <th scope="col">F-1 score</th>
+      <th scope="col">Support</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for category, metrics in threads_metrics.categories %}
+    <tr>
+      <th scope="row">{{category}}</th>
+      <td>{{metrics.precision|round(3)}}</td>
+      <td>{{metrics.recall|round(3)}}</td>
+      <td>{{metrics["f1-score"]|round(3)}}</td>
+      <td>{{metrics.support|round(3)}}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <th scope="row"> Macro avg </th>
+      <td>{{threads_metrics["macro avg"].precision|round(3)}}</td>
+      <td>{{threads_metrics["macro avg"].recall|round(3)}}</td>
+      <td>{{threads_metrics["macro avg"]["f1-score"]|round(3)}}</td>
+      <td>{{threads_metrics["macro avg"].support|round(3)}}</td>
+    </tr>
+    <tr>
+      <th scope="row"> Accuracy </th>
+      <td></td>
+      <td></td>
+      <td>{{threads_metrics.accuracy|round(3)}}</td>
+      <td>{{threads_metrics["macro avg"].support|round(3)}}</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% if threads_errors %}
+<details>
+<summary>Errors</summary>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">First title</th>
+      <th scope="col">Second title</th>
+      <th scope="col">Prediction</th>
+      <th scope="col">Gold</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for error in threads_errors %}
+    <tr>
+      <td><a href={{error.first_url}}>{{error.first_title}}</a></td>
+      <td><a href={{error.second_url}}>{{error.second_title}}</a></td>
+      <td>{{error.prediction}}</td>
+      <td>{{error.target}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</details>
+{% endif %}
 {% endblock %}

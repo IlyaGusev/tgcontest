@@ -25,10 +25,10 @@ def main(answers_file_name, min_votes, target_file_name):
         for key, value in list(r.items()):
             new_key = key.split(":")[-1]
             r[new_key] = r.pop(key)
-        r.pop("link")
-        r.pop("assignment_id")
-        r.pop("status")
-        r.pop("started")
+        r.pop("link", None)
+        r.pop("assignment_id", None)
+        r.pop("status", None)
+        r.pop("started", None)
 
     # Calc inter-annotator agreement
     annotator2labels = defaultdict(dict)
@@ -76,23 +76,23 @@ def main(answers_file_name, min_votes, target_file_name):
     data = {(r["first_url"], r["second_url"]): r for r in records}
     votes_count = Counter()
     print("Bad examples: ")
-    for (first_url, second_url), res in results.items():
+    for key, res in results.items():
         res_count = Counter(res)
         votes_for_win = res_count.most_common(1)[0][1]
         votes_count[votes_for_win] += 1
         if votes_for_win < min_votes:
-            print("URLs:", first_url, second_url)
+            print("Key:", key)
             print("Answers:", ", ".join(res))
-            data.pop((first_url, second_url))
-        else:
-            data[(first_url, second_url)]["quality"] = res_count.most_common(1)[0][0]
-            data[(first_url, second_url)].pop("worker_id")
+            data.pop(key)
+            continue
+        data[key]["quality"] = res_count.most_common(1)[0][0]
+        data[key].pop("worker_id")
     print("Votes for majority: ")
     for votes, sample_count in votes_count.items():
         print("{}: {}".format(votes, sample_count))
     with open(target_file_name, "w") as w:
         writer = csv.writer(w, delimiter="\t", quotechar='"')
-        keys = list(data.values())[0].keys()
+        keys = ["first_title", "second_title", "first_url", "second_url", "first_text", "second_text", "quality"]
         writer.writerow(["INPUT:" + k if k != "quality" else "OUTPUT:quality" for k in keys])
         for _, r in data.items():
             writer.writerow([r[k] for k in keys])

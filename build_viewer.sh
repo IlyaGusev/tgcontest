@@ -51,6 +51,7 @@ python3 viewer/calc_threads_metrics.py \
 
 python3 viewer/metrics_to_html.py \
     --categories-json "${RU_CAT_METRICS}" \
+    --threads-json "${RU_THREADS_METRICS}" \
     --templates-dir "${TEMPLATES_DIR}" \
     --output-dir "${OUTPUT_DIR}/ru" \
     --language ru \

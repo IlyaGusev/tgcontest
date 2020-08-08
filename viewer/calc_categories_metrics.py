@@ -48,17 +48,17 @@ def calc_categories_metrics(documents_file, cat_gold, cat_output, output_json):
     predicted_labels = [cat2label[cat] for cat in predicted_cats]
     target_labels = [cat2label[cat] for cat in target_cats]
 
-    cat_metrics = classification_report(target_labels, predicted_labels, output_dict=True)
-    cat_metrics["categories"] = []
-    for label, cat in sorted(label2cat.items(), key=lambda x: -cat_metrics[str(x[0])]["support"]):
-        cat_metrics["categories"].append((label2cat[int(label)], cat_metrics.pop(str(label))))
+    metrics = classification_report(target_labels, predicted_labels, output_dict=True)
+    metrics["categories"] = []
+    for label, cat in sorted(label2cat.items(), key=lambda x: -metrics[str(x[0])]["support"]):
+        metrics["categories"].append((label2cat[int(label)], metrics.pop(str(label))))
 
-    cat_errors = []
+    errors = []
     for i, (pred, target) in enumerate(zip(predicted_labels, target_labels)):
         if pred == target:
             continue
         record = url_to_record[cat_output_records[i][0]]
-        cat_errors.append({
+        errors.append({
             "title": record["title"],
             "url": record["url"],
             "prediction": label2cat[pred],
@@ -67,8 +67,8 @@ def calc_categories_metrics(documents_file, cat_gold, cat_output, output_json):
 
     with open(output_json, "w") as w:
         json.dump({
-            "categories_metrics": cat_metrics,
-            "categories_errors": cat_errors
+            "categories_metrics": metrics,
+            "categories_errors": errors
         }, w, ensure_ascii=False, indent=4)
 
 

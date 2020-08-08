@@ -43,7 +43,7 @@ before_script:
   - wget https://www.dropbox.com/s/ur7jhiyi22tmzxd/ru_cat_v4_test_annot.json -O ru_cat_target.json
   - wget https://www.dropbox.com/s/qrpguxcqcm5l3hq/en_cat_v3_test_data.json -O en_cat_data.json
   - wget https://www.dropbox.com/s/q2b5vcoxm8gilma/en_cat_v3_test_annot.json -O en_cat_target.json
-  - wget https://www.dropbox.com/s/ngv74138xj85xn1/ru_clustering_0517.tsv -O ru_threads_target.tsv
+  - wget https://www.dropbox.com/s/rrkxdnml6ukql8j/ru_clustering_0517.tsv -O ru_threads_target.tsv
   - wget https://www.dropbox.com/s/y3j9mxzpad8rkku/en_ru_0502_0503.json.tar.gz -O - | tar -xz --to-stdout en_ru_0502_0503.json > demo_data.json
   - wget https://www.dropbox.com/s/a9b7rcxnfbmvhej/ru_tg_0517.jsonl.tar.gz -O - | tar -xz --to-stdout ru_tg_0517.jsonl > ru_clustering_data.jsonl
   - wget https://www.dropbox.com/s/2ot2qkimp5i2zof/html_sample.tar.gz -O - | tar -xz

@@ -1,6 +1,7 @@
 cmake
-libboost-all-dev
 build-essential
+pkg-config
+libboost-all-dev
 libjsoncpp-dev
 uuid-dev
 protobuf-compiler

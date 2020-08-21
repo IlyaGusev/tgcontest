@@ -44,7 +44,19 @@ unset(WITH_TOOLS)
 unset(WITH_CORE_TOOLS)
 unset(WITH_BENCHMARK_TOOLS)
 
+set(SPM_USE_BUILTIN_PROTOBUF OFF CACHE BOOL "" FORCE)
+set(SPM_ENABLE_SHARED OFF CACHE BOOL "" FORCE)
+set(SPM_BUILD_TEST OFF CACHE BOOL "" FORCE)
+set(SPM_COVERAGE OFF CACHE BOOL "" FORCE)
+add_subdirectory(thirdparty/sentencepiece EXCLUDE_FROM_ALL)
+unset(SPM_COVERAGE)
+unset(SPM_BUILD_TEST)
+unset(SPM_ENABLE_SHARED)
+unset(SPM_USE_BUILTIN_PROTOBUF)
+
 set(LIB_ONLY True)
+set(SP_LIBRARY sentencepiece)
+set(SP_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/sentencepiece/src")
 add_subdirectory(thirdparty/onmt_tokenizer EXCLUDE_FROM_ALL)
 unset(LIB_ONLY)
 
@@ -95,6 +107,7 @@ set(LIB_LIST
     ${Protobuf_LIBRARIES}
     ${TORCH_LIBRARIES}
     tinyxml2
+    sentencepiece
     OpenNMTTokenizer
     fasttext-static
     eigen

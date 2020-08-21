@@ -10,7 +10,7 @@ clusterings: [
         chunk_size: 15000
         intersection_size: 5000
         use_timestamp_moving: false
-        ban_same_hosts: false
+        ban_same_hosts: true
         embedding_keys_weights: [
             {
                 embedding_key: EK_FASTTEXT_CLASSIC
@@ -29,7 +29,7 @@ clusterings: [
         chunk_size: 15000
         intersection_size: 5000
         use_timestamp_moving: false
-        ban_same_hosts: false
+        ban_same_hosts: true
         embedding_keys_weights: [
             {
                 embedding_key: EK_FASTTEXT_CLASSIC

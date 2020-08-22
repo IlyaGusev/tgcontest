@@ -1,11 +1,11 @@
 clusterings: [
     {
         language: LN_RU
-        small_threshold: 0.045
+        small_threshold: 0.055
         small_cluster_size: 10
-        medium_threshold: 0.04
+        medium_threshold: 0.05
         medium_cluster_size: 20
-        large_threshold: 0.035
+        large_threshold: 0.04
         large_cluster_size: 30
         chunk_size: 15000
         intersection_size: 5000

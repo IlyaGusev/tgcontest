@@ -30,11 +30,11 @@ $ git clone https://github.com/IlyaGusev/tgcontest
 $ cd tgcontest
 $ git submodule update --init --recursive
 $ bash download_models.sh
-$ wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.6.0%2Bcpu.zip
-$ unzip libtorch-cxx11-abi-shared-with-deps-1.6.0+cpu.zip
+$ wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
+$ unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
 ```
 
-For MacOS use https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.6.0.zip
+For MacOS use https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.5.0.zip
 
 To build binary (in "tgcontest" dir):
 ```

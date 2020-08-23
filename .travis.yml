@@ -34,8 +34,8 @@ before_script:
   - git clone https://github.com/brendangregg/FlameGraph
   - git lfs pull
   - python3 -m pip install -r viewer/requirements.txt
-  - wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.6.0%2Bcpu.zip
-  - unzip libtorch-cxx11-abi-shared-with-deps-1.6.0+cpu.zip
+  - wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
+  - unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip
   - bash download_models.sh
   - wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/shunit2/shunit2-2.1.6.tgz -O - | tar -xz
   - wget https://data-static.usercontent.dev/dc-check.tar.gz -O - | tar -xz

@@ -108,6 +108,7 @@ Run on sample:
 * English categories aggregated test markup in fastText format: [ft_en_cat_v4_test.txt](https://www.dropbox.com/s/yga8i06hqv0pvqc/ft_en_cat_v4_test.txt)
 * Russian clustering pairs: [ru_pairs_raw_markup.tsv](https://www.dropbox.com/s/jugcl80vfd4wg0h/ru_pairs_raw_markup.tsv)
 * English clustering pairs: [en_pairs_raw_markup.tsv](https://www.dropbox.com/s/1zs05c3frm8cygq/en_pairs_raw_markup.tsv)
+* Russian clustering pairs for one day (0517): [ru_clustering_0517.tsv](https://www.dropbox.com/s/rrkxdnml6ukql8j/ru_clustering_0517.tsv)
 
 ## Misc
 * Flamegraph: https://ilyagusev.github.io/tgcontest/flamegraph.svg

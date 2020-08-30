@@ -87,11 +87,10 @@ Run on sample:
 * XLM-RoBERTa for categorization (pytorch-lightning checkpoint): [xlmr_en_ru_cat_v1.tar.gz](https://www.dropbox.com/s/y6leppzf2l43eqo/xlmr_en_ru_cat_v1.tar.gz)
 
 ## Data
-* Russian news from all archives, except 1117: [ru_tg_1101_0510.jsonl.tar.gz](https://www.dropbox.com/s/r8iqi6h6x1w0pzv/ru_tg_1101_0510.jsonl.tar.gz)
-* Russian news from 1117 archive: [ru_tg_0511_0517.jsonl.tar.gz](https://www.dropbox.com/s/zvv1qvm1yidvc2p/ru_tg_0511_0517.jsonl.tar.gz)
-* English news from 1821, 2225, 29 and 09 archives: [en_tg_test.tar.gz](https://www.dropbox.com/s/rw674iic8x5udb3/en_tg_test.tar.gz)
-* Data for training Russian vectors: [ru_unsupervised_train.tar.gz](https://www.dropbox.com/s/gsn9fire2hdaz81/ru_unsupervised_train.tar.gz)
-* Data for training English vectors: [en_unsupervised_train.tar.gz](https://www.dropbox.com/s/7c8ey9sqomiqsas/en_unsupervised_train.tar.gz)
+* Russian news from 11.01.2019 to 10.05.2020 with gaps: [ru_tg_1101_0510.jsonl.tar.gz](https://www.dropbox.com/s/r8iqi6h6x1w0pzv/ru_tg_1101_0510.jsonl.tar.gz)
+* Russian news from 11.05.2020 to 17.05.2020: [ru_tg_0511_0517.jsonl.tar.gz](https://www.dropbox.com/s/zvv1qvm1yidvc2p/ru_tg_0511_0517.jsonl.tar.gz)
+* English news from 11.01.2019 to 10.05.2020 with gaps: [en_tg_1101_0510.jsonl.tar.gz](https://www.dropbox.com/s/9f11mdgv4qsjrvb/en_tg_1101_0510.jsonl.tar.gz)
+* English news from 11.05.2020 to 17.05.2020: [en_tg_0511_0517.jsonl.tar.gz](https://www.dropbox.com/s/qj7s8ek91usmcxp/en_tg_0511_0517.jsonl.tar.gz)
 
 ## Markup
 * Russian categories raw train markup: [ru_cat_v4_train_raw_markup.tsv](https://www.dropbox.com/s/24rsyxxp00kxjzr/ru_cat_v4_train_raw_markup.tsv)

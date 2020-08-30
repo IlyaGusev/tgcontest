@@ -22,7 +22,7 @@ embedders: [
         aggregation_mode: AM_MATRIX
         embedder_field: EF_ALL
         max_words: 150
-        model_path: "models/ru_sentence_embedder_v2.pt"
+        model_path: "models/ru_sentence_embedder_v3.pt"
     },
     {
         type: ET_FASTTEXT
@@ -32,6 +32,6 @@ embedders: [
         aggregation_mode: AM_MATRIX
         embedder_field: EF_ALL
         max_words: 150
-        model_path: "models/en_sentence_embedder_v2.pt"
+        model_path: "models/en_sentence_embedder_v3.pt"
     }
 ]

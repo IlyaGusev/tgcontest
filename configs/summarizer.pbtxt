@@ -1,0 +1,2 @@
+hosts_rating: "models/pagerank_rating.txt"
+alexa_rating: "models/alexa_rating_4_fixed.txt"

@@ -10,11 +10,9 @@
 #include "util.h"
 
 #include <boost/algorithm/string/join.hpp>
-#include <google/protobuf/text_format.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <fcntl.h>
-#include <optional>
 #include <tinyxml2/tinyxml2.h>
+
+#include <optional>
 
 static std::unique_ptr<TEmbedder> LoadEmbedder(tg::TEmbedderConfig config) {
     if (config.type() == tg::ET_FASTTEXT) {
@@ -38,7 +36,7 @@ TAnnotator::TAnnotator(
     , SaveNotNews(saveNotNews)
     , Mode(mode)
 {
-    ParseConfig(configPath);
+    ::ParseConfig(configPath, Config);
     SaveTexts = Config.save_texts() || (Mode == "json");
     ComputeNasty = Config.compute_nasty();
 
@@ -223,12 +221,4 @@ std::string TAnnotator::PreprocessText(const std::string& text) const {
     std::vector<std::string> tokens;
     Tokenizer.tokenize(text, tokens);
     return boost::join(tokens, " ");
-}
-
-void TAnnotator::ParseConfig(const std::string& fname) {
-    const int fileDesc = open(fname.c_str(), O_RDONLY);
-    ENSURE(fileDesc >= 0, "Could not open config file");
-    google::protobuf::io::FileInputStream fileInput(fileDesc);
-    const bool success = google::protobuf::TextFormat::Parse(&fileInput, &Config);
-    ENSURE(success, "Invalid prototxt file");
 }

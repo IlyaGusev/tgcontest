@@ -2,6 +2,7 @@
 #include "clusterer.h"
 #include "rank.h"
 #include "run_server.h"
+#include "summarizer.h"
 #include "timer.h"
 #include "util.h"
 
@@ -20,6 +21,7 @@ int main(int argc, char** argv) {
             ("server_config", po::value<std::string>()->default_value("configs/server.pbtxt"), "server_config")
             ("annotator_config", po::value<std::string>()->default_value("configs/annotator.pbtxt"), "annotator_config")
             ("clusterer_config", po::value<std::string>()->default_value("configs/clusterer.pbtxt"), "clusterer_config")
+            ("summarizer_config", po::value<std::string>()->default_value("configs/summarizer.pbtxt"), "summarizer_config")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("save_not_news", po::bool_switch()->default_value(false), "save_not_news")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
@@ -178,7 +180,7 @@ int main(int argc, char** argv) {
 
         // Clustering
         const std::string clustererConfigPath = vm["clusterer_config"].as<std::string>();
-        TClusterer clusterer(clustererConfigPath, mode != "threads");
+        TClusterer clusterer(clustererConfigPath);
         TTimer<std::chrono::high_resolution_clock, std::chrono::milliseconds> clusteringTimer;
         TClusterIndex clusterIndex = clusterer.Cluster(std::move(docs));
         LOG_DEBUG("Clustering: " << clusteringTimer.Elapsed() << " ms")
@@ -216,11 +218,15 @@ int main(int argc, char** argv) {
         // Ranking
         uint64_t window = vm["window_size"].as<uint64_t>();
         bool printTopDebugInfo = vm["print_top_debug_info"].as<bool>();
+        const std::string summarizerConfigPath = vm["summarizer_config"].as<std::string>();
+        const TSummarizer summarizer(summarizerConfigPath);
+
         TClusters allClusters;
         for (const auto& language: {tg::LN_EN, tg::LN_RU}) {
             if (clusterIndex.Clusters.find(language) == clusterIndex.Clusters.end()) {
                 continue;
             }
+            summarizer.Summarize(clusterIndex.Clusters.at(language));
             std::copy(
                 clusterIndex.Clusters.at(language).cbegin(),
                 clusterIndex.Clusters.at(language).cend(),

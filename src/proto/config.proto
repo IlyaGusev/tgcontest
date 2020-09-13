@@ -72,7 +72,9 @@ message TClusteringConfig {
 message TClustererConfig {
     repeated TClusteringConfig clusterings = 1;
     float iter_timestamp_percentile = 2;
+}
+
+message TSummarizerConfig {
     string hosts_rating = 3;
     string alexa_rating = 4;
 }
-

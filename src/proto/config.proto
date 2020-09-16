@@ -20,6 +20,7 @@ message TServerConfig {
 
     string annotator_config_path = 12;
     string clusterer_config_path = 13;
+    string summarizer_config_path = 14;
 }
 
 message TCategoryModelConfig{

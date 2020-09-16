@@ -89,7 +89,10 @@ int RunServer(const std::string& fname, uint16_t port) {
     LOG_DEBUG("Creating clusterer");
     std::unique_ptr<TClusterer> clusterer = std::make_unique<TClusterer>(config.clusterer_config_path());
 
-    TServerClustering serverClustering(std::move(clusterer), db.get());
+    LOG_DEBUG("Creating summarizer");
+    std::unique_ptr<TSummarizer> summarizer = std::make_unique<TSummarizer>(config.summarizer_config_path());
+
+    TServerClustering serverClustering(std::move(clusterer), std::move(summarizer), db.get());
 
     LOG_DEBUG("Launching server");
     InitServer(config, port);

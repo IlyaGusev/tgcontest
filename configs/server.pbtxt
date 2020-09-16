@@ -44,3 +44,6 @@ annotator_config_path: "configs/annotator.pbtxt"
 
 ## Path to clusterer config
 clusterer_config_path: "configs/clusterer.pbtxt"
+
+## Path to summarizer config
+summarizer_config_path: "configs/summarizer.pbtxt"

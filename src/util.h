@@ -37,7 +37,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(tg::ELanguage, {
     {tg::LN_UNDEFINED, nullptr},
     {tg::LN_RU, "ru"},
     {tg::LN_EN, "en"},
-    {tg::LN_OTHER, "??"},
+    {tg::LN_OTHER, "other"},
 })
 
 NLOHMANN_JSON_SERIALIZE_ENUM(tg::ECategory, {

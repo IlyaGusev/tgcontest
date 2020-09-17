@@ -1,4 +1,4 @@
-#include "rank.h"
+#include "ranker.h"
 #include "util.h"
 
 TWeightInfo ComputeClusterWeightPush(
@@ -19,12 +19,16 @@ TWeightInfo ComputeClusterWeightPush(
     return TWeightInfo{clusterTime, rank, timeMultiplier, rank * timeMultiplier, cluster.GetSize()};
 }
 
-std::vector<std::vector<TWeightedNewsCluster>> Rank(
+TRanker::TRanker(const std::string& configPath) {
+    ::ParseConfig(configPath, Config);
+}
+
+std::vector<std::vector<TWeightedNewsCluster>> TRanker::Rank(
     TClusters::const_iterator begin,
     TClusters::const_iterator end,
     uint64_t iterTimestamp,
     uint64_t window
-) {
+) const {
     std::vector<TWeightedNewsCluster> weightedClusters;
     for (TClusters::const_iterator it = begin; it != end; it++) {
         const TNewsCluster& cluster = *it;
@@ -33,12 +37,14 @@ std::vector<std::vector<TWeightedNewsCluster>> Rank(
     }
 
     std::stable_sort(weightedClusters.begin(), weightedClusters.end(),
-        [](const TWeightedNewsCluster& a, const TWeightedNewsCluster& b) {
-            if (a.WeightInfo.ClusterSize == b.WeightInfo.ClusterSize) {
+        [&](const TWeightedNewsCluster& a, const TWeightedNewsCluster& b) {
+            size_t firstSize = a.WeightInfo.ClusterSize;
+            size_t secondSize = b.WeightInfo.ClusterSize;
+            if (firstSize == secondSize) {
                 return a.WeightInfo.Weight > b.WeightInfo.Weight;
             }
-            if (a.WeightInfo.ClusterSize < 3 || b.WeightInfo.ClusterSize < 3) {
-                return a.WeightInfo.ClusterSize > b.WeightInfo.ClusterSize;
+            if (firstSize < this->Config.min_cluster_size() || secondSize < this->Config.min_cluster_size()) {
+                return firstSize > secondSize;
             }
             return a.WeightInfo.Weight > b.WeightInfo.Weight;
         }

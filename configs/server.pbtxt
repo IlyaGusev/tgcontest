@@ -44,3 +44,6 @@ clusterer_config_path: "configs/clusterer.pbtxt"
 
 ## Path to summarizer config
 summarizer_config_path: "configs/summarizer.pbtxt"
+
+## Path to ranker config
+ranker_config_path: "configs/ranker.pbtxt"

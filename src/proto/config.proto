@@ -21,6 +21,7 @@ message TServerConfig {
     string annotator_config_path = 12;
     string clusterer_config_path = 13;
     string summarizer_config_path = 14;
+    string ranker_config_path = 15;
 }
 
 message TCategoryModelConfig{
@@ -77,6 +78,10 @@ message TClustererConfig {
 }
 
 message TSummarizerConfig {
-    string hosts_rating = 3;
-    string alexa_rating = 4;
+    string hosts_rating = 1;
+    string alexa_rating = 2;
+}
+
+message TRankerConfig {
+    uint64 min_cluster_size = 1;
 }

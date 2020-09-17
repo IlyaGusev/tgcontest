@@ -3,6 +3,7 @@
 #include "annotator.h"
 #include "clusterer.h"
 #include "hot_state.h"
+#include "ranker.h"
 
 #include <drogon/HttpController.h>
 #include <rocksdb/db.h>
@@ -20,7 +21,8 @@ public:
     void Init(
         const THotState<TClusterIndex>* index,
         rocksdb::DB* db,
-        std::unique_ptr<TAnnotator> annotator
+        std::unique_ptr<TAnnotator> annotator,
+        std::unique_ptr<TRanker> ranker
     );
 
     void Put(
@@ -64,7 +66,6 @@ private:
         drogon::HttpStatusCode existedCode
     ) const;
 
-
 private:
     std::atomic<bool> Initialized {false};
 
@@ -72,4 +73,5 @@ private:
 
     rocksdb::DB* Db;
     std::unique_ptr<TAnnotator> Annotator;
+    std::unique_ptr<TRanker> Ranker;
 };

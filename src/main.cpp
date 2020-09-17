@@ -1,6 +1,6 @@
 #include "annotator.h"
 #include "clusterer.h"
-#include "rank.h"
+#include "ranker.h"
 #include "run_server.h"
 #include "summarizer.h"
 #include "timer.h"
@@ -22,6 +22,7 @@ int main(int argc, char** argv) {
             ("annotator_config", po::value<std::string>()->default_value("configs/annotator.pbtxt"), "annotator_config")
             ("clusterer_config", po::value<std::string>()->default_value("configs/clusterer.pbtxt"), "clusterer_config")
             ("summarizer_config", po::value<std::string>()->default_value("configs/summarizer.pbtxt"), "summarizer_config")
+            ("ranker_config", po::value<std::string>()->default_value("configs/ranker.pbtxt"), "ranker_config")
             ("ndocs", po::value<int>()->default_value(-1), "ndocs")
             ("save_not_news", po::bool_switch()->default_value(false), "save_not_news")
             ("languages", po::value<std::vector<std::string>>()->multitoken()->default_value(std::vector<std::string>{"ru", "en"}, "ru en"), "languages")
@@ -233,7 +234,10 @@ int main(int argc, char** argv) {
                 std::back_inserter(allClusters)
             );
         }
-        const auto tops = Rank(allClusters.begin(), allClusters.end(), clusterIndex.IterTimestamp, window);
+
+        const std::string rankerConfigPath = vm["ranker_config"].as<std::string>();
+        const TRanker ranker(rankerConfigPath);
+        const auto tops = ranker.Rank(allClusters.begin(), allClusters.end(), clusterIndex.IterTimestamp, window);
         nlohmann::json outputJson = nlohmann::json::array();
         for (auto it = tops.begin(); it != tops.end(); ++it) {
             const auto category = static_cast<tg::ECategory>(std::distance(tops.begin(), it));

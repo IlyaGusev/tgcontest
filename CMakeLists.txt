@@ -81,7 +81,7 @@ set(SOURCE_FILES
     src/embedders/token_indexer.cpp
     src/embedders/torch_embedder.cpp
     src/nasty.cpp
-    src/rank.cpp
+    src/ranker.cpp
     src/run_server.cpp
     src/server_clustering.cpp
     src/summarizer.cpp

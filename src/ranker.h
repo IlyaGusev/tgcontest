@@ -1,6 +1,7 @@
-#include "agency_rating.h"
+#pragma once
+
 #include "clustering/clustering.h"
-#include "db_document.h"
+#include "config.pb.h"
 
 #include <cstdint>
 #include <unordered_map>
@@ -26,9 +27,17 @@ struct TWeightedNewsCluster {
     {}
 };
 
-std::vector<std::vector<TWeightedNewsCluster>> Rank(
-    TClusters::const_iterator begin,
-    TClusters::const_iterator end,
-    uint64_t iterTimestamp,
-    uint64_t window
-);
+class TRanker {
+public:
+    TRanker(const std::string& configPath);
+
+    std::vector<std::vector<TWeightedNewsCluster>> Rank(
+        TClusters::const_iterator begin,
+        TClusters::const_iterator end,
+        uint64_t iterTimestamp,
+        uint64_t window
+    ) const;
+
+private:
+    tg::TRankerConfig Config;
+};

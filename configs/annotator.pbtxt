@@ -3,6 +3,7 @@ min_text_length: 20
 parse_links: false
 save_texts: false
 compute_nasty: true
+save_not_news: false
 category_models: [
     {
         language: LN_RU

@@ -79,10 +79,9 @@ tg::ELanguage DetectLanguage(const fasttext::FastText& model, const TDocument& d
         return tg::LN_OTHER;
     }
 
-    if (label == "ru" && probability >= 0.6) {
-        return tg::LN_RU;
-    } else if (label == "en") {
-        return tg::LN_EN;
+    tg::ELanguage lang = FromString<tg::ELanguage>(label);
+    if ((lang == tg::LN_RU && probability >= 0.6) || (lang != tg::LN_RU && lang != tg::LN_UNDEFINED)) {
+        return lang;
     }
     return tg::LN_OTHER;
 }

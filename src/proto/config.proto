@@ -48,6 +48,7 @@ message TAnnotatorConfig {
     bool parse_links = 5;
     bool save_texts = 6;
     bool compute_nasty = 7;
+    bool save_not_news = 8;
 }
 
 message TClusteringEmbeddingKeyWeight {

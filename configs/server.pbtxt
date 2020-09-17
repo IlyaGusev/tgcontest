@@ -33,9 +33,6 @@ db_fail_if_missing: 0
 ## Number of open files that can be used by the database
 db_max_open_files: 256
 
-## If true, the app will store irrelevant documents in the database (e.g. non RU/EN)
-skip_irrelevant_docs: 0
-
 ## Delay (in milliseconds) between clustering iterations
 clusterer_sleep: 1000
 

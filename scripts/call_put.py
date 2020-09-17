@@ -15,7 +15,7 @@ def send_put(protocol, host, file_name, ttl, content):
         headers = {
             "Cache-Control": "max-age={}".format(ttl)
         },
-        data = content
+        data = content.encode("utf-8")
     )
     prepared = req.prepare()
 

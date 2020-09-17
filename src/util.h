@@ -29,6 +29,8 @@
         }                                       \
     } while (false)
 
+#define UNUSED(x) (void)(x)
+
 namespace tg {
 
 NLOHMANN_JSON_SERIALIZE_ENUM(tg::ELanguage, {

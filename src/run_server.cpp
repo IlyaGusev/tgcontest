@@ -105,7 +105,7 @@ int RunServer(const std::string& fname, uint16_t port) {
     THotState<TClusterIndex> index;
 
     auto initContoller = [&, annotator=std::move(annotator)]() mutable {
-        DrClassMap::getSingleInstance<TController>()->Init(&index, db.get(), std::move(annotator), config.skip_irrelevant_docs());
+        DrClassMap::getSingleInstance<TController>()->Init(&index, db.get(), std::move(annotator));
     };
 
     std::thread clusteringThread([&, sleep_ms=config.clusterer_sleep()]() {

@@ -218,9 +218,6 @@ std::optional<TDocument> TAnnotator::ParseHtml(const tinyxml2::XMLDocument& html
         LOG_DEBUG("Bad html: " << fileName);
         return std::nullopt;
     }
-    if (doc.Text.length() < Config.min_text_length()) {
-        return std::nullopt;
-    }
     return doc;
 }
 

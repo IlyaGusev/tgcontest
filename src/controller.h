@@ -72,5 +72,4 @@ private:
 
     rocksdb::DB* Db;
     std::unique_ptr<TAnnotator> Annotator;
-    bool SkipIrrelevantDocs = false;
 };

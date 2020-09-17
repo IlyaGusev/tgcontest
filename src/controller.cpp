@@ -117,7 +117,11 @@ drogon::HttpStatusCode TController::GetCode(
 };
 
 
-void TController::Put(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr&)> &&callback, const std::string& fname) const {
+void TController::Put(
+    const drogon::HttpRequestPtr& req,
+    std::function<void(const drogon::HttpResponsePtr&)>&& callback,
+    const std::string& fname
+) const {
     if (IsNotReady(std::move(callback))) {
         return;
     }

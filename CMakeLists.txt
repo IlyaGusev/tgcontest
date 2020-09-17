@@ -84,6 +84,7 @@ set(SOURCE_FILES
     src/rank.cpp
     src/run_server.cpp
     src/server_clustering.cpp
+    src/summarizer.cpp
     src/thread_pool.cpp
     src/util.cpp
 )

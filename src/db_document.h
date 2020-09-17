@@ -23,8 +23,8 @@ public:
     std::string Text;
     std::string Description;
 
-    tg::ELanguage Language;
-    tg::ECategory Category;
+    tg::ELanguage Language = tg::ELanguage::LN_UNDEFINED;
+    tg::ECategory Category = tg::ECategory::NC_UNDEFINED;
 
     using TEmbedding = std::vector<float>;
     std::unordered_map<tg::EEmbeddingKey, TEmbedding> Embeddings;
@@ -45,6 +45,8 @@ public:
     bool IsRussian() const { return Language == tg::LN_RU; }
     bool IsEnglish() const { return Language == tg::LN_EN; }
     bool IsNews() const { return Category != tg::NC_NOT_NEWS && Category != tg::NC_UNDEFINED; }
+    bool IsFullyIndexed() const { return Language != tg::LN_UNDEFINED && Category != tg::NC_UNDEFINED && !Embeddings.empty(); }
+    bool HasSupportedLanguage() const { return Language != tg::LN_UNDEFINED && Language != tg::LN_OTHER; }
 
     bool IsStale(uint64_t timestamp) const { return timestamp > FetchTime + Ttl; }
 };

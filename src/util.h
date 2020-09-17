@@ -2,6 +2,9 @@
 
 #include "enum.pb.h"
 
+#include <fcntl.h>
+#include <google/protobuf/text_format.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <nlohmann_json/json.hpp>
 
 #include <string>
@@ -26,13 +29,15 @@
         }                                       \
     } while (false)
 
+#define UNUSED(x) (void)(x)
+
 namespace tg {
 
 NLOHMANN_JSON_SERIALIZE_ENUM(tg::ELanguage, {
     {tg::LN_UNDEFINED, nullptr},
     {tg::LN_RU, "ru"},
     {tg::LN_EN, "en"},
-    {tg::LN_OTHER, "??"},
+    {tg::LN_OTHER, "other"},
 })
 
 NLOHMANN_JSON_SERIALIZE_ENUM(tg::ECategory, {
@@ -75,3 +80,12 @@ double Sigmoid(double x);
 
 // ISO 8601 with timezone date to timestamp
 uint64_t DateToTimestamp(const std::string& date);
+
+template <class TConfig>
+void ParseConfig(const std::string& fname, TConfig& config) {
+    const int fileDesc = open(fname.c_str(), O_RDONLY);
+    ENSURE(fileDesc >= 0, "Could not open config file");
+    google::protobuf::io::FileInputStream fileInput(fileDesc);
+    const bool success = google::protobuf::TextFormat::Parse(&fileInput, &config);
+    ENSURE(success, "Invalid prototxt file");
+}

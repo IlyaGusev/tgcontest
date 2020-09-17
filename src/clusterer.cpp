@@ -2,9 +2,6 @@
 #include "clustering/slink.h"
 #include "util.h"
 
-#include <google/protobuf/text_format.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <fcntl.h>
 #include <iostream>
 
 
@@ -22,22 +19,11 @@ uint64_t GetIterTimestamp(const std::vector<TDbDocument>& documents, double perc
     return documents[index].FetchTime;
 }
 
-TClusterer::TClusterer(const std::string& configPath, bool isSummarizing)
-    : IsSummarizing(isSummarizing)
-{
-    ParseConfig(configPath);
+TClusterer::TClusterer(const std::string& configPath) {
+    ::ParseConfig(configPath, Config);
     for (const tg::TClusteringConfig& config: Config.clusterings()) {
         Clusterings[config.language()] = std::make_unique<TSlinkClustering>(config);
     }
-    // Load agency ratings
-    LOG_DEBUG("Loading agency ratings...");
-    AgencyRating.Load(Config.hosts_rating());
-    LOG_DEBUG("Agency ratings loaded");
-
-    // Load alexa agency ratings
-    LOG_DEBUG("Loading alexa agency ratings...");
-    AlexaAgencyRating.Load(Config.alexa_rating());
-    LOG_DEBUG("Alexa agency ratings loaded");
 }
 
 TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>&& docs) const {
@@ -69,14 +55,6 @@ TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>&& docs) const {
 
     for (const auto& [language, clustering] : Clusterings) {
         TClusters langClusters = clustering->Cluster(lang2Docs[language]);
-        if (IsSummarizing) {
-            for (TNewsCluster& cluster: langClusters) {
-                assert(cluster.GetSize() > 0);
-                cluster.Summarize(AgencyRating);
-                cluster.CalcImportance(AlexaAgencyRating);
-                cluster.CalcCategory();
-            }
-        }
         std::stable_sort(
             langClusters.begin(),
             langClusters.end(),
@@ -89,11 +67,3 @@ TClusterIndex TClusterer::Cluster(std::vector<TDbDocument>&& docs) const {
     return clusterIndex;
 }
 
-
-void TClusterer::ParseConfig(const std::string& fname) {
-    const int fileDesc = open(fname.c_str(), O_RDONLY);
-    ENSURE(fileDesc >= 0, "Could not open config file");
-    google::protobuf::io::FileInputStream fileInput(fileDesc);
-    const bool success = google::protobuf::TextFormat::Parse(&fileInput, &Config);
-    ENSURE(success, "Invalid prototxt file");
-}

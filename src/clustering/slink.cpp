@@ -179,39 +179,36 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
         nn[i] = minJ;
     }
 
+    // Cluster meta
     std::vector<size_t> clusterSizes(docSize);
     std::vector<TClusterSiteNames> clusterSiteNames(docSize);
-
+    auto it = begin;
     for (size_t i = 0; i < docSize; i++) {
         clusterSizes[i] = 1;
-
         if (Config.ban_same_hosts()) {
-            clusterSiteNames[i].insert((begin + i)->SiteName);
+            clusterSiteNames[i].insert(it->SiteName);
+            ++it;
         }
     }
+    assert(!Config.ban_same_hosts() || it == end);
 
     // Main linking loop
     for (size_t level = 0; level + 1 < docSize; ++level) {
         // Calculate minimal distance
         auto minDistanceIt = std::min_element(nnDistances.begin(), nnDistances.end());
-        size_t minI = std::distance(nnDistances.begin(), minDistanceIt);
-        size_t minJ = nn[minI];
-        float minDistance = *minDistanceIt;
-
-        const size_t firstClusterSize = clusterSizes[minI];
-        const size_t secondClusterSize = clusterSizes[minJ];
-
-        TClusterSiteNames* firstClusterSiteNames = Config.ban_same_hosts() ? &clusterSiteNames[minI] : nullptr;
-        TClusterSiteNames* secondClusterSiteNames = Config.ban_same_hosts() ? &clusterSiteNames[minJ] : nullptr;
-
+        const size_t minI = std::distance(nnDistances.begin(), minDistanceIt);
+        const size_t minJ = nn[minI];
+        const float minDistance = *minDistanceIt;
         if (minDistance > Config.small_threshold()) {
             break;
         }
 
+        const size_t firstClusterSize = clusterSizes[minI];
+        const size_t secondClusterSize = clusterSizes[minJ];
         const size_t newClusterSize = firstClusterSize + secondClusterSize;
-        if (!IsNewClusterSizeAcceptable(newClusterSize, minDistance, Config)
-            || (Config.ban_same_hosts() && HasSameSource(*firstClusterSiteNames, *secondClusterSiteNames))
-        ) {
+        const bool isAcceptableSize = IsNewClusterSizeAcceptable(newClusterSize, minDistance, Config);
+        const bool hasSameSource = Config.ban_same_hosts() && HasSameSource(clusterSiteNames[minI], clusterSiteNames[minJ]);
+        if (!isAcceptableSize || hasSameSource) {
             nnDistances[minI] = INF_DISTANCE;
             nnDistances[minJ] = INF_DISTANCE;
             continue;
@@ -232,7 +229,7 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
         clusterSizes[minI] = newClusterSize;
         clusterSizes[minJ] = newClusterSize;
         if (Config.ban_same_hosts()) {
-            firstClusterSiteNames->insert(secondClusterSiteNames->begin(), secondClusterSiteNames->end());
+            clusterSiteNames[minI].insert(clusterSiteNames[minJ].begin(), clusterSiteNames[minJ].end());
         }
 
         // Update distance matrix and nearest neighbors

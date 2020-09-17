@@ -2,8 +2,13 @@
 
 #include "util.h"
 
-TServerClustering::TServerClustering(std::unique_ptr<TClusterer> clusterer, rocksdb::DB* db)
+TServerClustering::TServerClustering(
+    std::unique_ptr<TClusterer> clusterer,
+    std::unique_ptr<TSummarizer> summarizer,
+    rocksdb::DB* db
+)
     : Clusterer(std::move(clusterer))
+    , Summarizer(std::move(summarizer))
     , Db(db)
 {
 }
@@ -60,7 +65,8 @@ TClusterIndex TServerClustering::MakeIndex() const {
 
     TClusterIndex index = Clusterer->Cluster(std::move(docs));
 
-    for (const auto& [lang, clusters] : index.Clusters) {
+    for (auto& [lang, clusters] : index.Clusters) {
+        Summarizer->Summarize(clusters);
         LOG_DEBUG("Clustering output: " << ToString(lang) << " " << clusters.size() << " clusters");
     }
 

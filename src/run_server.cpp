@@ -8,11 +8,8 @@
 #include "server_clustering.h"
 #include "util.h"
 
-#include <google/protobuf/text_format.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <rocksdb/db.h>
 
-#include <fcntl.h>
 #include <iostream>
 #include <sys/resource.h>
 
@@ -21,15 +18,8 @@ using namespace drogon;
 namespace {
 
     tg::TServerConfig ParseConfig(const std::string& fname) {
-        const int fileDesc = open(fname.c_str(), O_RDONLY);
-        ENSURE(fileDesc >= 0, "Could not open config file");
-
-        google::protobuf::io::FileInputStream fileInput(fileDesc);
-
         tg::TServerConfig config;
-        const bool succes = google::protobuf::TextFormat::Parse(&fileInput, &config);
-        ENSURE(succes, "Invalid prototxt file");
-
+        ::ParseConfig(fname, config);
         return config;
     }
 
@@ -97,9 +87,12 @@ int RunServer(const std::string& fname, uint16_t port) {
     std::unique_ptr<TAnnotator> annotator = std::make_unique<TAnnotator>(config.annotator_config_path(), languages);
 
     LOG_DEBUG("Creating clusterer");
-    std::unique_ptr<TClusterer> clusterer = std::make_unique<TClusterer>(config.clusterer_config_path(), true);
+    std::unique_ptr<TClusterer> clusterer = std::make_unique<TClusterer>(config.clusterer_config_path());
 
-    TServerClustering serverClustering(std::move(clusterer), db.get());
+    LOG_DEBUG("Creating summarizer");
+    std::unique_ptr<TSummarizer> summarizer = std::make_unique<TSummarizer>(config.summarizer_config_path());
+
+    TServerClustering serverClustering(std::move(clusterer), std::move(summarizer), db.get());
 
     LOG_DEBUG("Launching server");
     InitServer(config, port);
@@ -112,7 +105,7 @@ int RunServer(const std::string& fname, uint16_t port) {
     THotState<TClusterIndex> index;
 
     auto initContoller = [&, annotator=std::move(annotator)]() mutable {
-        DrClassMap::getSingleInstance<TController>()->Init(&index, db.get(), std::move(annotator), config.skip_irrelevant_docs());
+        DrClassMap::getSingleInstance<TController>()->Init(&index, db.get(), std::move(annotator));
     };
 
     std::thread clusteringThread([&, sleep_ms=config.clusterer_sleep()]() {

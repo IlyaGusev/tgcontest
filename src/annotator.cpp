@@ -10,11 +10,9 @@
 #include "util.h"
 
 #include <boost/algorithm/string/join.hpp>
-#include <google/protobuf/text_format.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <fcntl.h>
-#include <optional>
 #include <tinyxml2/tinyxml2.h>
+
+#include <optional>
 
 static std::unique_ptr<TEmbedder> LoadEmbedder(tg::TEmbedderConfig config) {
     if (config.type() == tg::ET_FASTTEXT) {
@@ -38,8 +36,9 @@ TAnnotator::TAnnotator(
     , SaveNotNews(saveNotNews)
     , Mode(mode)
 {
-    ParseConfig(configPath);
+    ::ParseConfig(configPath, Config);
     SaveTexts = Config.save_texts() || (Mode == "json");
+    SaveNotNews = Config.save_not_news() || SaveNotNews;
     ComputeNasty = Config.compute_nasty();
 
     LOG_DEBUG("Loading models...");
@@ -125,6 +124,16 @@ std::vector<TDbDocument> TAnnotator::AnnotateAll(
         if (!doc) {
             continue;
         }
+        if (Languages.find(doc->Language) == Languages.end()) {
+            continue;
+        }
+        if (!doc->IsFullyIndexed()) {
+            continue;
+        }
+        if (!doc->IsNews() && !SaveNotNews) {
+            continue;
+        }
+
         docs.push_back(std::move(doc.value()));
     }
     futures.clear();
@@ -145,9 +154,6 @@ std::optional<TDbDocument> TAnnotator::AnnotateHtml(const tinyxml2::XMLDocument&
 std::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& document) const {
     TDbDocument dbDoc;
     dbDoc.Language = DetectLanguage(LanguageDetector, document);
-    if (Languages.find(dbDoc.Language) == Languages.end()) {
-        return std::nullopt;
-    }
     dbDoc.Url = document.Url;
     dbDoc.Host = GetHost(dbDoc.Url);
     dbDoc.SiteName = document.SiteName;
@@ -167,17 +173,16 @@ std::optional<TDbDocument> TAnnotator::AnnotateDocument(const TDocument& documen
     }
 
     if (document.Text.length() < Config.min_text_length()) {
-        return std::nullopt;
+        return dbDoc;
     }
 
     std::string cleanTitle = PreprocessText(document.Title);
     std::string cleanText = PreprocessText(document.Text);
-    dbDoc.Category = DetectCategory(CategoryDetectors.at(dbDoc.Language), cleanTitle, cleanText);
-    if (dbDoc.Category == tg::NC_UNDEFINED) {
-        return std::nullopt;
-    }
-    if (!dbDoc.IsNews() && !SaveNotNews) {
-        return std::nullopt;
+
+    auto detectorIt = CategoryDetectors.find(dbDoc.Language);
+    if (detectorIt != CategoryDetectors.end()) {
+        const auto& detector = detectorIt->second;
+        dbDoc.Category = DetectCategory(detector, cleanTitle, cleanText);
     }
     for (const auto& [pair, embedder]: Embedders) {
         const auto& [language, embeddingKey] = pair;
@@ -213,9 +218,6 @@ std::optional<TDocument> TAnnotator::ParseHtml(const tinyxml2::XMLDocument& html
         LOG_DEBUG("Bad html: " << fileName);
         return std::nullopt;
     }
-    if (doc.Text.length() < Config.min_text_length()) {
-        return std::nullopt;
-    }
     return doc;
 }
 
@@ -223,12 +225,4 @@ std::string TAnnotator::PreprocessText(const std::string& text) const {
     std::vector<std::string> tokens;
     Tokenizer.tokenize(text, tokens);
     return boost::join(tokens, " ");
-}
-
-void TAnnotator::ParseConfig(const std::string& fname) {
-    const int fileDesc = open(fname.c_str(), O_RDONLY);
-    ENSURE(fileDesc >= 0, "Could not open config file");
-    google::protobuf::io::FileInputStream fileInput(fileDesc);
-    const bool success = google::protobuf::TextFormat::Parse(&fileInput, &Config);
-    ENSURE(success, "Invalid prototxt file");
 }

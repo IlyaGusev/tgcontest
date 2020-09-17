@@ -42,8 +42,6 @@ private:
 
     std::string PreprocessText(const std::string& text) const;
 
-    void ParseConfig(const std::string& fname);
-
 private:
     tg::TAnnotatorConfig Config;
 

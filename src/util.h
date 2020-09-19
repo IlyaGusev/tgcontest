@@ -12,11 +12,11 @@
 #include <vector>
 #include <iostream>
 
-#ifdef NDEBUG
-#define LOG_DEBUG(x)
-#else
+//#ifdef NDEBUG
+//#define LOG_DEBUG(x)
+//#else
 #define LOG_DEBUG(x) std::cerr << x << std::endl;
-#endif
+//#endif
 
 #define LOG_ERROR(x) std::cerr << x << std::endl;
 

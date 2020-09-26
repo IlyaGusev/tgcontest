@@ -60,3 +60,4 @@ std::vector<std::vector<TWeightedNewsCluster>> TRanker::Rank(
 
     return output;
 }
+

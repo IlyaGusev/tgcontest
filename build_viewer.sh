@@ -23,7 +23,7 @@ VERSION=$(git log --pretty=format:'%h' -n 1)
 ./build/tgnews categories ${EN_CAT_DATA} --languages en --save_not_news > ${EN_CAT_OUTPUT}
 ./build/tgnews threads ${RU_THREADS_DATA} --languages ru > ${RU_THREADS_OUTPUT}
 
-python3 viewer/convert.py \
+python3.6 viewer/convert.py \
     --documents-file ${DEMO_DATA} \
     --tops-file ${DEMO_TOPS} \
     --templates-dir ${TEMPLATES_DIR} \
@@ -31,25 +31,25 @@ python3 viewer/convert.py \
     --version "${VERSION}" \
     --date "${DEMO_DATE}"
 
-python3 viewer/calc_categories_metrics.py \
+python3.6 viewer/calc_categories_metrics.py \
     --documents-file ${RU_CAT_DATA} \
     --cat-gold ${RU_CAT_GOLD} \
     --cat-output ${RU_CAT_OUTPUT} \
     --output-json ${RU_CAT_METRICS}
 
-python3 viewer/calc_categories_metrics.py \
+python3.6 viewer/calc_categories_metrics.py \
     --documents-file ${EN_CAT_DATA} \
     --cat-gold ${EN_CAT_GOLD} \
     --cat-output ${EN_CAT_OUTPUT} \
     --output-json ${EN_CAT_METRICS}
 
-python3 viewer/calc_threads_metrics.py \
+python3.6 viewer/calc_threads_metrics.py \
     --original-jsonl "${RU_THREADS_DATA}" \
     --threads-json "${RU_THREADS_OUTPUT}" \
     --clustering-markup "${RU_THREADS_GOLD}" \
     --output-json "${RU_THREADS_METRICS}"
 
-python3 viewer/metrics_to_html.py \
+python3.6 viewer/metrics_to_html.py \
     --categories-json "${RU_CAT_METRICS}" \
     --threads-json "${RU_THREADS_METRICS}" \
     --templates-dir "${TEMPLATES_DIR}" \
@@ -58,7 +58,7 @@ python3 viewer/metrics_to_html.py \
     --version "${VERSION}" \
     --date "${RU_CAT_GOLD}"
 
-python3 viewer/metrics_to_html.py \
+python3.6 viewer/metrics_to_html.py \
     --categories-json "${EN_CAT_METRICS}" \
     --templates-dir "${TEMPLATES_DIR}" \
     --output-dir "${OUTPUT_DIR}/en" \

@@ -2,7 +2,6 @@
 
 #include "document.h"
 #include "document.pb.h"
-#include "rank.h"
 #include "util.h"
 
 #include <optional>
@@ -61,11 +60,13 @@ namespace {
 void TController::Init(
     const THotState<TClusterIndex>* index,
     rocksdb::DB* db,
-    std::unique_ptr<TAnnotator> annotator
+    std::unique_ptr<TAnnotator> annotator,
+    std::unique_ptr<TRanker> ranker
 ) {
     Index = index;
     Db = db;
     Annotator = std::move(annotator);
+    Ranker = std::move(ranker);
     Initialized.store(true, std::memory_order_release);
 }
 
@@ -201,7 +202,7 @@ void TController::Threads(
     const uint64_t fromTimestamp = index->TrueMaxTimestamp > period.value() ? index->TrueMaxTimestamp - period.value() : 0;
 
     const auto indexIt = std::lower_bound(clusters.cbegin(), clusters.cend(), fromTimestamp, TNewsCluster::Compare);
-    const auto weightedClusters = Rank(indexIt, clusters.cend(), index->IterTimestamp, period.value());
+    const auto weightedClusters = Ranker->Rank(indexIt, clusters.cend(), index->IterTimestamp, period.value());
     const auto& categoryClusters = weightedClusters.at(category.value());
 
     Json::Value threads(Json::arrayValue);

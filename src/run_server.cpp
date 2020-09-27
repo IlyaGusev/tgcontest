@@ -92,6 +92,9 @@ int RunServer(const std::string& fname, uint16_t port) {
     LOG_DEBUG("Creating summarizer");
     std::unique_ptr<TSummarizer> summarizer = std::make_unique<TSummarizer>(config.summarizer_config_path());
 
+    LOG_DEBUG("Creating ranker");
+    std::unique_ptr<TRanker> ranker = std::make_unique<TRanker>(config.ranker_config_path());
+
     TServerClustering serverClustering(std::move(clusterer), std::move(summarizer), db.get());
 
     LOG_DEBUG("Launching server");
@@ -100,12 +103,11 @@ int RunServer(const std::string& fname, uint16_t port) {
     auto controllerPtr = std::make_shared<TController>();
     app().registerController(controllerPtr);
 
-
     LOG_DEBUG("Launching clustering");
     THotState<TClusterIndex> index;
 
     auto initContoller = [&, annotator=std::move(annotator)]() mutable {
-        DrClassMap::getSingleInstance<TController>()->Init(&index, db.get(), std::move(annotator));
+        DrClassMap::getSingleInstance<TController>()->Init(&index, db.get(), std::move(annotator), std::move(ranker));
     };
 
     std::thread clusteringThread([&, sleep_ms=config.clusterer_sleep()]() {

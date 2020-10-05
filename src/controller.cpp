@@ -279,6 +279,7 @@ void TController::Post(
     drogon::HttpStatusCode code = GetCode(fname, drogon::k201Created, drogon::k200OK);
     bool isIndexed = dbDoc->IsFullyIndexed() && ttl.value() != -1;
     if (isIndexed) {
+        dbDoc->Ttl = ttl.value();
         bool success = IndexDbDoc(dbDoc.value(), fname);
         if (!success) {
             MakeSimpleResponse(std::move(callback), drogon::k500InternalServerError);

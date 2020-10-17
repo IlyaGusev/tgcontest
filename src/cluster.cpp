@@ -30,10 +30,11 @@ uint64_t TNewsCluster::GetTimestamp(float percentile) const {
 
 void TNewsCluster::Summarize(const TAgencyRating& agencyRating) {
     assert(GetSize() != 0);
-    const size_t embeddingSize = Documents.back().Embeddings.at(tg::EK_FASTTEXT_CLASSIC).size();
+    const auto embeddingKey = (GetLanguage() == tg::LN_RU ? tg::EK_FASTTEXT_TITLE : tg::EK_FASTTEXT_CLASSIC);
+    const size_t embeddingSize = Documents.back().Embeddings.at(embeddingKey).size();
     Eigen::MatrixXf points(GetSize(), embeddingSize);
     for (size_t i = 0; i < GetSize(); i++) {
-        auto embedding = Documents[i].Embeddings.at(tg::EK_FASTTEXT_CLASSIC);
+        auto embedding = Documents[i].Embeddings.at(embeddingKey);
         Eigen::Map<Eigen::VectorXf, Eigen::Unaligned> eigenVector(embedding.data(), embedding.size());
         points.row(i) = eigenVector / eigenVector.norm();
     }

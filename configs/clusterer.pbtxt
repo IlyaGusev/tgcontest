@@ -1,20 +1,24 @@
 clusterings: [
     {
         language: LN_RU
-        small_threshold: 0.047
-        small_cluster_size: 10
-        medium_threshold: 0.043
-        medium_cluster_size: 20
-        large_threshold: 0.039
-        large_cluster_size: 30
+        small_threshold: 0.2
+        small_cluster_size: 20
+        medium_threshold: 0.16
+        medium_cluster_size: 40
+        large_threshold: 0.12
+        large_cluster_size: 60
         chunk_size: 25000
         intersection_size: 5000
         use_timestamp_moving: false
         ban_same_hosts: true
         embedding_keys_weights: [
             {
-                embedding_key: EK_FASTTEXT_CLASSIC
-                weight: 1.0
+                embedding_key: EK_FASTTEXT_TITLE
+                weight: 0.5
+            },
+            {
+                embedding_key: EK_FASTTEXT_TEXT
+                weight: 0.5
             }
         ]
     },

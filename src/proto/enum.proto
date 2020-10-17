@@ -33,7 +33,8 @@ enum EEmbeddingKey {
     EK_UNDEFINED = 0;
     EK_FASTTEXT_CLASSIC = 1;
     EK_FASTTEXT_TITLE = 2;
-    EK_TFIDF = 3;
+    EK_FASTTEXT_TEXT = 3;
+    EK_TFIDF = 4;
 }
 
 enum EAggregationMode {

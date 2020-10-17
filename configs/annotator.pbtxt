@@ -17,16 +17,6 @@ category_models: [
 embedders: [
     {
         type: ET_FASTTEXT
-        language: LN_RU
-        embedding_key: EK_FASTTEXT_CLASSIC
-        vector_model_path: "models/ru_vectors_v3.bin"
-        aggregation_mode: AM_MATRIX
-        embedder_field: EF_ALL
-        max_words: 150
-        model_path: "models/ru_sentence_embedder_v3.pt"
-    },
-    {
-        type: ET_FASTTEXT
         language: LN_EN
         embedding_key: EK_FASTTEXT_CLASSIC
         vector_model_path: "models/en_vectors_v3.bin"
@@ -34,5 +24,25 @@ embedders: [
         embedder_field: EF_ALL
         max_words: 150
         model_path: "models/en_sentence_embedder_v3.pt"
+    },
+    {
+        type: ET_FASTTEXT
+        language: LN_RU
+        embedding_key: EK_FASTTEXT_TITLE
+        vector_model_path: "models/ru_vectors_v3.bin"
+        aggregation_mode: AM_MATRIX
+        embedder_field: EF_TITLE
+        max_words: 150
+        model_path: "models/ru_sentence_embedder_v4_title.pt"
+    },
+    {
+        type: ET_FASTTEXT
+        language: LN_RU
+        embedding_key: EK_FASTTEXT_TEXT
+        vector_model_path: "models/ru_vectors_v3.bin"
+        aggregation_mode: AM_MATRIX
+        embedder_field: EF_TEXT
+        max_words: 150
+        model_path: "models/ru_sentence_embedder_v4_text.pt"
     }
 ]

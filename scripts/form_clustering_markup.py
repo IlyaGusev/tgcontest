@@ -4,17 +4,7 @@ import json
 import random
 from collections import defaultdict
 
-
-def read_markup_tsv(file_name):
-    records = []
-    with open(file_name, "r") as r:
-        header = tuple([h.split(":")[-1] for h in next(r).strip().split("\t")])
-        reader = csv.reader(r, delimiter='\t', quotechar='"')
-        for row in reader:
-            record = dict(zip(header, row))
-            records.append(record)
-    return records
-
+from util import read_markup_tsv, write_markup_tsv
 
 def main(original_jsonl, threads_json, honey_tsv, current_markup_tsv, output_tsv):
     url2record = dict()
@@ -46,12 +36,14 @@ def main(original_jsonl, threads_json, honey_tsv, current_markup_tsv, output_tsv
             for second_url in thread_urls[1:]:
                 if key in existing_urls:
                     continue
-                if random.random() < 0.6:
+                if random.random() < 0.8:
                     key = (first_url, second_url)
                     markup_keys.append(key)
+                    existing_urls.add(key)
             key = (prev_thread_url, first_url)
-            if prev_thread_url and random.random() < 0.0001 and key not in existing_urls:
+            if prev_thread_url and random.random() < 0.00001 and key not in existing_urls:
                 markup_keys.append(key)
+                existing_urls.add(key)
             prev_thread_url = first_url
 
     markup = []
@@ -73,19 +65,7 @@ def main(original_jsonl, threads_json, honey_tsv, current_markup_tsv, output_tsv
     random.shuffle(final_markup)
     print(len(final_markup))
 
-    with open(output_tsv, "w") as w:
-        w.write("\t".join([
-            "INPUT:first_title", "INPUT:second_title",
-            "INPUT:first_url", "INPUT:second_url",
-            "INPUT:first_text", "INPUT:second_text",
-            "GOLDEN:quality"
-        ]) + "\n")
-        writer = csv.writer(w, delimiter='\t', quotechar='"')
-        for record in final_markup:
-            writer.writerow((
-                record["first_title"], record["second_title"], record["first_url"],
-                record["second_url"], record["first_text"], record["second_text"], record.get("quality", "")
-            ))
+    write_markup_tsv(final_markup, output_tsv)
 
 
 if __name__ == "__main__":

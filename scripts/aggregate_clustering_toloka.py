@@ -6,6 +6,8 @@ from collections import Counter
 from collections import defaultdict
 from sklearn.metrics import cohen_kappa_score
 
+from util import write_markup_tsv
+
 
 def main(answers_file_name, min_votes, target_file_name):
     with open(answers_file_name, "r") as r:
@@ -90,12 +92,7 @@ def main(answers_file_name, min_votes, target_file_name):
     print("Votes for majority: ")
     for votes, sample_count in votes_count.items():
         print("{}: {}".format(votes, sample_count))
-    with open(target_file_name, "w") as w:
-        writer = csv.writer(w, delimiter="\t", quotechar='"')
-        keys = ["first_title", "second_title", "first_url", "second_url", "first_text", "second_text", "quality"]
-        writer.writerow(["INPUT:" + k if k != "quality" else "OUTPUT:quality" for k in keys])
-        for _, r in data.items():
-            writer.writerow([r[k] for k in keys])
+    write_markup_tsv([r for _, r in data.items()], target_file_name, "OUTPUT")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

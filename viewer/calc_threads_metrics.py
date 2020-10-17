@@ -89,7 +89,7 @@ def calc_threads_metrics(clustering_markup, original_jsonl, threads_json, errors
             writer = csv.writer(w, delimiter='\t', quotechar='"')
             keys = ("first_url", "second_url", "first_title", "second_title", "first_text", "second_text")
             for error in errors:
-                writer.writerow([error[key] for key in keys] + ["OK" if error["target"] == 1 else "BAD"])
+                writer.writerow([error[key].replace("\n", " ").strip() for key in keys] + ["OK" if error["target"] == 1 else "BAD"])
 
 
 if __name__ == "__main__":

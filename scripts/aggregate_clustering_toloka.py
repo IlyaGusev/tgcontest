@@ -9,7 +9,7 @@ from sklearn.metrics import cohen_kappa_score
 from util import write_markup_tsv
 
 
-def main(answers_file_name, min_votes, target_file_name):
+def main(answers_file_name, min_proba, target_file_name):
     with open(answers_file_name, "r") as r:
         header = tuple(next(r).strip().split("\t"))
         records = []
@@ -62,13 +62,10 @@ def main(answers_file_name, min_votes, target_file_name):
                     continue
                 fixed_labels1.append(l1)
                 fixed_labels2.append(l2)
-            if not fixed_labels1 or not fixed_labels2:
-                print("{} vs {}: no intersection".format(w1, w2))
-            else:
+            if fixed_labels1 and fixed_labels2:
                 score = cohen_kappa_score(fixed_labels1, fixed_labels2)
                 if -1.0 <= score <= 1.0:
                     scores.append(score)
-                print("{} vs {}: {}".format(w1, w2, score))
     print("Avg kappa score: {}".format(sum(scores)/len(scores)))
 
     results = defaultdict(list)
@@ -76,13 +73,15 @@ def main(answers_file_name, min_votes, target_file_name):
         results[(r["first_url"], r["second_url"])].append(r["quality"])
 
     data = {(r["first_url"], r["second_url"]): r for r in records}
-    votes_count = Counter()
+    proba_count = Counter()
     print("Bad examples: ")
     for key, res in results.items():
         res_count = Counter(res)
+        votes_count = len(res)
         votes_for_win = res_count.most_common(1)[0][1]
-        votes_count[votes_for_win] += 1
-        if votes_for_win < min_votes:
+        proba = votes_for_win / votes_count
+        proba_count[proba] += 1
+        if proba < min_proba:
             print("Key:", key)
             print("Answers:", ", ".join(res))
             data.pop(key)
@@ -90,14 +89,14 @@ def main(answers_file_name, min_votes, target_file_name):
         data[key]["quality"] = res_count.most_common(1)[0][0]
         data[key].pop("worker_id")
     print("Votes for majority: ")
-    for votes, sample_count in votes_count.items():
-        print("{}: {}".format(votes, sample_count))
+    for proba, sample_count in proba_count.items():
+        print("{}: {}".format(proba, sample_count))
     write_markup_tsv([r for _, r in data.items()], target_file_name, "OUTPUT")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--answers-file-name", type=str, required=True)
-    parser.add_argument("--min-votes", type=int, default=3)
+    parser.add_argument("--min-proba", type=float, default=0.7)
     parser.add_argument("--target-file-name", type=str, required=True)
     args = parser.parse_args()
     main(**vars(args))

@@ -189,12 +189,15 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
     assert(!Config.ban_same_hosts() || it == end);
 
     // Main linking loop
+    float prevStepMinDistance = 0.0;
     for (size_t level = 0; level + 1 < docSize; ++level) {
         // Calculate minimal distance
         auto minDistanceIt = std::min_element(nnDistances.begin(), nnDistances.end());
         const size_t minI = std::distance(nnDistances.begin(), minDistanceIt);
         const size_t minJ = nn[minI];
         const float minDistance = *minDistanceIt;
+        ENSURE(prevStepMinDistance <= minDistance, "SLINK non-decreasing distance invariant failed");
+        prevStepMinDistance = minDistance;
         if (minDistance > Config.small_threshold()) {
             break;
         }
@@ -207,6 +210,23 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
         if (!isAcceptableSize || hasSameSource) {
             nnDistances[minI] = INF_DISTANCE;
             nnDistances[minJ] = INF_DISTANCE;
+            distances(minJ, minI) = INF_DISTANCE;
+            distances(minI, minJ) = INF_DISTANCE;
+            for (size_t k = 0; k < static_cast<size_t>(distances.rows()); k++) {
+                if (k == minI || k == minJ) {
+                    continue;
+                }
+                float iDistance = distances(minI, k);
+                float jDistance = distances(minJ, k);
+                if (iDistance < nnDistances[minI]) {
+                    nnDistances[minI] = iDistance;
+                    nn[minI] = k;
+                }
+                if (jDistance < nnDistances[minJ]) {
+                    nnDistances[minJ] = jDistance;
+                    nn[minJ] = k;
+                }
+            }
             continue;
         }
 
@@ -214,11 +234,6 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
         for (size_t i = 0; i < docSize; i++) {
             if (labels[i] == minJ || labels[i] == labels[minJ]) {
                 labels[i] = minI;
-            }
-        }
-        for (size_t& value : nn) {
-            if (value == minJ) {
-                value = minI;
             }
         }
 
@@ -240,6 +255,10 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
             if (newDistance < nnDistances[minI]) {
                 nnDistances[minI] = newDistance;
                 nn[minI] = k;
+            }
+            if (nn[k] == minJ || nn[k] == minI) {
+                nnDistances[k] = newDistance;
+                nn[k] = minI;
             }
         }
 

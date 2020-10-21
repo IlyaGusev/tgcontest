@@ -189,7 +189,7 @@ std::vector<size_t> TSlinkClustering::ClusterBatch(
     assert(!Config.ban_same_hosts() || it == end);
 
     // Main linking loop
-    float prevStepMinDistance = 0.0;
+    float prevStepMinDistance = 0.0f;
     for (size_t level = 0; level + 1 < docSize; ++level) {
         // Calculate minimal distance
         auto minDistanceIt = std::min_element(nnDistances.begin(), nnDistances.end());
@@ -307,6 +307,7 @@ Eigen::MatrixXf TSlinkClustering::CalcDistances(
             distances.row(index) = Eigen::VectorXf::Ones(docSize) * weight;
             distances.col(index) = Eigen::VectorXf::Ones(docSize) * weight;
         }
+        distances = distances.cwiseMax(0.0f);
         finalDistances += distances;
     }
 

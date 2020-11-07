@@ -8,7 +8,7 @@ TDbDocument TDbDocument::FromProto(const tg::TDocumentProto& proto) {
     document.Host = GetHost(document.Url);
     document.SiteName = proto.site_name();
     document.PubTime = proto.pub_time();
-    document.FetchTime = proto.pub_time();
+    document.FetchTime = proto.fetch_time();
     document.Ttl = proto.ttl();
     document.Title = proto.title();
     document.Text = proto.text();

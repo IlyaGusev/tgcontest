@@ -15,6 +15,7 @@ addons:
       - libboost-all-dev
       - python3-pip
       - python3-setuptools
+      - python3-dev
       - python3-numpy
       - python3-scipy
       - libjsoncpp-dev
@@ -36,6 +37,7 @@ before_script:
   - sudo apt-get install -y php7.4 php7.4-curl
   - git clone https://github.com/brendangregg/FlameGraph
   - git lfs pull
+  - python3 -m pip install cython
   - python3 -m pip install -r viewer/requirements.txt
   - wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.5.0%2Bcpu.zip
   - unzip libtorch-cxx11-abi-shared-with-deps-1.5.0+cpu.zip

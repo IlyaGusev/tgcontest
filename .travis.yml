@@ -1,5 +1,5 @@
 os: linux
-dist: focal
+dist: bionic
 language: cpp
 
 branches:
@@ -23,7 +23,7 @@ addons:
       - uuid-dev
       - protobuf-compiler
       - libprotobuf-dev
-      - linux-tools-gcp
+      - linux-tools-5.4.0-1032-gcp
 
 compiler:
   - clang

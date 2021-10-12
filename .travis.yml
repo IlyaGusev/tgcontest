@@ -23,7 +23,6 @@ addons:
       - uuid-dev
       - protobuf-compiler
       - libprotobuf-dev
-      - linux-tools-5.4.0-1049-gcp
 
 compiler:
   - clang
@@ -36,7 +35,6 @@ before_script:
   - sudo add-apt-repository -y ppa:ondrej/php
   - sudo apt-get -q update
   - sudo apt-get install -y php7.4 php7.4-curl
-  - git clone https://github.com/brendangregg/FlameGraph
   - git lfs pull
   - python3 -m pip install wheel
   - python3 -m pip install cython
@@ -64,10 +62,7 @@ script:
   - make test
   - cd ..
   - bash test_canonical.sh
-  - perf record -F 99 -g ./build/tgnews top demo_data.json --print_top_debug_info > demo_top.json
-  - perf script > out.perf
   - mkdir output
-  - ./FlameGraph/stackcollapse-perf.pl out.perf | ./FlameGraph/flamegraph.pl > output/flamegraph.svg
   - bash build_viewer.sh viewer/templates output "03 May" demo_data.json ru_cat_data.json ru_cat_target.json en_cat_data.json en_cat_target.json ru_clustering_data.jsonl ru_threads_target.tsv
   - php7.4 dc-check.php build/tgnews all 8000 html_sample
 

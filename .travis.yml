@@ -23,7 +23,7 @@ addons:
       - uuid-dev
       - protobuf-compiler
       - libprotobuf-dev
-      - linux-tools-5.4.0-1032-gcp
+      - linux-tools-5.4.0-1049-gcp
 
 compiler:
   - clang

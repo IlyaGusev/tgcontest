@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Mindful Squirrel &dash; 8945b9f &dash; Data Clustering Contest</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/contest-zoo.css">
+    <script src="../js/jquery-3.4.1.slim.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <style>.brand-photo{display:inline-block;width:40px;height:40px;margin:-.3125rem 0;text-align:center;vertical-align:top;overflow:hidden;}.brand-name{font-size:18px;line-height:16px;font-weight:500;vertical-align:top;margin:.125rem .25rem 0 1rem!important;}.brand-name small{display:inline-block;font-size:13px;font-weight:400;margin-top:.25rem;}.card-cover{width:180px;background:no-repeat center;background-size:cover;border-radius:0 .25rem .25rem 0;display:none;}.text-secondary{color:#6f42c1!important;}.text-truncate-3,.text-truncate-4,.text-truncate-5{display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;}.text-truncate-3{-webkit-line-clamp:3;}.text-truncate-4{-webkit-line-clamp:4;}.text-truncate-5{-webkit-line-clamp:5;}.thread:not(:last-child){flex-grow:1;max-width:100%;}.thread.show{flex:0 0 100%;max-width:100%;}.thread.show .card-body{background-color:#f8f9fa!important;}.btn-outline-warning:hover{color:#fff;}.dropdown-toggle:after{margin-left:.5em;vertical-align:.15em;}</style>
+     <script>
+      $(document).on('show.bs.collapse', '.collapse', function () {
+        $(this).parents('.thread').addClass('show');
+      });
+      $(document).on('hidden.bs.collapse', '.collapse', function () {
+        $(this).parents('.thread').removeClass('show');
+      });
+    </script>
+</head>
+<body class="d-flex flex-column h-100">
+    <header class="bg-light fixed-top">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light px-0 px-sm-3">
+                <a class="navbar-brand py-0" href="">
+                    <span class="brand-photo rounded-circle"><i class="animal-photo squirrel bc4"></i></span><span class="brand-name d-none d-sm-inline-block"><div><span dir="auto" class="tc4">Mindful Squirrel<span class="d-none d-md-inline"> News</span></span></div><small class="text-muted">v8945b9f</small></span>
+                </a>
+                <div class="flex-fill">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" id="dropdownDateButton">en_cat_target.json</button>
+                </div>
+                <div class="btn-group btn-group-sm mx-2 mx-sm-3 mx-md-4">
+                    <a class="btn  btn-secondary " href="../en/metrics.html">EN</a>
+                    <a class="btn  btn-outline-secondary " href="../ru/metrics.html">RU</a>
+                </div>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse flex-grow-0" id="navbarSupportedContent">
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item active">
+                            <a class="nav-link" href="../en/main.html">Top</a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="../en/metrics.html">Metrics</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+    <main class="flex-shrink-0 py-5">
+        <div class="container pt-2 pb-1">
+            
+
+<h1>Categories</h1>
+<div>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Category</th>
+      <th scope="col">Precision</th>
+      <th scope="col">Recall</th>
+      <th scope="col">F-1 score</th>
+      <th scope="col">Support</th>
+    </tr>
+  </thead>
+  <tbody>
+    
+    <tr>
+      <th scope="row">society</th>
+      <td>0.922</td>
+      <td>0.94</td>
+      <td>0.931</td>
+      <td>252</td>
+    </tr>
+    
+    <tr>
+      <th scope="row">economy</th>
+      <td>0.917</td>
+      <td>0.926</td>
+      <td>0.921</td>
+      <td>95</td>
+    </tr>
+    
+    <tr>
+      <th scope="row">entertainment</th>
+      <td>0.905</td>
+      <td>0.95</td>
+      <td>0.927</td>
+      <td>80</td>
+    </tr>
+    
+    <tr>
+      <th scope="row">sports</th>
+      <td>0.947</td>
+      <td>0.96</td>
+      <td>0.954</td>
+      <td>75</td>
+    </tr>
+    
+    <tr>
+      <th scope="row">technology</th>
+      <td>0.936</td>
+      <td>0.898</td>
+      <td>0.917</td>
+      <td>49</td>
+    </tr>
+    
+    <tr>
+      <th scope="row">science</th>
+      <td>0.786</td>
+      <td>0.647</td>
+      <td>0.71</td>
+      <td>17</td>
+    </tr>
+    
+    <tr>
+      <th scope="row">not_news</th>
+      <td>0.667</td>
+      <td>0.429</td>
+      <td>0.522</td>
+      <td>14</td>
+    </tr>
+    
+    <tr>
+      <th scope="row">other</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1</td>
+    </tr>
+    
+    <tr>
+      <th scope="row"> Macro avg </th>
+      <td>0.76</td>
+      <td>0.719</td>
+      <td>0.735</td>
+      <td>583</td>
+    </tr>
+    <tr>
+      <th scope="row"> Accuracy </th>
+      <td></td>
+      <td></td>
+      <td>0.916</td>
+      <td>583</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+<details>
+<summary>Errors</summary>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Title</th>
+      <th scope="col">Prediction</th>
+      <th scope="col">Gold</th>
+    </tr>
+  </thead>
+  <tbody>
+    
+    <tr>
+      <td><a href=http://www.jantakareporter.com/india/varun-gandhi-slams-social-media-users-for-vulgar-morally-reprehensible-comments-on-amit-shahs-health/290069/>Varun Gandhi slams social media users for ‘vulgar, morally reprehensible’ comments on Amit Shah’s health</a></td>
+      <td>society</td>
+      <td>entertainment</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://gulfnews.com/sport/cricket/stage-india-pakistan-test-series-to-resume-cricket-with-a-bang-brad-hogg-1.71359181>Stage India-Pakistan Test series to resume cricket with a bang: Brad Hogg</a></td>
+      <td>sports</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://hollywoodlife.com/feature/denim-skirts-celebrities-wearing-jean-looks-photos-3580056/>14 Stars Proving Denim Skirts Are The Perfect Casual Spring Style: Hailey Baldwin & More</a></td>
+      <td>entertainment</td>
+      <td>not_news</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://seekingalpha.com/article/4344126-5-safe-and-cheap-dividend-stocks-to-invest-may-2020?source=feed_all_articles>5 Safe And Cheap Dividend Stocks To Invest (May 2020)</a></td>
+      <td>economy</td>
+      <td>not_news</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://sputniknews.com/interviews/202005061079216950-amazon-should-be-nationalised-as-it-has-become-a-public-marketplace-economist-says/>Amazon Should Be Nationalised as It Has Become a Public Marketplace, Economist Says</a></td>
+      <td>society</td>
+      <td>economy</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://techviral.net/spotify-premium-accounts/>Free Spotify Premium Accounts & Passwords (100% Working)</a></td>
+      <td>entertainment</td>
+      <td>not_news</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.bleepingcomputer.com/news/security/hacker-sells-22-million-unacademy-user-records-after-data-breach/>Hacker sells 22 million Unacademy user records after data breach</a></td>
+      <td>technology</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.businessinsider.com.au/coronavirus-may-have-spread-florida-france-by-december-2020-5>New evidence suggests the coronavirus was likely spreading in the US and France as early as December</a></td>
+      <td>science</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.businessinsider.sg/going-back-to-work-office-design-coronavirus-2020-5>Experts say the office as we knew it is gone, and companies will need one-way hallways, sneeze guards, and other safety measures to let employees return. Here's what it could look like., Business Insider - Business Insider Singapore</a></td>
+      <td>society</td>
+      <td>economy</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.buzz.ie/movies-tv/sky-tv-makes-top-box-sets-rewatch-367602>Sky TV makes their top box sets available to all customers</a></td>
+      <td>entertainment</td>
+      <td>technology</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.buzz.ie/news/harry-potter-star-miriam-margolyes-sparks-controversy-death-comment-boris-johnson-367869>Harry Potter star Miriam Margolyes sparks controversy for saying she ‘wanted Boris Johnson to die’ of coronavirus</a></td>
+      <td>society</td>
+      <td>entertainment</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.castanet.net/news/World/299483/Jobless-rate-spikes-to-14-7-in-US-highest-since-Great-Depression>US jobless rate hits 14.7%</a></td>
+      <td>economy</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.channelnewsasia.com/news/business/apple-to-reopen-some-stores-in-united-states-next-week-12717248>Apple to reopen some stores in United States next week</a></td>
+      <td>economy</td>
+      <td>technology</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.courthousenews.com/civil-forfeiture-5/>Civil Forfeiture</a></td>
+      <td>society</td>
+      <td>economy</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.courthousenews.com/union-sues-united-airlines-over-plans-to-cut-workers-hours/>Union Sues United Airlines Over Plans to Cut Workers’ Hours</a></td>
+      <td>society</td>
+      <td>economy</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.dailymail.co.uk/femail/article-8289323/Top-20-popular-decor-trends-online-revealed.html?ns_mchannel=rss&ns_campaign=1490&ito=1490>How Insta-worthy is YOUR home? The 20 decor trends that will get you the most likes revealed - including macramé wall hangings, feature walls and Smeg fridges</a></td>
+      <td>entertainment</td>
+      <td>not_news</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.dailymail.co.uk/news/article-8304883/Hapless-carpenter-crashes-ground-smacks-head-ladder-slips-him.html?ns_mchannel=rss&ns_campaign=1490&ito=1490>Moment hapless carpenter crashes to the ground and smacks his head after his ladder slips from under him leaving him nursing a broken leg</a></td>
+      <td>sports</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.dailypioneer.com/2020/state-editions/start-icu-operation-in-all-district-hospitals-before-may-19--hc-start-icu-operation-in-all-district-hospitals-before-may-19--hc.html>Start ICU operation in all district hospitals before May 19: HC</a></td>
+      <td>society</td>
+      <td>science</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.dailypioneer.com/2020/state-editions/start-icu-operation-in-all-district-hospitals-before-may-19--hc.html>Start ICU operation in all district hospitals before May 19: HC</a></td>
+      <td>society</td>
+      <td>science</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.dawn.com/news/1554850>Very hot, dry weather forecast for Karachi today</a></td>
+      <td>society</td>
+      <td>other</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.deccanherald.com/video/news/covid-19-daily-update-may-10-836062.html>Covid-19 Daily Update - May 10</a></td>
+      <td>society</td>
+      <td>science</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.dundalkdemocrat.ie/news/home/540333/the-mysterious-sighting-of-a-mermaid-on-river-in-county-louth.html>The mysterious sighting of a ‘mermaid’ on river in County Louth</a></td>
+      <td>not_news</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.factmag.com/2020/05/08/fact-archive-footwurk-the-legacy/>FACT Archive: Footwurk – The Legacy</a></td>
+      <td>entertainment</td>
+      <td>not_news</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.filmibeat.com/bollywood/news/2020/mira-rajput-kapoor-reacts-to-boys-locker-room-case-by-sharing-an-essay-that-says-teach-your-sons-298573.html>Mira Rajput Kapoor Reacts To Boys Locker Room Case By Sharing An Essay That Says Teach Your Sons</a></td>
+      <td>entertainment</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.financemagnates.com/executives/moves/hkex-ceo-charles-li-will-not-seek-re-election-in-2021/>HKEX CEO Charles Li Will Not Seek Re-Election in 2021</a></td>
+      <td>economy</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.finextra.com/newsarticle/35788/us-coalition-forms-to-protect-right-to-pay-with-cash>US coalition forms to protect right to pay with cash</a></td>
+      <td>economy</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.firstpost.com/india/maharana-pratap-jayanti-2020-narendra-modi-venkaiah-naidu-remember-rajput-king-who-fought-mughals-valiantly-8350641.html>Maharana Pratap Jayanti 2020: Narendra Modi, Venkaiah Naidu remember Rajput king who fought Mughals valiantly</a></td>
+      <td>society</td>
+      <td>not_news</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.forbes.com/sites/cathyhuyghe/2020/05/10/new-motherhood-while-working-in-wine-an-update-during-covid-19/>New Motherhood While Working In Wine: An Update During COVID-19</a></td>
+      <td>entertainment</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.forbes.com/sites/reneemorad/2020/05/06/new-proposal-give-frontline-workers-25000-for-tuition-and-student-loan-debt-relief/>New Proposal: Give Frontline Workers $25,000 For Tuition And Student Loan Debt Relief</a></td>
+      <td>society</td>
+      <td>economy</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.india.com/viral/having-problems-with-two-kids-at-home-think-of-this-costa-rican-family-self-isolating-with-31-children-4021806/>Having Problems With Two Kids at Home? Think of This Costa Rican Family Self-isolating With 31 Children</a></td>
+      <td>society</td>
+      <td>not_news</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.irishtimes.com/sport/other-sports/ian-o-riordan-running-enough-to-go-completely-bananas-again-1.4248695>Ian O'Riordan: Running enough to go completely bananas again</a></td>
+      <td>not_news</td>
+      <td>sports</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.mirror.co.uk/sport/cricket/ben-stokes-fitness-diet-programme-22005735>Ben Stokes fitness and diet programme: Week 6 of cricket legend's workout schedule</a></td>
+      <td>not_news</td>
+      <td>sports</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.moneycontrol.com/news/business/boom-in-canned-food-means-a-boom-in-cans-too-5244451.html>Boom in canned food means a boom in cans, too</a></td>
+      <td>economy</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.moneycontrol.com/news/business/health-care-used-to-be-recession-proof-not-anymore-5244481.html>Health care used to be recession-proof. Not anymore</a></td>
+      <td>society</td>
+      <td>science</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.motor1.com/news/420771/ford-creates-artificial-bird-poop/?utm_source=RSS&utm_medium=referral&utm_campaign=RSS-all-videos>Ford Creates Fake Bird Poop For Science, And Paint Protection</a></td>
+      <td>science</td>
+      <td>technology</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.rediff.com/news/report/coronavirus-in-india-mumbai-standalone-electronic-hardware-shops-to-open/20200507.htm>Standalone electronic, hardware shops to reopen in Mumbai</a></td>
+      <td>society</td>
+      <td>technology</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.reuters.com/article/us-mining-rio-tinto-idUSKBN22J28N>Rio Tinto dodges climate reporting fire, but issue unlikely to go away</a></td>
+      <td>economy</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.sciencedaily.com/releases/2020/05/200507131316.htm>New simple method for measuring the state of lithium-ion batteries</a></td>
+      <td>science</td>
+      <td>technology</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.sportskeeda.com/wwe/news-aleister-black-responds-to-aj-styles-threat-of-throwing-him-off-the-building-at-wwe-money-in-the-bank?utm_source=feed&utm_medium=referral&utm_campaign=sportskeeda>Aleister Black responds to AJ Styles' threat of throwing him off the building at WWE Money In The Bank</a></td>
+      <td>sports</td>
+      <td>entertainment</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.techdirt.com/articles/20200504/16564544432/twitter-making-it-easier-to-study-public-discussions-around-covid-19.shtml>Twitter Making It Easier To Study The Public Discussions Around COVID-19</a></td>
+      <td>technology</td>
+      <td>not_news</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.theglobeandmail.com/opinion/article-how-bc-health-authorities-are-undermining-indigenous-governments/>Opinion: How B.C. health authorities are undermining Indigenous governments</a></td>
+      <td>society</td>
+      <td>science</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.thehindu.com/news/cities/Hyderabad/hc-suspends-decision-to-surrender-medical-pg-diploma-courses/article31537551.ece>HC suspends decision to surrender medical PG diploma courses</a></td>
+      <td>society</td>
+      <td>science</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.thehindu.com/news/cities/Kochi/local-businesses-feel-the-heat-as-migrants-leave/article31530167.ece>Local businesses feel the heat as migrants leave</a></td>
+      <td>society</td>
+      <td>economy</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.thehindu.com/news/cities/Mangalore/delay-in-providing-temporary-sheds-worries-traders/article31552383.ece>Delay in providing temporary sheds worries traders</a></td>
+      <td>society</td>
+      <td>economy</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.thejakartapost.com/news/2020/05/08/us-jobless-claims-begin-decline-but-still-high-at-32-million.html>US jobless claims begin decline, but still high at 3.2 million</a></td>
+      <td>economy</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.thejournal.ie/debunked-no-irelands-golf-courses-did-not-reopen-on-saturday-5092594-May2020/>Debunked: No, Ireland's golf courses did not reopen on Saturday</a></td>
+      <td>society</td>
+      <td>sports</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.tipperarylive.ie/news/farming/541089/disappointment-for-tipperary-people-as-national-ploughing-championships-trade-exhibitions-are-cancelled.html>Disappointment for Tipperary people as National Ploughing championships trade exhibitions are cancelled</a></td>
+      <td>sports</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.washingtontimes.com/news/2020/may/10/indiana-universitys-doctor-rock-retires-after-38-y/>Indiana University's `Doctor Rock' retires after 38 years</a></td>
+      <td>entertainment</td>
+      <td>society</td>
+    </tr>
+    
+    <tr>
+      <td><a href=https://www.windowscentral.com/windows-10-game-mode-hurting-your-games-more-its-helping?utm_source=feedburner&utm_medium=feed&utm_campaign=Feed%3A+wmexperts+%28Windows+Central%29>Is Windows 10 Game Mode hurting your games more than it's helping?</a></td>
+      <td>technology</td>
+      <td>entertainment</td>
+    </tr>
+    
+  </tbody>
+</table>
+</details>
+
+<br/>
+
+
+
+        </div>
+    </main>
+</body>
+</html>
